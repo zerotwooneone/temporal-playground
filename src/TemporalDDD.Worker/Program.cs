@@ -1,7 +1,11 @@
+using Microsoft.Extensions.Hosting;
 using Temporalio.Client;
 using Temporalio.Worker;
 using TemporalDDD.Application.ProviderOnboarding;
 using TemporalDDD.Infrastructure.ProviderOnboarding;
+
+var builder = Host.CreateApplicationBuilder(args);
+TemporalDDD.Worker.DatabaseBootstrapper.Initialize(builder.Configuration);
 
 var client = await TemporalClient.ConnectAsync(new("localhost:7233"));
 

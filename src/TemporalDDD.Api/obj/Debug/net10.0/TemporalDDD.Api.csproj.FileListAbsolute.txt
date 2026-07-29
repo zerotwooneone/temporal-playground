@@ -48,3 +48,4 @@ C:\Users\squir\source\repos\temporal-playground\src\TemporalDDD.Api\obj\Debug\ne
 C:\Users\squir\source\repos\temporal-playground\src\TemporalDDD.Api\obj\Debug\net10.0\TemporalDDD.Api.pdb
 C:\Users\squir\source\repos\temporal-playground\src\TemporalDDD.Api\obj\Debug\net10.0\TemporalDDD.Api.genruntimeconfig.cache
 C:\Users\squir\source\repos\temporal-playground\src\TemporalDDD.Api\obj\Debug\net10.0\ref\TemporalDDD.Api.dll
+C:\Users\squir\source\repos\temporal-playground\src\TemporalDDD.Api\bin\Debug\net10.0\DbTemplates\base_empty.sqlite

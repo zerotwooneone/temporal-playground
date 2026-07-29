@@ -13,7 +13,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("TemporalDDD.Worker")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+6ac6e1c868f2b7bf9c8cfb0ce7adbb18ef4d7487")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+a2a73f5af124fb6714cc52fd6ecffbbf851a985a")]
 [assembly: System.Reflection.AssemblyProductAttribute("TemporalDDD.Worker")]
 [assembly: System.Reflection.AssemblyTitleAttribute("TemporalDDD.Worker")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]

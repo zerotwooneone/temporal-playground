@@ -1,6 +1,7 @@
 using Temporalio.Client;
 
 var builder = WebApplication.CreateBuilder(args);
+TemporalDDD.Api.DatabaseBootstrapper.Initialize(builder.Configuration);
 
 // Add services to the container.
 builder.Services.AddControllers();

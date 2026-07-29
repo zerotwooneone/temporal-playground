@@ -31,7 +31,6 @@
         },
         "frameworks": {
           "net10.0": {
-            "framework": "net10.0",
             "targetAlias": "net10.0",
             "projectReferences": {
               "C:\\Users\\squir\\source\\repos\\temporal-playground\\src\\TemporalDDD.Domain\\TemporalDDD.Domain.csproj": {
@@ -54,7 +53,6 @@
       },
       "frameworks": {
         "net10.0": {
-          "framework": "net10.0",
           "targetAlias": "net10.0",
           "dependencies": {
             "Temporalio": {
@@ -383,7 +381,6 @@
         },
         "frameworks": {
           "net10.0": {
-            "framework": "net10.0",
             "targetAlias": "net10.0",
             "projectReferences": {}
           }
@@ -402,7 +399,6 @@
       },
       "frameworks": {
         "net10.0": {
-          "framework": "net10.0",
           "targetAlias": "net10.0",
           "imports": [
             "net461",
@@ -725,7 +721,6 @@
         },
         "frameworks": {
           "net10.0": {
-            "framework": "net10.0",
             "targetAlias": "net10.0",
             "projectReferences": {
               "C:\\Users\\squir\\source\\repos\\temporal-playground\\src\\TemporalDDD.Application\\TemporalDDD.Application.csproj": {
@@ -748,9 +743,16 @@
       },
       "frameworks": {
         "net10.0": {
-          "framework": "net10.0",
           "targetAlias": "net10.0",
           "dependencies": {
+            "Microsoft.EntityFrameworkCore.Design": {
+              "target": "Package",
+              "version": "[10.0.10, )"
+            },
+            "Microsoft.EntityFrameworkCore.Sqlite": {
+              "target": "Package",
+              "version": "[10.0.10, )"
+            },
             "Temporalio": {
               "target": "Package",
               "version": "[1.17.0, )"
@@ -1077,7 +1079,6 @@
         },
         "frameworks": {
           "net10.0": {
-            "framework": "net10.0",
             "targetAlias": "net10.0",
             "projectReferences": {
               "C:\\Users\\squir\\source\\repos\\temporal-playground\\src\\TemporalDDD.Application\\TemporalDDD.Application.csproj": {
@@ -1103,12 +1104,15 @@
       },
       "frameworks": {
         "net10.0": {
-          "framework": "net10.0",
           "targetAlias": "net10.0",
           "dependencies": {
             "Microsoft.Extensions.Hosting": {
               "target": "Package",
               "version": "[10.0.10, )"
+            },
+            "Temporalio.Extensions.Hosting": {
+              "target": "Package",
+              "version": "[1.17.0, )"
             }
           },
           "imports": [

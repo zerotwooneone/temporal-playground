@@ -16,3 +16,5 @@ C:\Users\squir\source\repos\temporal-playground\src\TemporalDDD.Infrastructure\o
 C:\Users\squir\source\repos\temporal-playground\src\TemporalDDD.Infrastructure\obj\Debug\net10.0\refint\TemporalDDD.Infrastructure.dll
 C:\Users\squir\source\repos\temporal-playground\src\TemporalDDD.Infrastructure\obj\Debug\net10.0\TemporalDDD.Infrastructure.pdb
 C:\Users\squir\source\repos\temporal-playground\src\TemporalDDD.Infrastructure\obj\Debug\net10.0\ref\TemporalDDD.Infrastructure.dll
+C:\Users\squir\source\repos\temporal-playground\src\TemporalDDD.Infrastructure\bin\Debug\net10.0\TemporalDDD.Infrastructure.runtimeconfig.json
+C:\Users\squir\source\repos\temporal-playground\src\TemporalDDD.Infrastructure\obj\Debug\net10.0\TemporalDDD.Infrastructure.genruntimeconfig.cache
