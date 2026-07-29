@@ -16,7 +16,7 @@ public class PlacementMatchingActivities : IPlacementMatchingActivities
         _dbContext = dbContext;
     }
 
-    public async Task<decimal> CalculateMatchScoreAsync(Guid providerId, Guid facilityId, Guid positionId)
+    public async Task<decimal> CalculateMatchScoreAsync(uint providerId, uint facilityId, uint positionId)
     {
         // Simulate match score calculation algorithm
         await Task.Delay(500);
@@ -30,7 +30,7 @@ public class PlacementMatchingActivities : IPlacementMatchingActivities
         return matchScore;
     }
 
-    public async Task<Guid> ProposeAssignmentAsync(Guid providerId, Guid facilityId, Guid positionId, decimal matchScore)
+    public async Task<uint> ProposeAssignmentAsync(uint providerId, uint facilityId, uint positionId, decimal matchScore)
     {
         // Simulate database operation to create assignment proposal
         await _dbContext.Database.EnsureCreatedAsync();
@@ -41,8 +41,8 @@ public class PlacementMatchingActivities : IPlacementMatchingActivities
         var facilityIdVo = FacilityId.Create(facilityId);
         var positionIdVo = PositionId.Create(positionId);
 
-        // Create domain entity
-        var assignment = new Domain.PlacementMatching.Assignment(providerIdVo, facilityIdVo, positionIdVo, matchScoreVo);
+        // Create domain entity using factory
+        var assignment = Domain.PlacementMatching.Assignment.Create(providerIdVo, facilityIdVo, positionIdVo, matchScoreVo);
 
         // Note: DbSet would be added to ApplicationDbContext once schema is defined
         // For now, we simulate the save
@@ -53,7 +53,7 @@ public class PlacementMatchingActivities : IPlacementMatchingActivities
         return assignment.Id;
     }
 
-    public async Task CommitAssignmentAsync(Guid assignmentId, int expectedVersion)
+    public async Task CommitAssignmentAsync(uint assignmentId, int expectedVersion)
     {
         // Simulate database operation with Optimistic Concurrency Control (OCC)
         await _dbContext.Database.EnsureCreatedAsync();
@@ -80,7 +80,7 @@ public class PlacementMatchingActivities : IPlacementMatchingActivities
         Console.WriteLine($"[Assignment] Committed assignment {assignmentId} with version check {expectedVersion}");
     }
 
-    public async Task RevokeOfferAsync(Guid assignmentId)
+    public async Task RevokeOfferAsync(uint assignmentId)
     {
         // Simulate database operation to revoke offer
         await _dbContext.Database.EnsureCreatedAsync();

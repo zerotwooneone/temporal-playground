@@ -4,8 +4,8 @@ namespace TemporalDDD.Application.PlacementMatching;
 
 public interface IPlacementMatchingActivities
 {
-    Task<decimal> CalculateMatchScoreAsync(Guid providerId, Guid facilityId, Guid positionId);
-    Task<Guid> ProposeAssignmentAsync(Guid providerId, Guid facilityId, Guid positionId, decimal matchScore);
-    Task CommitAssignmentAsync(Guid assignmentId, int expectedVersion);
-    Task RevokeOfferAsync(Guid assignmentId);
+    Task<decimal> CalculateMatchScoreAsync(uint providerId, uint facilityId, uint positionId);
+    Task<uint> ProposeAssignmentAsync(uint providerId, uint facilityId, uint positionId, decimal matchScore);
+    Task CommitAssignmentAsync(uint assignmentId, int expectedVersion);
+    Task RevokeOfferAsync(uint assignmentId);
 }

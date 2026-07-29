@@ -5,7 +5,8 @@ namespace TemporalDDD.Domain.ProviderCredentialing;
 
 public class CredentialEvaluation
 {
-    public Guid Id { get; private set; }
+    public uint Id { get; private set; }
+    public CredentialEvaluationPublicId? PublicId { get; private set; }
     public ProviderId ProviderId { get; private set; }
     public LicenseNumber LicenseNumber { get; private set; }
     public MedicalBoard MedicalBoard { get; private set; }
@@ -17,15 +18,38 @@ public class CredentialEvaluation
 
     private CredentialEvaluation() { }
 
-    public CredentialEvaluation(ProviderId providerId, LicenseNumber licenseNumber, MedicalBoard medicalBoard, LicenseExpiryDate licenseExpiryDate)
+    // Factory for creating new evaluation (ID will be set by database)
+    public static CredentialEvaluation Create(ProviderId providerId, LicenseNumber licenseNumber, MedicalBoard medicalBoard, LicenseExpiryDate licenseExpiryDate)
     {
-        Id = Guid.NewGuid();
-        ProviderId = providerId;
-        LicenseNumber = licenseNumber;
-        MedicalBoard = medicalBoard;
-        LicenseExpiryDate = licenseExpiryDate;
-        Status = EvaluationStatus.Pending;
-        EvaluatedAt = DateTime.UtcNow;
+        return new CredentialEvaluation
+        {
+            Id = 0, // Temporary, will be set by DB
+            PublicId = CredentialEvaluationPublicId.New(),
+            ProviderId = providerId,
+            LicenseNumber = licenseNumber,
+            MedicalBoard = medicalBoard,
+            LicenseExpiryDate = licenseExpiryDate,
+            Status = EvaluationStatus.Pending,
+            EvaluatedAt = DateTime.UtcNow
+        };
+    }
+
+    // Factory for rehydrating from database
+    public static CredentialEvaluation FromDatabase(uint id, Guid? publicId, ProviderId providerId, LicenseNumber licenseNumber, MedicalBoard medicalBoard, LicenseExpiryDate licenseExpiryDate, bool isCompliant, string? complianceNotes, DateTime evaluatedAt, EvaluationStatus status)
+    {
+        return new CredentialEvaluation
+        {
+            Id = id,
+            PublicId = publicId.HasValue ? CredentialEvaluationPublicId.Create(publicId.Value) : null,
+            ProviderId = providerId,
+            LicenseNumber = licenseNumber,
+            MedicalBoard = medicalBoard,
+            LicenseExpiryDate = licenseExpiryDate,
+            IsCompliant = isCompliant,
+            ComplianceNotes = complianceNotes,
+            EvaluatedAt = evaluatedAt,
+            Status = status
+        };
     }
 
     public void MarkAsCompliant(string? notes = null)

@@ -31,5 +31,5 @@ public class OnboardingController : ControllerBase
         return Ok(new { WorkflowId = workflowId, Message = "Provider onboarding workflow started" });
     }
 
-    public record OnboardingRequest(string ProviderId, string LicenseNumber);
+    public record OnboardingRequest(uint ProviderId, string LicenseNumber);
 }

@@ -8,13 +8,13 @@ namespace TemporalDDD.Infrastructure.ProviderOnboarding;
 public class ProviderActivities : IProviderActivities
 {
     [Activity]
-    public async Task ActivateProvider(string providerId, ComplianceStatus status)
+    public async Task ActivateProvider(uint providerId, ComplianceStatus status)
     {
         // Simulate database save
         await Task.Delay(100);
 
-        var providerIdVo = ProviderId.Create(Guid.Parse(providerId));
-        var providerProfile = new ProviderProfile(providerIdVo);
+        var providerIdVo = ProviderId.Create(providerId);
+        var providerProfile = ProviderProfile.Create(providerIdVo);
         
         if (status == ComplianceStatus.Cleared)
         {

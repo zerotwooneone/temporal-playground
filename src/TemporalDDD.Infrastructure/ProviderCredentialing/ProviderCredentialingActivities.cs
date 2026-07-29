@@ -30,11 +30,12 @@ public class ProviderCredentialingActivities : IProviderCredentialingActivities
             MedicalBoard: medicalBoard,
             ExpiryDate: expiryDate,
             IsValid: isValid,
+            ProviderId: 1, // Simulated provider ID
             Notes: isValid ? "License verified successfully" : "License number format invalid"
         );
     }
 
-    public async Task EvaluateAndSaveComplianceAsync(Guid evaluationId, MedicalBoardLicenseInfo licenseInfo)
+    public async Task EvaluateAndSaveComplianceAsync(uint evaluationId, MedicalBoardLicenseInfo licenseInfo)
     {
         // Simulate business rule evaluation
         var isCompliant = licenseInfo.IsValid && licenseInfo.ExpiryDate > DateTime.UtcNow.AddMonths(6);
@@ -43,10 +44,10 @@ public class ProviderCredentialingActivities : IProviderCredentialingActivities
         var licenseNumberVo = LicenseNumber.Create(licenseInfo.LicenseNumber);
         var medicalBoardVo = MedicalBoard.Create(licenseInfo.MedicalBoard);
         var licenseExpiryDateVo = LicenseExpiryDate.Create(licenseInfo.ExpiryDate);
-        var providerIdVo = ProviderId.New();
+        var providerIdVo = ProviderId.Create(licenseInfo.ProviderId);
 
-        // Create domain entity
-        var evaluation = new Domain.ProviderCredentialing.CredentialEvaluation(
+        // Create domain entity using factory
+        var evaluation = Domain.ProviderCredentialing.CredentialEvaluation.Create(
             providerId: providerIdVo,
             licenseNumber: licenseNumberVo,
             medicalBoard: medicalBoardVo,
@@ -70,7 +71,7 @@ public class ProviderCredentialingActivities : IProviderCredentialingActivities
         await Task.Delay(100);
     }
 
-    public async Task RequestManualReviewAsync(Guid evaluationId)
+    public async Task RequestManualReviewAsync(uint evaluationId)
     {
         // Simulate external notification (e.g., email, webhook)
         await Task.Delay(500);
@@ -79,7 +80,7 @@ public class ProviderCredentialingActivities : IProviderCredentialingActivities
         Console.WriteLine($"[ManualReview] Request sent for evaluation {evaluationId}");
     }
 
-    public async Task ActivateProviderProfileAsync(Guid providerId)
+    public async Task ActivateProviderProfileAsync(uint providerId)
     {
         // Simulate database operation to activate provider
         await _dbContext.Database.EnsureCreatedAsync();

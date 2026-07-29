@@ -5,7 +5,8 @@ namespace TemporalDDD.Domain.TravelLogistics;
 
 public class LodgingBooking
 {
-    public Guid Id { get; private set; }
+    public uint Id { get; private set; }
+    public LodgingBookingPublicId? PublicId { get; private set; }
     public HotelName HotelName { get; private set; }
     public Address Address { get; private set; }
     public DateRange StayPeriod { get; private set; }
@@ -15,15 +16,36 @@ public class LodgingBooking
 
     private LodgingBooking() { }
 
-    public LodgingBooking(HotelName hotelName, Address address, DateRange stayPeriod, Money cost)
+    // Factory for creating new booking (ID will be set by database)
+    public static LodgingBooking Create(HotelName hotelName, Address address, DateRange stayPeriod, Money cost)
     {
-        Id = Guid.NewGuid();
-        HotelName = hotelName;
-        Address = address;
-        StayPeriod = stayPeriod;
-        Cost = cost;
-        Status = BookingStatus.Pending;
-        BookedAt = DateTime.UtcNow;
+        return new LodgingBooking
+        {
+            Id = 0, // Temporary, will be set by DB
+            PublicId = LodgingBookingPublicId.New(),
+            HotelName = hotelName,
+            Address = address,
+            StayPeriod = stayPeriod,
+            Cost = cost,
+            Status = BookingStatus.Pending,
+            BookedAt = DateTime.UtcNow
+        };
+    }
+
+    // Factory for rehydrating from database
+    public static LodgingBooking FromDatabase(uint id, Guid? publicId, HotelName hotelName, Address address, DateRange stayPeriod, Money cost, BookingStatus status, DateTime bookedAt)
+    {
+        return new LodgingBooking
+        {
+            Id = id,
+            PublicId = publicId.HasValue ? LodgingBookingPublicId.Create(publicId.Value) : null,
+            HotelName = hotelName,
+            Address = address,
+            StayPeriod = stayPeriod,
+            Cost = cost,
+            Status = status,
+            BookedAt = bookedAt
+        };
     }
 
     public void Confirm()

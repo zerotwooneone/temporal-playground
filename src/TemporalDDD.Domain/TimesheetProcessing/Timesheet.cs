@@ -5,7 +5,8 @@ namespace TemporalDDD.Domain.TimesheetProcessing;
 
 public class Timesheet
 {
-    public Guid Id { get; private set; }
+    public uint Id { get; private set; }
+    public TimesheetPublicId? PublicId { get; private set; }
     public ProviderId ProviderId { get; private set; }
     public DateRange Period { get; private set; }
     public Hours TotalHours { get; private set; }
@@ -20,16 +21,42 @@ public class Timesheet
 
     private Timesheet() { }
 
-    public Timesheet(ProviderId providerId, DateRange period, Hours totalHours, HourlyRate hourlyRate)
+    // Factory for creating new timesheet (ID will be set by database)
+    public static Timesheet Create(ProviderId providerId, DateRange period, Hours totalHours, HourlyRate hourlyRate)
     {
-        Id = Guid.NewGuid();
-        ProviderId = providerId;
-        Period = period;
-        TotalHours = totalHours;
-        HourlyRate = hourlyRate;
-        GrossPay = hourlyRate.CalculatePay(totalHours);
-        Status = TimesheetStatus.Submitted;
-        SubmittedAt = DateTime.UtcNow;
+        return new Timesheet
+        {
+            Id = 0, // Temporary, will be set by DB
+            PublicId = TimesheetPublicId.New(),
+            ProviderId = providerId,
+            Period = period,
+            TotalHours = totalHours,
+            HourlyRate = hourlyRate,
+            GrossPay = hourlyRate.CalculatePay(totalHours),
+            Status = TimesheetStatus.Submitted,
+            SubmittedAt = DateTime.UtcNow
+        };
+    }
+
+    // Factory for rehydrating from database
+    public static Timesheet FromDatabase(uint id, Guid? publicId, ProviderId providerId, DateRange period, Hours totalHours, HourlyRate hourlyRate, Money grossPay, Money taxAmount, Money netPay, TimesheetStatus status, DateTime submittedAt, DateTime? processedAt, PaymentReference? paymentReference)
+    {
+        return new Timesheet
+        {
+            Id = id,
+            PublicId = publicId.HasValue ? TimesheetPublicId.Create(publicId.Value) : null,
+            ProviderId = providerId,
+            Period = period,
+            TotalHours = totalHours,
+            HourlyRate = hourlyRate,
+            GrossPay = grossPay,
+            TaxAmount = taxAmount,
+            NetPay = netPay,
+            Status = status,
+            SubmittedAt = submittedAt,
+            ProcessedAt = processedAt,
+            PaymentReference = paymentReference
+        };
     }
 
     public void Validate()

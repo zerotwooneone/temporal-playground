@@ -5,7 +5,8 @@ namespace TemporalDDD.Domain.TravelLogistics;
 
 public class FlightBooking
 {
-    public Guid Id { get; private set; }
+    public uint Id { get; private set; }
+    public FlightBookingPublicId? PublicId { get; private set; }
     public FlightNumber FlightNumber { get; private set; }
     public AirportCode Origin { get; private set; }
     public AirportCode Destination { get; private set; }
@@ -16,16 +17,38 @@ public class FlightBooking
 
     private FlightBooking() { }
 
-    public FlightBooking(FlightNumber flightNumber, AirportCode origin, AirportCode destination, FlightDepartureTime departureTime, Money cost)
+    // Factory for creating new booking (ID will be set by database)
+    public static FlightBooking Create(FlightNumber flightNumber, AirportCode origin, AirportCode destination, FlightDepartureTime departureTime, Money cost)
     {
-        Id = Guid.NewGuid();
-        FlightNumber = flightNumber;
-        Origin = origin;
-        Destination = destination;
-        DepartureTime = departureTime;
-        Cost = cost;
-        Status = BookingStatus.Pending;
-        BookedAt = DateTime.UtcNow;
+        return new FlightBooking
+        {
+            Id = 0, // Temporary, will be set by DB
+            PublicId = FlightBookingPublicId.New(),
+            FlightNumber = flightNumber,
+            Origin = origin,
+            Destination = destination,
+            DepartureTime = departureTime,
+            Cost = cost,
+            Status = BookingStatus.Pending,
+            BookedAt = DateTime.UtcNow
+        };
+    }
+
+    // Factory for rehydrating from database
+    public static FlightBooking FromDatabase(uint id, Guid? publicId, FlightNumber flightNumber, AirportCode origin, AirportCode destination, FlightDepartureTime departureTime, Money cost, BookingStatus status, DateTime bookedAt)
+    {
+        return new FlightBooking
+        {
+            Id = id,
+            PublicId = publicId.HasValue ? FlightBookingPublicId.Create(publicId.Value) : null,
+            FlightNumber = flightNumber,
+            Origin = origin,
+            Destination = destination,
+            DepartureTime = departureTime,
+            Cost = cost,
+            Status = status,
+            BookedAt = bookedAt
+        };
     }
 
     public void Confirm()

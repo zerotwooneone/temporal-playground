@@ -6,5 +6,5 @@ namespace TemporalDDD.Application.ProviderOnboarding;
 public interface IProviderActivities
 {
     [Activity]
-    Task ActivateProvider(string providerId, ComplianceStatus status);
+    Task ActivateProvider(uint providerId, ComplianceStatus status);
 }

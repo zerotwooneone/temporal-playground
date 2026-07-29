@@ -14,7 +14,7 @@ public class ComplianceActivities : IComplianceActivities
         await Task.Delay(100);
 
         var licenseNumberVo = LicenseNumber.Create(licenseNumber);
-        var evaluation = new CredentialEvaluation(licenseNumberVo);
+        var evaluation = CredentialEvaluation.Create(licenseNumberVo);
         
         // Simulate license validation (in real scenario, this would call an external API)
         bool isLicenseValid = licenseNumber.Length > 5;

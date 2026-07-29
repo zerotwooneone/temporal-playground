@@ -2,24 +2,25 @@ namespace TemporalDDD.Domain.SharedKernel;
 
 public sealed record ProviderId
 {
-    public Guid Value { get; }
+    public uint Value { get; }
 
-    private ProviderId(Guid value)
+    private ProviderId(uint value)
     {
         Value = value;
     }
 
-    public static ProviderId Create(Guid value)
+    public static ProviderId Create(uint value)
     {
-        if (value == Guid.Empty)
-            throw new ArgumentException("ProviderId cannot be empty", nameof(value));
+        if (value == 0)
+            throw new ArgumentException("ProviderId cannot be zero", nameof(value));
 
         return new ProviderId(value);
     }
 
-    public static ProviderId New() => new(Guid.NewGuid());
+    // Factory method for rehydration from database
+    public static ProviderId FromDatabase(uint value) => new(value);
 
-    public static implicit operator Guid(ProviderId id) => id.Value;
+    public static implicit operator uint(ProviderId id) => id.Value;
 
     public override string ToString() => Value.ToString();
 }

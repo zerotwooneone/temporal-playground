@@ -4,10 +4,10 @@ namespace TemporalDDD.Application.TimesheetProcessing;
 
 public interface ITimesheetProcessingActivities
 {
-    Task ValidateTimesheetRulesAsync(Guid timesheetId);
-    Task<PayrollCalculationResult> CalculatePayrollAndTaxesAsync(Guid timesheetId);
-    Task<string> SubmitBankTransferAsync(Guid timesheetId, string idempotencyKey);
-    Task<string> GenerateAndSendInvoiceAsync(Guid timesheetId, decimal facilityBillRate);
+    Task ValidateTimesheetRulesAsync(uint timesheetId);
+    Task<PayrollCalculationResult> CalculatePayrollAndTaxesAsync(uint timesheetId);
+    Task<string> SubmitBankTransferAsync(uint timesheetId, string idempotencyKey);
+    Task<string> GenerateAndSendInvoiceAsync(uint timesheetId, decimal facilityBillRate);
 }
 
 public record PayrollCalculationResult(

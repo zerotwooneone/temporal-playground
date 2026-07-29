@@ -5,7 +5,7 @@ namespace TemporalDDD.Application.ProviderOnboarding;
 
 public class ProviderOnboardingWorkflow : IProviderOnboardingWorkflow
 {
-    public async Task RunAsync(string providerId, string licenseNumber)
+    public async Task RunAsync(uint providerId, string licenseNumber)
     {
         ComplianceStatus status = await Workflow.ExecuteActivityAsync(
             (IComplianceActivities a) => a.PerformComplianceCheck(licenseNumber),

@@ -7,5 +7,5 @@ namespace TemporalDDD.Application.ProviderOnboarding;
 public interface IProviderOnboardingWorkflow
 {
     [WorkflowRun]
-    Task RunAsync(string providerId, string licenseNumber);
+    Task RunAsync(uint providerId, string licenseNumber);
 }

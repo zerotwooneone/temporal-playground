@@ -16,7 +16,7 @@ public class TimesheetProcessingActivities : ITimesheetProcessingActivities
         _dbContext = dbContext;
     }
 
-    public async Task ValidateTimesheetRulesAsync(Guid timesheetId)
+    public async Task ValidateTimesheetRulesAsync(uint timesheetId)
     {
         // Simulate database operation to load and validate timesheet
         await _dbContext.Database.EnsureCreatedAsync();
@@ -25,10 +25,10 @@ public class TimesheetProcessingActivities : ITimesheetProcessingActivities
         var periodVo = DateRange.Create(DateTime.UtcNow.AddDays(-30), DateTime.UtcNow);
         var totalHoursVo = Hours.Create(160);
         var hourlyRateVo = HourlyRate.Create(50);
-        var providerIdVo = ProviderId.New();
+        var providerIdVo = ProviderId.Create(1); // Simulated provider ID
 
-        // Create domain entity for validation
-        var timesheet = new Domain.TimesheetProcessing.Timesheet(
+        // Create domain entity for validation using factory
+        var timesheet = Domain.TimesheetProcessing.Timesheet.Create(
             providerId: providerIdVo,
             period: periodVo,
             totalHours: totalHoursVo,
@@ -45,7 +45,7 @@ public class TimesheetProcessingActivities : ITimesheetProcessingActivities
         Console.WriteLine($"[TimesheetValidation] Timesheet {timesheetId} validated successfully");
     }
 
-    public async Task<PayrollCalculationResult> CalculatePayrollAndTaxesAsync(Guid timesheetId)
+    public async Task<PayrollCalculationResult> CalculatePayrollAndTaxesAsync(uint timesheetId)
     {
         // Simulate database operation to load timesheet and calculate payroll
         await _dbContext.Database.EnsureCreatedAsync();
@@ -54,10 +54,10 @@ public class TimesheetProcessingActivities : ITimesheetProcessingActivities
         var periodVo = DateRange.Create(DateTime.UtcNow.AddDays(-30), DateTime.UtcNow);
         var totalHoursVo = Hours.Create(160);
         var hourlyRateVo = HourlyRate.Create(50);
-        var providerIdVo = ProviderId.New();
+        var providerIdVo = ProviderId.Create(1); // Simulated provider ID
 
         // In real implementation, this would load the timesheet from database
-        var timesheet = new Domain.TimesheetProcessing.Timesheet(
+        var timesheet = Domain.TimesheetProcessing.Timesheet.Create(
             providerId: providerIdVo,
             period: periodVo,
             totalHours: totalHoursVo,
@@ -79,7 +79,7 @@ public class TimesheetProcessingActivities : ITimesheetProcessingActivities
         );
     }
 
-    public async Task<string> SubmitBankTransferAsync(Guid timesheetId, string idempotencyKey)
+    public async Task<string> SubmitBankTransferAsync(uint timesheetId, string idempotencyKey)
     {
         // Simulate external API call to payment gateway with idempotency key
         await Task.Delay(2000);
@@ -94,7 +94,7 @@ public class TimesheetProcessingActivities : ITimesheetProcessingActivities
         return paymentReference;
     }
 
-    public async Task<string> GenerateAndSendInvoiceAsync(Guid timesheetId, decimal facilityBillRate)
+    public async Task<string> GenerateAndSendInvoiceAsync(uint timesheetId, decimal facilityBillRate)
     {
         // Simulate database operation to load timesheet and calculate facility bill
         await _dbContext.Database.EnsureCreatedAsync();
@@ -103,10 +103,10 @@ public class TimesheetProcessingActivities : ITimesheetProcessingActivities
         var periodVo = DateRange.Create(DateTime.UtcNow.AddDays(-30), DateTime.UtcNow);
         var totalHoursVo = Hours.Create(160);
         var hourlyRateVo = HourlyRate.Create(50);
-        var providerIdVo = ProviderId.New();
+        var providerIdVo = ProviderId.Create(1); // Simulated provider ID
 
         // In real implementation, this would load the timesheet from database
-        var timesheet = new Domain.TimesheetProcessing.Timesheet(
+        var timesheet = Domain.TimesheetProcessing.Timesheet.Create(
             providerId: providerIdVo,
             period: periodVo,
             totalHours: totalHoursVo,

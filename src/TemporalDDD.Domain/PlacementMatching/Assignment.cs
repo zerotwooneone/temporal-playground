@@ -6,6 +6,7 @@ namespace TemporalDDD.Domain.PlacementMatching;
 public class Assignment
 {
     public AssignmentId Id { get; private set; }
+    public AssignmentPublicId? PublicId { get; private set; }
     public ProviderId ProviderId { get; private set; }
     public FacilityId FacilityId { get; private set; }
     public PositionId PositionId { get; private set; }
@@ -17,16 +18,39 @@ public class Assignment
 
     private Assignment() { }
 
-    public Assignment(ProviderId providerId, FacilityId facilityId, PositionId positionId, MatchScore matchScore)
+    // Factory for creating new assignment (ID will be set by database)
+    public static Assignment Create(ProviderId providerId, FacilityId facilityId, PositionId positionId, MatchScore matchScore)
     {
-        Id = AssignmentId.New();
-        ProviderId = providerId;
-        FacilityId = facilityId;
-        PositionId = positionId;
-        MatchScore = matchScore;
-        Status = AssignmentStatus.Proposed;
-        ProposedAt = DateTime.UtcNow;
-        Version = AggregateVersion.Initial();
+        return new Assignment
+        {
+            Id = AssignmentId.Create(0), // Temporary, will be set by DB
+            PublicId = AssignmentPublicId.New(),
+            ProviderId = providerId,
+            FacilityId = facilityId,
+            PositionId = positionId,
+            MatchScore = matchScore,
+            Status = AssignmentStatus.Proposed,
+            ProposedAt = DateTime.UtcNow,
+            Version = AggregateVersion.Initial()
+        };
+    }
+
+    // Factory for rehydrating from database
+    public static Assignment FromDatabase(uint id, Guid? publicId, ProviderId providerId, FacilityId facilityId, PositionId positionId, MatchScore matchScore, AssignmentStatus status, DateTime proposedAt, DateTime? acceptedAt, AggregateVersion version)
+    {
+        return new Assignment
+        {
+            Id = AssignmentId.FromDatabase(id),
+            PublicId = publicId.HasValue ? AssignmentPublicId.Create(publicId.Value) : null,
+            ProviderId = providerId,
+            FacilityId = facilityId,
+            PositionId = positionId,
+            MatchScore = matchScore,
+            Status = status,
+            ProposedAt = proposedAt,
+            AcceptedAt = acceptedAt,
+            Version = version
+        };
     }
 
     public void Accept(AggregateVersion expectedVersion)

@@ -6,8 +6,8 @@ namespace TemporalDDD.Application.TravelLogistics;
 [Workflow]
 public class TravelLogisticsSagaWorkflow
 {
-    private Guid? _flightBookingId;
-    private Guid? _lodgingBookingId;
+    private uint? _flightBookingId;
+    private uint? _lodgingBookingId;
 
     [WorkflowRun]
     public async Task RunAsync(

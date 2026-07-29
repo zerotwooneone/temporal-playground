@@ -5,9 +5,9 @@ namespace TemporalDDD.Application.ProviderCredentialing;
 public interface IProviderCredentialingActivities
 {
     Task<MedicalBoardLicenseInfo> FetchMedicalBoardLicenseAsync(string licenseNumber, string medicalBoard);
-    Task EvaluateAndSaveComplianceAsync(Guid evaluationId, MedicalBoardLicenseInfo licenseInfo);
-    Task RequestManualReviewAsync(Guid evaluationId);
-    Task ActivateProviderProfileAsync(Guid providerId);
+    Task EvaluateAndSaveComplianceAsync(uint evaluationId, MedicalBoardLicenseInfo licenseInfo);
+    Task RequestManualReviewAsync(uint evaluationId);
+    Task ActivateProviderProfileAsync(uint providerId);
 }
 
 public record MedicalBoardLicenseInfo(
@@ -15,5 +15,6 @@ public record MedicalBoardLicenseInfo(
     string MedicalBoard,
     DateTime ExpiryDate,
     bool IsValid,
+    uint ProviderId,
     string? Notes = null
 );

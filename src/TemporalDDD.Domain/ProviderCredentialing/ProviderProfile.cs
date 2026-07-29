@@ -5,7 +5,8 @@ namespace TemporalDDD.Domain.ProviderCredentialing;
 
 public class ProviderProfile
 {
-    public ProviderId Id { get; private set; }
+    public uint Id { get; private set; }
+    public ProviderPublicId? PublicId { get; private set; }
     public PersonName FirstName { get; private set; }
     public PersonName LastName { get; private set; }
     public Email Email { get; private set; }
@@ -17,16 +18,39 @@ public class ProviderProfile
 
     private ProviderProfile() { }
 
-    public ProviderProfile(PersonName firstName, PersonName lastName, Email email, Specialty specialty)
+    // Factory for creating new profile (ID will be set by database)
+    public static ProviderProfile Create(PersonName firstName, PersonName lastName, Email email, Specialty specialty)
     {
-        Id = ProviderId.New();
-        FirstName = firstName;
-        LastName = lastName;
-        Email = email;
-        Specialty = specialty;
-        IsActive = false;
-        CreatedAt = DateTime.UtcNow;
-        Version = 1;
+        return new ProviderProfile
+        {
+            Id = 0, // Temporary, will be set by DB
+            PublicId = ProviderPublicId.New(),
+            FirstName = firstName,
+            LastName = lastName,
+            Email = email,
+            Specialty = specialty,
+            IsActive = false,
+            CreatedAt = DateTime.UtcNow,
+            Version = 1
+        };
+    }
+
+    // Factory for rehydrating from database
+    public static ProviderProfile FromDatabase(uint id, Guid? publicId, PersonName firstName, PersonName lastName, Email email, Specialty specialty, bool isActive, DateTime? activatedAt, DateTime createdAt, int version)
+    {
+        return new ProviderProfile
+        {
+            Id = id,
+            PublicId = publicId.HasValue ? ProviderPublicId.Create(publicId.Value) : null,
+            FirstName = firstName,
+            LastName = lastName,
+            Email = email,
+            Specialty = specialty,
+            IsActive = isActive,
+            ActivatedAt = activatedAt,
+            CreatedAt = createdAt,
+            Version = version
+        };
     }
 
     public void Activate()

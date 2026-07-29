@@ -7,7 +7,7 @@ namespace TemporalDDD.Infrastructure.TravelLogistics;
 
 public class TravelLogisticsActivities : ITravelLogisticsActivities
 {
-    public async Task<Guid> BookFlightAsync(string flightNumber, string origin, string destination, DateTime departureTime, decimal cost)
+    public async Task<uint> BookFlightAsync(string flightNumber, string origin, string destination, DateTime departureTime, decimal cost)
     {
         // Simulate external API call to flight booking system
         await Task.Delay(1500);
@@ -25,8 +25,8 @@ public class TravelLogisticsActivities : ITravelLogisticsActivities
         var departureTimeVo = FlightDepartureTime.Create(departureTime.ToUniversalTime());
         var costVo = Money.Create(cost);
 
-        // Create domain entity
-        var booking = new Domain.TravelLogistics.FlightBooking(flightNumberVo, originVo, destinationVo, departureTimeVo, costVo);
+        // Create domain entity using factory
+        var booking = Domain.TravelLogistics.FlightBooking.Create(flightNumberVo, originVo, destinationVo, departureTimeVo, costVo);
         booking.Confirm();
 
         Console.WriteLine($"[FlightBooking] Booked flight {flightNumber} from {origin} to {destination} - ID: {booking.Id}");
@@ -34,7 +34,7 @@ public class TravelLogisticsActivities : ITravelLogisticsActivities
         return booking.Id;
     }
 
-    public async Task<Guid> BookLodgingAsync(string hotelName, string address, DateTime checkInDate, DateTime checkOutDate, decimal cost)
+    public async Task<uint> BookLodgingAsync(string hotelName, string address, DateTime checkInDate, DateTime checkOutDate, decimal cost)
     {
         // Simulate external API call to hotel booking system
         await Task.Delay(1500);
@@ -58,8 +58,8 @@ public class TravelLogisticsActivities : ITravelLogisticsActivities
         var stayPeriodVo = DateRange.Create(checkInDate, checkOutDate);
         var costVo = Money.Create(cost);
 
-        // Create domain entity
-        var booking = new Domain.TravelLogistics.LodgingBooking(hotelNameVo, addressVo, stayPeriodVo, costVo);
+        // Create domain entity using factory
+        var booking = Domain.TravelLogistics.LodgingBooking.Create(hotelNameVo, addressVo, stayPeriodVo, costVo);
         booking.Confirm();
 
         Console.WriteLine($"[LodgingBooking] Booked hotel {hotelName} at {address} - ID: {booking.Id}");
@@ -67,7 +67,7 @@ public class TravelLogisticsActivities : ITravelLogisticsActivities
         return booking.Id;
     }
 
-    public async Task CancelFlightAsync(Guid flightBookingId)
+    public async Task CancelFlightAsync(uint flightBookingId)
     {
         // Simulate external API call to cancel flight
         await Task.Delay(1000);
@@ -76,7 +76,7 @@ public class TravelLogisticsActivities : ITravelLogisticsActivities
         Console.WriteLine($"[FlightCancellation] Cancelled flight booking {flightBookingId}");
     }
 
-    public async Task CancelLodgingAsync(Guid lodgingBookingId)
+    public async Task CancelLodgingAsync(uint lodgingBookingId)
     {
         // Simulate external API call to cancel lodging
         await Task.Delay(1000);

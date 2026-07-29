@@ -6,13 +6,13 @@ namespace TemporalDDD.Application.PlacementMatching;
 [Workflow]
 public class PlacementMatchingWorkflow
 {
-    private Guid? _assignmentId;
+    private uint? _assignmentId;
     private OfferAcceptedSignal? _offerAcceptedSignal;
     private OfferRejectedSignal? _offerRejectedSignal;
     private ProviderMatchedElsewhereSignal? _providerMatchedElsewhereSignal;
 
     [WorkflowRun]
-    public async Task RunAsync(Guid providerId, Guid facilityId, Guid positionId)
+    public async Task RunAsync(uint providerId, uint facilityId, uint positionId)
     {
         // Step 1: Calculate Match Score
         var matchScore = await Workflow.ExecuteActivityAsync(
