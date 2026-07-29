@@ -1,4 +1,4 @@
-namespace TemporalDDD.Domain.SharedKernel;
+namespace TemporalDDD.Domain.TimesheetProcessing;
 
 public sealed record TimesheetId
 {

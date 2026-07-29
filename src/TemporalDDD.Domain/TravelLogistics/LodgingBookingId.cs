@@ -1,4 +1,4 @@
-namespace TemporalDDD.Domain.SharedKernel;
+namespace TemporalDDD.Domain.TravelLogistics;
 
 public sealed record LodgingBookingId
 {
