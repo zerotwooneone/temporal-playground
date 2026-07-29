@@ -1,4 +1,8 @@
 <Solution>
+  <Folder Name="/SolutionFolder1/">
+    <File Path="../README.md" />
+    <File Path="../workflows.md" />
+  </Folder>
   <Project Path="TemporalDDD.Api/TemporalDDD.Api.csproj" />
   <Project Path="TemporalDDD.Application/TemporalDDD.Application.csproj" />
   <Project Path="TemporalDDD.Domain/TemporalDDD.Domain.csproj" />
