@@ -1,0 +1,16 @@
+C:\Users\squir\source\repos\temporal-playground\src\TemporalDDD.Application\obj\Debug\net10.0\TemporalDDD.Application.csproj.AssemblyReference.cache
+C:\Users\squir\source\repos\temporal-playground\src\TemporalDDD.Application\obj\Debug\net10.0\TemporalDDD.Application.GeneratedMSBuildEditorConfig.editorconfig
+C:\Users\squir\source\repos\temporal-playground\src\TemporalDDD.Application\obj\Debug\net10.0\TemporalDDD.Application.AssemblyInfoInputs.cache
+C:\Users\squir\source\repos\temporal-playground\src\TemporalDDD.Application\obj\Debug\net10.0\TemporalDDD.Application.AssemblyInfo.cs
+C:\Users\squir\source\repos\temporal-playground\src\TemporalDDD.Application\obj\Debug\net10.0\TemporalDDD.Application.csproj.CoreCompileInputs.cache
+C:\Users\squir\source\repos\temporal-playground\src\TemporalDDD.Application\obj\Debug\net10.0\TemporalDDD.Application.sourcelink.json
+C:\Users\squir\source\repos\temporal-playground\src\TemporalDDD.Application\bin\Debug\net10.0\TemporalDDD.Application.deps.json
+C:\Users\squir\source\repos\temporal-playground\src\TemporalDDD.Application\bin\Debug\net10.0\TemporalDDD.Application.dll
+C:\Users\squir\source\repos\temporal-playground\src\TemporalDDD.Application\bin\Debug\net10.0\TemporalDDD.Application.pdb
+C:\Users\squir\source\repos\temporal-playground\src\TemporalDDD.Application\bin\Debug\net10.0\TemporalDDD.Domain.dll
+C:\Users\squir\source\repos\temporal-playground\src\TemporalDDD.Application\bin\Debug\net10.0\TemporalDDD.Domain.pdb
+C:\Users\squir\source\repos\temporal-playground\src\TemporalDDD.Application\obj\Debug\net10.0\Temporal.8831E47B.Up2Date
+C:\Users\squir\source\repos\temporal-playground\src\TemporalDDD.Application\obj\Debug\net10.0\TemporalDDD.Application.dll
+C:\Users\squir\source\repos\temporal-playground\src\TemporalDDD.Application\obj\Debug\net10.0\refint\TemporalDDD.Application.dll
+C:\Users\squir\source\repos\temporal-playground\src\TemporalDDD.Application\obj\Debug\net10.0\TemporalDDD.Application.pdb
+C:\Users\squir\source\repos\temporal-playground\src\TemporalDDD.Application\obj\Debug\net10.0\ref\TemporalDDD.Application.dll

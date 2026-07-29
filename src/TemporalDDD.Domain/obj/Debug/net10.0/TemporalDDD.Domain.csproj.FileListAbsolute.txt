@@ -1,0 +1,12 @@
+C:\Users\squir\source\repos\temporal-playground\src\TemporalDDD.Domain\bin\Debug\net10.0\TemporalDDD.Domain.deps.json
+C:\Users\squir\source\repos\temporal-playground\src\TemporalDDD.Domain\bin\Debug\net10.0\TemporalDDD.Domain.dll
+C:\Users\squir\source\repos\temporal-playground\src\TemporalDDD.Domain\bin\Debug\net10.0\TemporalDDD.Domain.pdb
+C:\Users\squir\source\repos\temporal-playground\src\TemporalDDD.Domain\obj\Debug\net10.0\TemporalDDD.Domain.GeneratedMSBuildEditorConfig.editorconfig
+C:\Users\squir\source\repos\temporal-playground\src\TemporalDDD.Domain\obj\Debug\net10.0\TemporalDDD.Domain.AssemblyInfoInputs.cache
+C:\Users\squir\source\repos\temporal-playground\src\TemporalDDD.Domain\obj\Debug\net10.0\TemporalDDD.Domain.AssemblyInfo.cs
+C:\Users\squir\source\repos\temporal-playground\src\TemporalDDD.Domain\obj\Debug\net10.0\TemporalDDD.Domain.csproj.CoreCompileInputs.cache
+C:\Users\squir\source\repos\temporal-playground\src\TemporalDDD.Domain\obj\Debug\net10.0\TemporalDDD.Domain.sourcelink.json
+C:\Users\squir\source\repos\temporal-playground\src\TemporalDDD.Domain\obj\Debug\net10.0\TemporalDDD.Domain.dll
+C:\Users\squir\source\repos\temporal-playground\src\TemporalDDD.Domain\obj\Debug\net10.0\refint\TemporalDDD.Domain.dll
+C:\Users\squir\source\repos\temporal-playground\src\TemporalDDD.Domain\obj\Debug\net10.0\TemporalDDD.Domain.pdb
+C:\Users\squir\source\repos\temporal-playground\src\TemporalDDD.Domain\obj\Debug\net10.0\ref\TemporalDDD.Domain.dll

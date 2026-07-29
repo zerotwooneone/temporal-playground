@@ -1,0 +1,19 @@
+# =========================
+# JetBrains Rider / ReSharper
+# =========================
+
+# Ignore personal workspace and local history
+/.idea/workspace.xml
+/.idea/tasks.xml
+/.idea/shelf/
+/.idea/vcs.xml
+/.idea/dictionaries/
+/.idea/modules.xml
+
+# Ignore Rider specific user files
+/.idea/contentModel.xml
+/.idea/projectSettingsUpdater.xml
+
+# Ignore ReSharper caches
+/_ReSharper.Caches/
+*.DotSettings.user
