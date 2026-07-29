@@ -104,7 +104,7 @@ public static Assignment Create(ProviderId providerId, FacilityId facilityId, Po
         PositionId = positionId,
         MatchScore = matchScore,
         Status = AssignmentStatus.Proposed,
-        ProposedAt = DateTime.UtcNow,
+        ProposedAt = DateTimeOffset.UtcNow,
         Version = AggregateVersion.Initial()
     };
 }
@@ -117,7 +117,7 @@ public static Assignment Create(ProviderId providerId, FacilityId facilityId, Po
 - **Usage**: When loading entities from database
 
 ```csharp
-public static Assignment FromDatabase(uint id, Guid? publicId, ProviderId providerId, FacilityId facilityId, PositionId positionId, MatchScore matchScore, AssignmentStatus status, DateTime proposedAt, DateTime? acceptedAt, AggregateVersion version)
+public static Assignment FromDatabase(uint id, Guid? publicId, ProviderId providerId, FacilityId facilityId, PositionId positionId, MatchScore matchScore, AssignmentStatus status, DateTimeOffset proposedAt, DateTimeOffset? acceptedAt, AggregateVersion version)
 {
     return new Assignment
     {
@@ -152,7 +152,8 @@ Value objects are immutable, validated, and identified by their attributes:
 - `HotelName` - Regex validation (letters, numbers, spaces, hyphens, apostrophes), length 2-255
 - `LicenseNumber` - Alphanumeric validation, length constraints
 - `MedicalBoard` - Allowed list validation
-- `LicenseExpiryDate` - Future date validation
+- `LicenseExpiryDate` - Future date validation (DateTimeOffset)
+- `ComplianceNotes` - String wrapper with length validation (2000 char max)
 - `PersonName` - Character and length validation
 - `Specialty` - Smart enum with predefined values
 - `FlightNumber` - IATA format validation
@@ -279,14 +280,6 @@ TemporalDDD.Domain/
 │   ├── AssignmentId.cs
 │   ├── FacilityId.cs
 │   ├── PositionId.cs
-│   ├── AssignmentPublicId.cs
-│   ├── ProviderPublicId.cs
-│   ├── TimesheetPublicId.cs
-│   ├── FlightBookingPublicId.cs
-│   ├── LodgingBookingPublicId.cs
-│   ├── CredentialEvaluationPublicId.cs
-│   ├── Money.cs
-│   ├── DateRange.cs
 │   └── Email.cs
 ├── ProviderCredentialing/     # Provider credentialing domain
 │   ├── ValueObjects/
@@ -321,16 +314,13 @@ TemporalDDD.Domain/
 │   ├── FlightBooking.cs
 │   ├── LodgingBooking.cs
 │   └── BookingStatus.cs
-└── ProviderOnboarding/        # Legacy onboarding domain (cleanup in progress)
-    ├── CredentialEvaluation.cs
-    ├── ProviderProfile.cs
-    └── ComplianceStatus.cs
 ```
 
 ### 10. Anti-Patterns to Avoid
 
 **Do NOT**:
 - Use primitive types for domain concepts (Primitive Obsession)
+- Use DateTime for domain dates (use DateTimeOffset)
 - Use Guid for internal database IDs (use uint)
 - Expose internal uint IDs to APIs (use PublicId)
 - Put business logic in setters
@@ -338,9 +328,11 @@ TemporalDDD.Domain/
 - Skip validation in constructors
 - Use standard enums for status types (use Smart Enums)
 - Generate IDs in domain layer (database should generate uint IDs)
+- Create duplicate entities across namespaces
 
 **DO**:
 - Use strongly-typed IDs for all identifiers
+- Use DateTimeOffset for all domain dates
 - Use value objects for domain concepts
 - Encapsulate business logic in aggregate methods
 - Validate at the earliest possible point
@@ -348,6 +340,7 @@ TemporalDDD.Domain/
 - Separate internal IDs (uint) from public IDs (Guid)
 - Make value objects immutable
 - Use Smart Enums for status types
+- Use AggregateVersion for version tracking (not int)
 
 ## Implementation Checklist
 
@@ -357,6 +350,7 @@ When implementing new domain entities:
    - Use uint for internal ID
    - Add `Create()` and `FromDatabase()` factory methods
    - Add validation (non-zero)
+   - Place in SharedKernel namespace
 
 2. **Create PublicId** (if API exposure needed)
    - Use Guid with unique 3-letter prefix
@@ -365,6 +359,7 @@ When implementing new domain entities:
 
 3. **Create value objects** for domain concepts
    - Make immutable (sealed record)
+   - Use DateTimeOffset for date-related value objects
    - Validate in constructor
    - Throw ArgumentException on invalid input
 
@@ -376,6 +371,8 @@ When implementing new domain entities:
 5. **Implement aggregate** with factory pattern
    - `Create()` factory for new entities (Id = 0)
    - `FromDatabase()` factory for rehydration
+   - Use DateTimeOffset for all date properties
+   - Use AggregateVersion for version tracking
    - Private setters, public methods for state changes
    - Business rule validation in methods
 
