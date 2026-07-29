@@ -1,5 +1,7 @@
 using Temporalio.Activities;
 using TemporalDDD.Application.TravelLogistics;
+using TemporalDDD.Domain.SharedKernel;
+using TemporalDDD.Domain.TravelLogistics.ValueObjects;
 
 namespace TemporalDDD.Infrastructure.TravelLogistics;
 
@@ -16,8 +18,15 @@ public class TravelLogisticsActivities : ITravelLogisticsActivities
             throw new Exception("Flight booking API unavailable");
         }
 
+        // Create value objects
+        var flightNumberVo = FlightNumber.Create(flightNumber);
+        var originVo = AirportCode.Create(origin);
+        var destinationVo = AirportCode.Create(destination);
+        var departureTimeVo = FlightDepartureTime.Create(departureTime.ToUniversalTime());
+        var costVo = Money.Create(cost);
+
         // Create domain entity
-        var booking = new Domain.TravelLogistics.FlightBooking(flightNumber, origin, destination, departureTime, cost);
+        var booking = new Domain.TravelLogistics.FlightBooking(flightNumberVo, originVo, destinationVo, departureTimeVo, costVo);
         booking.Confirm();
 
         Console.WriteLine($"[FlightBooking] Booked flight {flightNumber} from {origin} to {destination} - ID: {booking.Id}");
@@ -36,8 +45,20 @@ public class TravelLogisticsActivities : ITravelLogisticsActivities
             throw new Exception("Hotel booking API unavailable");
         }
 
+        // Parse address components (simplified for demo)
+        var addressParts = address.Split(',');
+        var street = addressParts.Length > 0 ? addressParts[0].Trim() : "Unknown Street";
+        var city = addressParts.Length > 1 ? addressParts[1].Trim() : "Unknown City";
+        var state = addressParts.Length > 2 ? addressParts[2].Trim() : "Unknown State";
+        var zipCode = addressParts.Length > 3 ? addressParts[3].Trim() : "00000";
+
+        // Create value objects
+        var addressVo = Address.Create(street, city, state, zipCode);
+        var stayPeriodVo = DateRange.Create(checkInDate, checkOutDate);
+        var costVo = Money.Create(cost);
+
         // Create domain entity
-        var booking = new Domain.TravelLogistics.LodgingBooking(hotelName, address, checkInDate, checkOutDate, cost);
+        var booking = new Domain.TravelLogistics.LodgingBooking(hotelName, addressVo, stayPeriodVo, costVo);
         booking.Confirm();
 
         Console.WriteLine($"[LodgingBooking] Booked hotel {hotelName} at {address} - ID: {booking.Id}");

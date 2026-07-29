@@ -1,6 +1,7 @@
 using Microsoft.EntityFrameworkCore;
 using Temporalio.Activities;
 using TemporalDDD.Application.ProviderCredentialing;
+using TemporalDDD.Domain.ProviderCredentialing.ValueObjects;
 using TemporalDDD.Infrastructure.Persistence;
 
 namespace TemporalDDD.Infrastructure.ProviderCredentialing;
@@ -37,12 +38,17 @@ public class ProviderCredentialingActivities : IProviderCredentialingActivities
         // Simulate business rule evaluation
         var isCompliant = licenseInfo.IsValid && licenseInfo.ExpiryDate > DateTime.UtcNow.AddMonths(6);
 
+        // Create value objects
+        var licenseNumberVo = LicenseNumber.Create(licenseInfo.LicenseNumber);
+        var medicalBoardVo = MedicalBoard.Create(licenseInfo.MedicalBoard);
+        var licenseExpiryDateVo = LicenseExpiryDate.Create(licenseInfo.ExpiryDate);
+
         // Create domain entity
         var evaluation = new Domain.ProviderCredentialing.CredentialEvaluation(
             providerId: Guid.NewGuid(), // In real scenario, this would be passed as parameter
-            licenseNumber: licenseInfo.LicenseNumber,
-            medicalBoard: licenseInfo.MedicalBoard,
-            licenseExpiryDate: licenseInfo.ExpiryDate
+            licenseNumber: licenseNumberVo,
+            medicalBoard: medicalBoardVo,
+            licenseExpiryDate: licenseExpiryDateVo
         );
 
         if (isCompliant)

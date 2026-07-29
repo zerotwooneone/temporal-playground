@@ -1,25 +1,26 @@
+using TemporalDDD.Domain.SharedKernel;
+using TemporalDDD.Domain.TravelLogistics.ValueObjects;
+
 namespace TemporalDDD.Domain.TravelLogistics;
 
 public class LodgingBooking
 {
     public Guid Id { get; private set; }
     public string HotelName { get; private set; }
-    public string Address { get; private set; }
-    public DateTime CheckInDate { get; private set; }
-    public DateTime CheckOutDate { get; private set; }
-    public decimal Cost { get; private set; }
+    public Address Address { get; private set; }
+    public DateRange StayPeriod { get; private set; }
+    public Money Cost { get; private set; }
     public BookingStatus Status { get; private set; }
     public DateTime BookedAt { get; private set; }
 
     private LodgingBooking() { }
 
-    public LodgingBooking(string hotelName, string address, DateTime checkInDate, DateTime checkOutDate, decimal cost)
+    public LodgingBooking(string hotelName, Address address, DateRange stayPeriod, Money cost)
     {
         Id = Guid.NewGuid();
         HotelName = hotelName;
         Address = address;
-        CheckInDate = checkInDate;
-        CheckOutDate = checkOutDate;
+        StayPeriod = stayPeriod;
         Cost = cost;
         Status = BookingStatus.Pending;
         BookedAt = DateTime.UtcNow;

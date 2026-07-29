@@ -1,12 +1,15 @@
+using TemporalDDD.Domain.ProviderCredentialing.ValueObjects;
+using TemporalDDD.Domain.SharedKernel;
+
 namespace TemporalDDD.Domain.ProviderCredentialing;
 
 public class ProviderProfile
 {
     public Guid Id { get; private set; }
-    public string FirstName { get; private set; }
-    public string LastName { get; private set; }
-    public string Email { get; private set; }
-    public string Specialty { get; private set; }
+    public PersonName FirstName { get; private set; }
+    public PersonName LastName { get; private set; }
+    public Email Email { get; private set; }
+    public Specialty Specialty { get; private set; }
     public bool IsActive { get; private set; }
     public DateTime? ActivatedAt { get; private set; }
     public DateTime CreatedAt { get; private set; }
@@ -14,7 +17,7 @@ public class ProviderProfile
 
     private ProviderProfile() { }
 
-    public ProviderProfile(string firstName, string lastName, string email, string specialty)
+    public ProviderProfile(PersonName firstName, PersonName lastName, Email email, Specialty specialty)
     {
         Id = Guid.NewGuid();
         FirstName = firstName;

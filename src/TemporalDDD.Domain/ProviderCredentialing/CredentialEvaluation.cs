@@ -1,12 +1,14 @@
+using TemporalDDD.Domain.ProviderCredentialing.ValueObjects;
+
 namespace TemporalDDD.Domain.ProviderCredentialing;
 
 public class CredentialEvaluation
 {
     public Guid Id { get; private set; }
     public Guid ProviderId { get; private set; }
-    public string LicenseNumber { get; private set; }
-    public string MedicalBoard { get; private set; }
-    public DateTime LicenseExpiryDate { get; private set; }
+    public LicenseNumber LicenseNumber { get; private set; }
+    public MedicalBoard MedicalBoard { get; private set; }
+    public LicenseExpiryDate LicenseExpiryDate { get; private set; }
     public bool IsCompliant { get; private set; }
     public string? ComplianceNotes { get; private set; }
     public DateTime EvaluatedAt { get; private set; }
@@ -14,7 +16,7 @@ public class CredentialEvaluation
 
     private CredentialEvaluation() { }
 
-    public CredentialEvaluation(Guid providerId, string licenseNumber, string medicalBoard, DateTime licenseExpiryDate)
+    public CredentialEvaluation(Guid providerId, LicenseNumber licenseNumber, MedicalBoard medicalBoard, LicenseExpiryDate licenseExpiryDate)
     {
         Id = Guid.NewGuid();
         ProviderId = providerId;

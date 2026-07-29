@@ -1,19 +1,22 @@
+using TemporalDDD.Domain.SharedKernel;
+using TemporalDDD.Domain.TravelLogistics.ValueObjects;
+
 namespace TemporalDDD.Domain.TravelLogistics;
 
 public class FlightBooking
 {
     public Guid Id { get; private set; }
-    public string FlightNumber { get; private set; }
-    public string Origin { get; private set; }
-    public string Destination { get; private set; }
-    public DateTime DepartureTime { get; private set; }
-    public decimal Cost { get; private set; }
+    public FlightNumber FlightNumber { get; private set; }
+    public AirportCode Origin { get; private set; }
+    public AirportCode Destination { get; private set; }
+    public FlightDepartureTime DepartureTime { get; private set; }
+    public Money Cost { get; private set; }
     public BookingStatus Status { get; private set; }
     public DateTime BookedAt { get; private set; }
 
     private FlightBooking() { }
 
-    public FlightBooking(string flightNumber, string origin, string destination, DateTime departureTime, decimal cost)
+    public FlightBooking(FlightNumber flightNumber, AirportCode origin, AirportCode destination, FlightDepartureTime departureTime, Money cost)
     {
         Id = Guid.NewGuid();
         FlightNumber = flightNumber;

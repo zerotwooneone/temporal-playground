@@ -1,6 +1,8 @@
 using Microsoft.EntityFrameworkCore;
 using Temporalio.Activities;
 using TemporalDDD.Application.TimesheetProcessing;
+using TemporalDDD.Domain.SharedKernel;
+using TemporalDDD.Domain.TimesheetProcessing.ValueObjects;
 using TemporalDDD.Infrastructure.Persistence;
 
 namespace TemporalDDD.Infrastructure.TimesheetProcessing;
@@ -19,13 +21,17 @@ public class TimesheetProcessingActivities : ITimesheetProcessingActivities
         // Simulate database operation to load and validate timesheet
         await _dbContext.Database.EnsureCreatedAsync();
 
+        // Create value objects
+        var periodVo = DateRange.Create(DateTime.UtcNow.AddDays(-30), DateTime.UtcNow);
+        var totalHoursVo = Hours.Create(160);
+        var hourlyRateVo = HourlyRate.Create(50);
+
         // Create domain entity for validation
         var timesheet = new Domain.TimesheetProcessing.Timesheet(
             providerId: Guid.NewGuid(),
-            periodStart: DateTime.UtcNow.AddDays(-30),
-            periodEnd: DateTime.UtcNow,
-            totalHours: 160,
-            hourlyRate: 50
+            period: periodVo,
+            totalHours: totalHoursVo,
+            hourlyRate: hourlyRateVo
         );
 
         // Validate business rules
@@ -43,13 +49,17 @@ public class TimesheetProcessingActivities : ITimesheetProcessingActivities
         // Simulate database operation to load timesheet and calculate payroll
         await _dbContext.Database.EnsureCreatedAsync();
 
+        // Create value objects
+        var periodVo = DateRange.Create(DateTime.UtcNow.AddDays(-30), DateTime.UtcNow);
+        var totalHoursVo = Hours.Create(160);
+        var hourlyRateVo = HourlyRate.Create(50);
+
         // In real implementation, this would load the timesheet from database
         var timesheet = new Domain.TimesheetProcessing.Timesheet(
             providerId: Guid.NewGuid(),
-            periodStart: DateTime.UtcNow.AddDays(-30),
-            periodEnd: DateTime.UtcNow,
-            totalHours: 160,
-            hourlyRate: 50
+            period: periodVo,
+            totalHours: totalHoursVo,
+            hourlyRate: hourlyRateVo
         );
 
         // Calculate payroll with tax rate (e.g., 25%)
@@ -58,12 +68,12 @@ public class TimesheetProcessingActivities : ITimesheetProcessingActivities
 
         await Task.Delay(100);
 
-        Console.WriteLine($"[PayrollCalculation] Gross: {timesheet.GrossPay:C}, Tax: {timesheet.TaxAmount:C}, Net: {timesheet.NetPay:C}");
+        Console.WriteLine($"[PayrollCalculation] Gross: {timesheet.GrossPay}, Tax: {timesheet.TaxAmount}, Net: {timesheet.NetPay}");
 
         return new PayrollCalculationResult(
-            GrossPay: timesheet.GrossPay,
-            TaxAmount: timesheet.TaxAmount,
-            NetPay: timesheet.NetPay
+            GrossPay: timesheet.GrossPay.Amount,
+            TaxAmount: timesheet.TaxAmount.Amount,
+            NetPay: timesheet.NetPay.Amount
         );
     }
 
@@ -87,17 +97,21 @@ public class TimesheetProcessingActivities : ITimesheetProcessingActivities
         // Simulate database operation to load timesheet and calculate facility bill
         await _dbContext.Database.EnsureCreatedAsync();
 
+        // Create value objects
+        var periodVo = DateRange.Create(DateTime.UtcNow.AddDays(-30), DateTime.UtcNow);
+        var totalHoursVo = Hours.Create(160);
+        var hourlyRateVo = HourlyRate.Create(50);
+
         // In real implementation, this would load the timesheet from database
         var timesheet = new Domain.TimesheetProcessing.Timesheet(
             providerId: Guid.NewGuid(),
-            periodStart: DateTime.UtcNow.AddDays(-30),
-            periodEnd: DateTime.UtcNow,
-            totalHours: 160,
-            hourlyRate: 50
+            period: periodVo,
+            totalHours: totalHoursVo,
+            hourlyRate: hourlyRateVo
         );
 
         // Calculate facility bill (typically higher than provider pay rate)
-        var facilityBillAmount = timesheet.TotalHours * facilityBillRate;
+        var facilityBillAmount = timesheet.TotalHours.Value * facilityBillRate;
 
         // Simulate external API call to ERP system to send invoice
         await Task.Delay(1000);
