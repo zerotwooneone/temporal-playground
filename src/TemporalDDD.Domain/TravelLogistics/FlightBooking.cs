@@ -5,7 +5,7 @@ namespace TemporalDDD.Domain.TravelLogistics;
 
 public class FlightBooking
 {
-    public uint Id { get; private set; }
+    public FlightBookingId Id { get; private set; }
     public FlightBookingPublicId? PublicId { get; private set; }
     public FlightNumber FlightNumber { get; private set; }
     public AirportCode Origin { get; private set; }
@@ -13,7 +13,7 @@ public class FlightBooking
     public FlightDepartureTime DepartureTime { get; private set; }
     public Money Cost { get; private set; }
     public BookingStatus Status { get; private set; }
-    public DateTime BookedAt { get; private set; }
+    public DateTimeOffset BookedAt { get; private set; }
 
     private FlightBooking() { }
 
@@ -22,7 +22,7 @@ public class FlightBooking
     {
         return new FlightBooking
         {
-            Id = 0, // Temporary, will be set by DB
+            Id = FlightBookingId.Create(0), // Temporary, will be set by DB
             PublicId = FlightBookingPublicId.New(),
             FlightNumber = flightNumber,
             Origin = origin,
@@ -30,16 +30,16 @@ public class FlightBooking
             DepartureTime = departureTime,
             Cost = cost,
             Status = BookingStatus.Pending,
-            BookedAt = DateTime.UtcNow
+            BookedAt = DateTimeOffset.UtcNow
         };
     }
 
     // Factory for rehydrating from database
-    public static FlightBooking FromDatabase(uint id, Guid? publicId, FlightNumber flightNumber, AirportCode origin, AirportCode destination, FlightDepartureTime departureTime, Money cost, BookingStatus status, DateTime bookedAt)
+    public static FlightBooking FromDatabase(uint id, Guid? publicId, FlightNumber flightNumber, AirportCode origin, AirportCode destination, FlightDepartureTime departureTime, Money cost, BookingStatus status, DateTimeOffset bookedAt)
     {
         return new FlightBooking
         {
-            Id = id,
+            Id = FlightBookingId.FromDatabase(id),
             PublicId = publicId.HasValue ? FlightBookingPublicId.Create(publicId.Value) : null,
             FlightNumber = flightNumber,
             Origin = origin,

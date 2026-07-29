@@ -5,15 +5,15 @@ namespace TemporalDDD.Domain.ProviderCredentialing;
 
 public class CredentialEvaluation
 {
-    public uint Id { get; private set; }
+    public CredentialEvaluationId Id { get; private set; }
     public CredentialEvaluationPublicId? PublicId { get; private set; }
     public ProviderId ProviderId { get; private set; }
     public LicenseNumber LicenseNumber { get; private set; }
     public MedicalBoard MedicalBoard { get; private set; }
     public LicenseExpiryDate LicenseExpiryDate { get; private set; }
     public bool IsCompliant { get; private set; }
-    public string? ComplianceNotes { get; private set; }
-    public DateTime EvaluatedAt { get; private set; }
+    public ComplianceNotes ComplianceNotes { get; private set; }
+    public DateTimeOffset EvaluatedAt { get; private set; }
     public EvaluationStatus Status { get; private set; }
 
     private CredentialEvaluation() { }
@@ -23,30 +23,31 @@ public class CredentialEvaluation
     {
         return new CredentialEvaluation
         {
-            Id = 0, // Temporary, will be set by DB
+            Id = CredentialEvaluationId.Create(0), // Temporary, will be set by DB
             PublicId = CredentialEvaluationPublicId.New(),
             ProviderId = providerId,
             LicenseNumber = licenseNumber,
             MedicalBoard = medicalBoard,
             LicenseExpiryDate = licenseExpiryDate,
             Status = EvaluationStatus.Pending,
-            EvaluatedAt = DateTime.UtcNow
+            EvaluatedAt = DateTimeOffset.UtcNow,
+            ComplianceNotes = ComplianceNotes.Create(null)
         };
     }
 
     // Factory for rehydrating from database
-    public static CredentialEvaluation FromDatabase(uint id, Guid? publicId, ProviderId providerId, LicenseNumber licenseNumber, MedicalBoard medicalBoard, LicenseExpiryDate licenseExpiryDate, bool isCompliant, string? complianceNotes, DateTime evaluatedAt, EvaluationStatus status)
+    public static CredentialEvaluation FromDatabase(uint id, Guid? publicId, ProviderId providerId, LicenseNumber licenseNumber, MedicalBoard medicalBoard, LicenseExpiryDate licenseExpiryDate, bool isCompliant, string complianceNotes, DateTimeOffset evaluatedAt, EvaluationStatus status)
     {
         return new CredentialEvaluation
         {
-            Id = id,
+            Id = CredentialEvaluationId.FromDatabase(id),
             PublicId = publicId.HasValue ? CredentialEvaluationPublicId.Create(publicId.Value) : null,
             ProviderId = providerId,
             LicenseNumber = licenseNumber,
             MedicalBoard = medicalBoard,
             LicenseExpiryDate = licenseExpiryDate,
             IsCompliant = isCompliant,
-            ComplianceNotes = complianceNotes,
+            ComplianceNotes = ComplianceNotes.Create(complianceNotes),
             EvaluatedAt = evaluatedAt,
             Status = status
         };
@@ -55,14 +56,14 @@ public class CredentialEvaluation
     public void MarkAsCompliant(string? notes = null)
     {
         IsCompliant = true;
-        ComplianceNotes = notes;
+        ComplianceNotes = ComplianceNotes.Create(notes);
         Status = EvaluationStatus.Approved;
     }
 
     public void MarkAsNonCompliant(string notes)
     {
         IsCompliant = false;
-        ComplianceNotes = notes;
+        ComplianceNotes = ComplianceNotes.Create(notes);
         Status = EvaluationStatus.Rejected;
     }
 

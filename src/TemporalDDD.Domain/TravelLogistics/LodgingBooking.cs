@@ -5,14 +5,14 @@ namespace TemporalDDD.Domain.TravelLogistics;
 
 public class LodgingBooking
 {
-    public uint Id { get; private set; }
+    public LodgingBookingId Id { get; private set; }
     public LodgingBookingPublicId? PublicId { get; private set; }
     public HotelName HotelName { get; private set; }
     public Address Address { get; private set; }
     public DateRange StayPeriod { get; private set; }
     public Money Cost { get; private set; }
     public BookingStatus Status { get; private set; }
-    public DateTime BookedAt { get; private set; }
+    public DateTimeOffset BookedAt { get; private set; }
 
     private LodgingBooking() { }
 
@@ -21,23 +21,23 @@ public class LodgingBooking
     {
         return new LodgingBooking
         {
-            Id = 0, // Temporary, will be set by DB
+            Id = LodgingBookingId.Create(0), // Temporary, will be set by DB
             PublicId = LodgingBookingPublicId.New(),
             HotelName = hotelName,
             Address = address,
             StayPeriod = stayPeriod,
             Cost = cost,
             Status = BookingStatus.Pending,
-            BookedAt = DateTime.UtcNow
+            BookedAt = DateTimeOffset.UtcNow
         };
     }
 
     // Factory for rehydrating from database
-    public static LodgingBooking FromDatabase(uint id, Guid? publicId, HotelName hotelName, Address address, DateRange stayPeriod, Money cost, BookingStatus status, DateTime bookedAt)
+    public static LodgingBooking FromDatabase(uint id, Guid? publicId, HotelName hotelName, Address address, DateRange stayPeriod, Money cost, BookingStatus status, DateTimeOffset bookedAt)
     {
         return new LodgingBooking
         {
-            Id = id,
+            Id = LodgingBookingId.FromDatabase(id),
             PublicId = publicId.HasValue ? LodgingBookingPublicId.Create(publicId.Value) : null,
             HotelName = hotelName,
             Address = address,

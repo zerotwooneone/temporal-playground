@@ -12,8 +12,8 @@ public class Assignment
     public PositionId PositionId { get; private set; }
     public MatchScore MatchScore { get; private set; }
     public AssignmentStatus Status { get; private set; }
-    public DateTime ProposedAt { get; private set; }
-    public DateTime? AcceptedAt { get; private set; }
+    public DateTimeOffset ProposedAt { get; private set; }
+    public DateTimeOffset? AcceptedAt { get; private set; }
     public AggregateVersion Version { get; private set; }
 
     private Assignment() { }
@@ -30,13 +30,13 @@ public class Assignment
             PositionId = positionId,
             MatchScore = matchScore,
             Status = AssignmentStatus.Proposed,
-            ProposedAt = DateTime.UtcNow,
+            ProposedAt = DateTimeOffset.UtcNow,
             Version = AggregateVersion.Initial()
         };
     }
 
     // Factory for rehydrating from database
-    public static Assignment FromDatabase(uint id, Guid? publicId, ProviderId providerId, FacilityId facilityId, PositionId positionId, MatchScore matchScore, AssignmentStatus status, DateTime proposedAt, DateTime? acceptedAt, AggregateVersion version)
+    public static Assignment FromDatabase(uint id, Guid? publicId, ProviderId providerId, FacilityId facilityId, PositionId positionId, MatchScore matchScore, AssignmentStatus status, DateTimeOffset proposedAt, DateTimeOffset? acceptedAt, AggregateVersion version)
     {
         return new Assignment
         {
@@ -62,7 +62,7 @@ public class Assignment
             throw new InvalidOperationException($"Version mismatch. Expected {expectedVersion}, actual {Version}");
 
         Status = AssignmentStatus.Accepted;
-        AcceptedAt = DateTime.UtcNow;
+        AcceptedAt = DateTimeOffset.UtcNow;
         Version = Version.Increment();
     }
 

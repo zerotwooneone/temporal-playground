@@ -1,10 +1,10 @@
 using Temporalio.Activities;
-using TemporalDDD.Domain.ProviderOnboarding;
+using TemporalDDD.Domain.ProviderCredentialing;
 
 namespace TemporalDDD.Application.ProviderOnboarding;
 
 public interface IProviderActivities
 {
     [Activity]
-    Task ActivateProvider(uint providerId, ComplianceStatus status);
+    Task ActivateProvider(uint providerId, EvaluationStatus status);
 }

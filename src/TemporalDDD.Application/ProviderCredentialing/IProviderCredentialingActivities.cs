@@ -13,7 +13,7 @@ public interface IProviderCredentialingActivities
 public record MedicalBoardLicenseInfo(
     string LicenseNumber,
     string MedicalBoard,
-    DateTime ExpiryDate,
+    DateTimeOffset ExpiryDate,
     bool IsValid,
     uint ProviderId,
     string? Notes = null

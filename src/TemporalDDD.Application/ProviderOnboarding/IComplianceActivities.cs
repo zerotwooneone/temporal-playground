@@ -1,10 +1,10 @@
 using Temporalio.Activities;
-using TemporalDDD.Domain.ProviderOnboarding;
+using TemporalDDD.Domain.ProviderCredentialing;
 
 namespace TemporalDDD.Application.ProviderOnboarding;
 
 public interface IComplianceActivities
 {
     [Activity]
-    Task<ComplianceStatus> PerformComplianceCheck(string licenseNumber);
+    Task<EvaluationStatus> PerformComplianceCheck(string licenseNumber);
 }

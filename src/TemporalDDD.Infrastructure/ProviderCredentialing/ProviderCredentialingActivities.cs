@@ -23,7 +23,7 @@ public class ProviderCredentialingActivities : IProviderCredentialingActivities
 
         // Simulated response - in real implementation, this would call actual medical board API
         var isValid = !string.IsNullOrEmpty(licenseNumber) && licenseNumber.Length >= 8;
-        var expiryDate = DateTime.UtcNow.AddYears(2);
+        var expiryDate = DateTimeOffset.UtcNow.AddYears(2);
 
         return new MedicalBoardLicenseInfo(
             LicenseNumber: licenseNumber,
@@ -38,7 +38,7 @@ public class ProviderCredentialingActivities : IProviderCredentialingActivities
     public async Task EvaluateAndSaveComplianceAsync(uint evaluationId, MedicalBoardLicenseInfo licenseInfo)
     {
         // Simulate business rule evaluation
-        var isCompliant = licenseInfo.IsValid && licenseInfo.ExpiryDate > DateTime.UtcNow.AddMonths(6);
+        var isCompliant = licenseInfo.IsValid && licenseInfo.ExpiryDate > DateTimeOffset.UtcNow.AddMonths(6);
 
         // Create value objects
         var licenseNumberVo = LicenseNumber.Create(licenseInfo.LicenseNumber);

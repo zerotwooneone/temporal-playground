@@ -5,7 +5,7 @@ namespace TemporalDDD.Domain.TimesheetProcessing;
 
 public class Timesheet
 {
-    public uint Id { get; private set; }
+    public TimesheetId Id { get; private set; }
     public TimesheetPublicId? PublicId { get; private set; }
     public ProviderId ProviderId { get; private set; }
     public DateRange Period { get; private set; }
@@ -15,8 +15,8 @@ public class Timesheet
     public Money TaxAmount { get; private set; }
     public Money NetPay { get; private set; }
     public TimesheetStatus Status { get; private set; }
-    public DateTime SubmittedAt { get; private set; }
-    public DateTime? ProcessedAt { get; private set; }
+    public DateTimeOffset SubmittedAt { get; private set; }
+    public DateTimeOffset? ProcessedAt { get; private set; }
     public PaymentReference? PaymentReference { get; private set; }
 
     private Timesheet() { }
@@ -26,7 +26,7 @@ public class Timesheet
     {
         return new Timesheet
         {
-            Id = 0, // Temporary, will be set by DB
+            Id = TimesheetId.Create(0), // Temporary, will be set by DB
             PublicId = TimesheetPublicId.New(),
             ProviderId = providerId,
             Period = period,
@@ -34,16 +34,16 @@ public class Timesheet
             HourlyRate = hourlyRate,
             GrossPay = hourlyRate.CalculatePay(totalHours),
             Status = TimesheetStatus.Submitted,
-            SubmittedAt = DateTime.UtcNow
+            SubmittedAt = DateTimeOffset.UtcNow
         };
     }
 
     // Factory for rehydrating from database
-    public static Timesheet FromDatabase(uint id, Guid? publicId, ProviderId providerId, DateRange period, Hours totalHours, HourlyRate hourlyRate, Money grossPay, Money taxAmount, Money netPay, TimesheetStatus status, DateTime submittedAt, DateTime? processedAt, PaymentReference? paymentReference)
+    public static Timesheet FromDatabase(uint id, Guid? publicId, ProviderId providerId, DateRange period, Hours totalHours, HourlyRate hourlyRate, Money grossPay, Money taxAmount, Money netPay, TimesheetStatus status, DateTimeOffset submittedAt, DateTimeOffset? processedAt, PaymentReference? paymentReference)
     {
         return new Timesheet
         {
-            Id = id,
+            Id = TimesheetId.FromDatabase(id),
             PublicId = publicId.HasValue ? TimesheetPublicId.Create(publicId.Value) : null,
             ProviderId = providerId,
             Period = period,
@@ -81,7 +81,7 @@ public class Timesheet
             throw new InvalidOperationException($"Cannot process timesheet in status: {Status}");
 
         Status = TimesheetStatus.Processed;
-        ProcessedAt = DateTime.UtcNow;
+        ProcessedAt = DateTimeOffset.UtcNow;
         PaymentReference = paymentReference;
     }
 }

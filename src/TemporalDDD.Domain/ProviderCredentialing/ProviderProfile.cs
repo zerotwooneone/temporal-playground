@@ -1,20 +1,21 @@
 using TemporalDDD.Domain.ProviderCredentialing.ValueObjects;
 using TemporalDDD.Domain.SharedKernel;
+using TemporalDDD.Domain.PlacementMatching.ValueObjects;
 
 namespace TemporalDDD.Domain.ProviderCredentialing;
 
 public class ProviderProfile
 {
-    public uint Id { get; private set; }
+    public ProviderProfileId Id { get; private set; }
     public ProviderPublicId? PublicId { get; private set; }
     public PersonName FirstName { get; private set; }
     public PersonName LastName { get; private set; }
     public Email Email { get; private set; }
     public Specialty Specialty { get; private set; }
     public bool IsActive { get; private set; }
-    public DateTime? ActivatedAt { get; private set; }
-    public DateTime CreatedAt { get; private set; }
-    public int Version { get; private set; }
+    public DateTimeOffset? ActivatedAt { get; private set; }
+    public DateTimeOffset CreatedAt { get; private set; }
+    public AggregateVersion Version { get; private set; }
 
     private ProviderProfile() { }
 
@@ -23,24 +24,24 @@ public class ProviderProfile
     {
         return new ProviderProfile
         {
-            Id = 0, // Temporary, will be set by DB
+            Id = ProviderProfileId.Create(0), // Temporary, will be set by DB
             PublicId = ProviderPublicId.New(),
             FirstName = firstName,
             LastName = lastName,
             Email = email,
             Specialty = specialty,
             IsActive = false,
-            CreatedAt = DateTime.UtcNow,
-            Version = 1
+            CreatedAt = DateTimeOffset.UtcNow,
+            Version = AggregateVersion.Initial()
         };
     }
 
     // Factory for rehydrating from database
-    public static ProviderProfile FromDatabase(uint id, Guid? publicId, PersonName firstName, PersonName lastName, Email email, Specialty specialty, bool isActive, DateTime? activatedAt, DateTime createdAt, int version)
+    public static ProviderProfile FromDatabase(uint id, Guid? publicId, PersonName firstName, PersonName lastName, Email email, Specialty specialty, bool isActive, DateTimeOffset? activatedAt, DateTimeOffset createdAt, AggregateVersion version)
     {
         return new ProviderProfile
         {
-            Id = id,
+            Id = ProviderProfileId.FromDatabase(id),
             PublicId = publicId.HasValue ? ProviderPublicId.Create(publicId.Value) : null,
             FirstName = firstName,
             LastName = lastName,
@@ -59,8 +60,8 @@ public class ProviderProfile
             throw new InvalidOperationException("Provider profile is already active");
 
         IsActive = true;
-        ActivatedAt = DateTime.UtcNow;
-        Version++;
+        ActivatedAt = DateTimeOffset.UtcNow;
+        Version = Version.Increment();
     }
 
     public void Deactivate()
@@ -70,6 +71,6 @@ public class ProviderProfile
 
         IsActive = false;
         ActivatedAt = null;
-        Version++;
+        Version = Version.Increment();
     }
 }

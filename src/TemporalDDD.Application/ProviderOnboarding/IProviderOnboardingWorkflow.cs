@@ -1,5 +1,5 @@
 using Temporalio.Workflows;
-using TemporalDDD.Domain.ProviderOnboarding;
+using TemporalDDD.Domain.ProviderCredentialing;
 
 namespace TemporalDDD.Application.ProviderOnboarding;
 
