@@ -25,10 +25,11 @@ public class TimesheetProcessingActivities : ITimesheetProcessingActivities
         var periodVo = DateRange.Create(DateTime.UtcNow.AddDays(-30), DateTime.UtcNow);
         var totalHoursVo = Hours.Create(160);
         var hourlyRateVo = HourlyRate.Create(50);
+        var providerIdVo = ProviderId.New();
 
         // Create domain entity for validation
         var timesheet = new Domain.TimesheetProcessing.Timesheet(
-            providerId: Guid.NewGuid(),
+            providerId: providerIdVo,
             period: periodVo,
             totalHours: totalHoursVo,
             hourlyRate: hourlyRateVo
@@ -53,10 +54,11 @@ public class TimesheetProcessingActivities : ITimesheetProcessingActivities
         var periodVo = DateRange.Create(DateTime.UtcNow.AddDays(-30), DateTime.UtcNow);
         var totalHoursVo = Hours.Create(160);
         var hourlyRateVo = HourlyRate.Create(50);
+        var providerIdVo = ProviderId.New();
 
         // In real implementation, this would load the timesheet from database
         var timesheet = new Domain.TimesheetProcessing.Timesheet(
-            providerId: Guid.NewGuid(),
+            providerId: providerIdVo,
             period: periodVo,
             totalHours: totalHoursVo,
             hourlyRate: hourlyRateVo
@@ -101,10 +103,11 @@ public class TimesheetProcessingActivities : ITimesheetProcessingActivities
         var periodVo = DateRange.Create(DateTime.UtcNow.AddDays(-30), DateTime.UtcNow);
         var totalHoursVo = Hours.Create(160);
         var hourlyRateVo = HourlyRate.Create(50);
+        var providerIdVo = ProviderId.New();
 
         // In real implementation, this would load the timesheet from database
         var timesheet = new Domain.TimesheetProcessing.Timesheet(
-            providerId: Guid.NewGuid(),
+            providerId: providerIdVo,
             period: periodVo,
             totalHours: totalHoursVo,
             hourlyRate: hourlyRateVo

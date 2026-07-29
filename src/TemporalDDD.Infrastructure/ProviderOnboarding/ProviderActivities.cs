@@ -1,6 +1,7 @@
 using Temporalio.Activities;
 using TemporalDDD.Application.ProviderOnboarding;
 using TemporalDDD.Domain.ProviderOnboarding;
+using TemporalDDD.Domain.SharedKernel;
 
 namespace TemporalDDD.Infrastructure.ProviderOnboarding;
 
@@ -12,7 +13,8 @@ public class ProviderActivities : IProviderActivities
         // Simulate database save
         await Task.Delay(100);
 
-        var providerProfile = new ProviderProfile(providerId);
+        var providerIdVo = ProviderId.Create(Guid.Parse(providerId));
+        var providerProfile = new ProviderProfile(providerIdVo);
         
         if (status == ComplianceStatus.Cleared)
         {

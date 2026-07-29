@@ -6,7 +6,7 @@ namespace TemporalDDD.Domain.TimesheetProcessing;
 public class Timesheet
 {
     public Guid Id { get; private set; }
-    public Guid ProviderId { get; private set; }
+    public ProviderId ProviderId { get; private set; }
     public DateRange Period { get; private set; }
     public Hours TotalHours { get; private set; }
     public HourlyRate HourlyRate { get; private set; }
@@ -20,7 +20,7 @@ public class Timesheet
 
     private Timesheet() { }
 
-    public Timesheet(Guid providerId, DateRange period, Hours totalHours, HourlyRate hourlyRate)
+    public Timesheet(ProviderId providerId, DateRange period, Hours totalHours, HourlyRate hourlyRate)
     {
         Id = Guid.NewGuid();
         ProviderId = providerId;
@@ -57,12 +57,4 @@ public class Timesheet
         ProcessedAt = DateTime.UtcNow;
         PaymentReference = paymentReference;
     }
-}
-
-public enum TimesheetStatus
-{
-    Submitted,
-    Validated,
-    Processed,
-    Failed
 }

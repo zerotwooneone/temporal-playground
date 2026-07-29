@@ -44,10 +44,3 @@ public class FlightBooking
         Status = BookingStatus.Cancelled;
     }
 }
-
-public enum BookingStatus
-{
-    Pending,
-    Confirmed,
-    Cancelled
-}

@@ -53,12 +53,13 @@ public class TravelLogisticsActivities : ITravelLogisticsActivities
         var zipCode = addressParts.Length > 3 ? addressParts[3].Trim() : "00000";
 
         // Create value objects
+        var hotelNameVo = HotelName.Create(hotelName);
         var addressVo = Address.Create(street, city, state, zipCode);
         var stayPeriodVo = DateRange.Create(checkInDate, checkOutDate);
         var costVo = Money.Create(cost);
 
         // Create domain entity
-        var booking = new Domain.TravelLogistics.LodgingBooking(hotelName, addressVo, stayPeriodVo, costVo);
+        var booking = new Domain.TravelLogistics.LodgingBooking(hotelNameVo, addressVo, stayPeriodVo, costVo);
         booking.Confirm();
 
         Console.WriteLine($"[LodgingBooking] Booked hotel {hotelName} at {address} - ID: {booking.Id}");

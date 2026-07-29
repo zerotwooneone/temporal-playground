@@ -1,6 +1,7 @@
 using Temporalio.Activities;
 using TemporalDDD.Application.ProviderOnboarding;
 using TemporalDDD.Domain.ProviderOnboarding;
+using TemporalDDD.Domain.ProviderCredentialing.ValueObjects;
 
 namespace TemporalDDD.Infrastructure.ProviderOnboarding;
 
@@ -12,7 +13,8 @@ public class ComplianceActivities : IComplianceActivities
         // Simulate external API call
         await Task.Delay(100);
 
-        var evaluation = new CredentialEvaluation(licenseNumber);
+        var licenseNumberVo = LicenseNumber.Create(licenseNumber);
+        var evaluation = new CredentialEvaluation(licenseNumberVo);
         
         // Simulate license validation (in real scenario, this would call an external API)
         bool isLicenseValid = licenseNumber.Length > 5;

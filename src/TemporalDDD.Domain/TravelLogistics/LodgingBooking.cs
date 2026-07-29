@@ -6,7 +6,7 @@ namespace TemporalDDD.Domain.TravelLogistics;
 public class LodgingBooking
 {
     public Guid Id { get; private set; }
-    public string HotelName { get; private set; }
+    public HotelName HotelName { get; private set; }
     public Address Address { get; private set; }
     public DateRange StayPeriod { get; private set; }
     public Money Cost { get; private set; }
@@ -15,7 +15,7 @@ public class LodgingBooking
 
     private LodgingBooking() { }
 
-    public LodgingBooking(string hotelName, Address address, DateRange stayPeriod, Money cost)
+    public LodgingBooking(HotelName hotelName, Address address, DateRange stayPeriod, Money cost)
     {
         Id = Guid.NewGuid();
         HotelName = hotelName;

@@ -1,11 +1,12 @@
 using TemporalDDD.Domain.ProviderCredentialing.ValueObjects;
+using TemporalDDD.Domain.SharedKernel;
 
 namespace TemporalDDD.Domain.ProviderCredentialing;
 
 public class CredentialEvaluation
 {
     public Guid Id { get; private set; }
-    public Guid ProviderId { get; private set; }
+    public ProviderId ProviderId { get; private set; }
     public LicenseNumber LicenseNumber { get; private set; }
     public MedicalBoard MedicalBoard { get; private set; }
     public LicenseExpiryDate LicenseExpiryDate { get; private set; }
@@ -16,7 +17,7 @@ public class CredentialEvaluation
 
     private CredentialEvaluation() { }
 
-    public CredentialEvaluation(Guid providerId, LicenseNumber licenseNumber, MedicalBoard medicalBoard, LicenseExpiryDate licenseExpiryDate)
+    public CredentialEvaluation(ProviderId providerId, LicenseNumber licenseNumber, MedicalBoard medicalBoard, LicenseExpiryDate licenseExpiryDate)
     {
         Id = Guid.NewGuid();
         ProviderId = providerId;
@@ -57,12 +58,4 @@ public class CredentialEvaluation
             MarkAsNonCompliant(notes ?? "Manual review rejected");
         }
     }
-}
-
-public enum EvaluationStatus
-{
-    Pending,
-    Approved,
-    Rejected,
-    ManualReviewRequired
 }

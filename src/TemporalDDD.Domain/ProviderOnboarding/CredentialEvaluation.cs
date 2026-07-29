@@ -1,11 +1,13 @@
+using TemporalDDD.Domain.ProviderCredentialing.ValueObjects;
+
 namespace TemporalDDD.Domain.ProviderOnboarding;
 
 public class CredentialEvaluation
 {
-    public string LicenseNumber { get; }
+    public LicenseNumber LicenseNumber { get; }
     public ComplianceStatus Status { get; private set; }
 
-    public CredentialEvaluation(string licenseNumber)
+    public CredentialEvaluation(LicenseNumber licenseNumber)
     {
         LicenseNumber = licenseNumber;
         Status = ComplianceStatus.Pending;

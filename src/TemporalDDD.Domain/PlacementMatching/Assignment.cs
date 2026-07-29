@@ -1,13 +1,14 @@
 using TemporalDDD.Domain.PlacementMatching.ValueObjects;
+using TemporalDDD.Domain.SharedKernel;
 
 namespace TemporalDDD.Domain.PlacementMatching;
 
 public class Assignment
 {
-    public Guid Id { get; private set; }
-    public Guid ProviderId { get; private set; }
-    public Guid FacilityId { get; private set; }
-    public Guid PositionId { get; private set; }
+    public AssignmentId Id { get; private set; }
+    public ProviderId ProviderId { get; private set; }
+    public FacilityId FacilityId { get; private set; }
+    public PositionId PositionId { get; private set; }
     public MatchScore MatchScore { get; private set; }
     public AssignmentStatus Status { get; private set; }
     public DateTime ProposedAt { get; private set; }
@@ -16,9 +17,9 @@ public class Assignment
 
     private Assignment() { }
 
-    public Assignment(Guid providerId, Guid facilityId, Guid positionId, MatchScore matchScore)
+    public Assignment(ProviderId providerId, FacilityId facilityId, PositionId positionId, MatchScore matchScore)
     {
-        Id = Guid.NewGuid();
+        Id = AssignmentId.New();
         ProviderId = providerId;
         FacilityId = facilityId;
         PositionId = positionId;
@@ -58,12 +59,4 @@ public class Assignment
         Status = AssignmentStatus.Revoked;
         Version = Version.Increment();
     }
-}
-
-public enum AssignmentStatus
-{
-    Proposed,
-    Accepted,
-    Rejected,
-    Revoked
 }

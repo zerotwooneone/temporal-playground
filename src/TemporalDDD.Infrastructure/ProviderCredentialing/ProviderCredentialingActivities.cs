@@ -2,6 +2,7 @@ using Microsoft.EntityFrameworkCore;
 using Temporalio.Activities;
 using TemporalDDD.Application.ProviderCredentialing;
 using TemporalDDD.Domain.ProviderCredentialing.ValueObjects;
+using TemporalDDD.Domain.SharedKernel;
 using TemporalDDD.Infrastructure.Persistence;
 
 namespace TemporalDDD.Infrastructure.ProviderCredentialing;
@@ -42,10 +43,11 @@ public class ProviderCredentialingActivities : IProviderCredentialingActivities
         var licenseNumberVo = LicenseNumber.Create(licenseInfo.LicenseNumber);
         var medicalBoardVo = MedicalBoard.Create(licenseInfo.MedicalBoard);
         var licenseExpiryDateVo = LicenseExpiryDate.Create(licenseInfo.ExpiryDate);
+        var providerIdVo = ProviderId.New();
 
         // Create domain entity
         var evaluation = new Domain.ProviderCredentialing.CredentialEvaluation(
-            providerId: Guid.NewGuid(), // In real scenario, this would be passed as parameter
+            providerId: providerIdVo,
             licenseNumber: licenseNumberVo,
             medicalBoard: medicalBoardVo,
             licenseExpiryDate: licenseExpiryDateVo

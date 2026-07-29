@@ -1,11 +1,13 @@
+using TemporalDDD.Domain.SharedKernel;
+
 namespace TemporalDDD.Domain.ProviderOnboarding;
 
 public class ProviderProfile
 {
-    public string ProviderId { get; }
+    public ProviderId ProviderId { get; }
     public bool IsActive { get; private set; }
 
-    public ProviderProfile(string providerId)
+    public ProviderProfile(ProviderId providerId)
     {
         ProviderId = providerId;
         IsActive = false;

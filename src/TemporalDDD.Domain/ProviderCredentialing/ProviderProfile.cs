@@ -5,7 +5,7 @@ namespace TemporalDDD.Domain.ProviderCredentialing;
 
 public class ProviderProfile
 {
-    public Guid Id { get; private set; }
+    public ProviderId Id { get; private set; }
     public PersonName FirstName { get; private set; }
     public PersonName LastName { get; private set; }
     public Email Email { get; private set; }
@@ -19,7 +19,7 @@ public class ProviderProfile
 
     public ProviderProfile(PersonName firstName, PersonName lastName, Email email, Specialty specialty)
     {
-        Id = Guid.NewGuid();
+        Id = ProviderId.New();
         FirstName = firstName;
         LastName = lastName;
         Email = email;

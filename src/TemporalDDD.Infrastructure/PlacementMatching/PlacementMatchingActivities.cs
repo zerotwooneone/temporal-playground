@@ -2,6 +2,7 @@ using Microsoft.EntityFrameworkCore;
 using Temporalio.Activities;
 using TemporalDDD.Application.PlacementMatching;
 using TemporalDDD.Domain.PlacementMatching.ValueObjects;
+using TemporalDDD.Domain.SharedKernel;
 using TemporalDDD.Infrastructure.Persistence;
 
 namespace TemporalDDD.Infrastructure.PlacementMatching;
@@ -34,11 +35,14 @@ public class PlacementMatchingActivities : IPlacementMatchingActivities
         // Simulate database operation to create assignment proposal
         await _dbContext.Database.EnsureCreatedAsync();
 
-        // Create value object
+        // Create value objects
         var matchScoreVo = MatchScore.Create(matchScore);
+        var providerIdVo = ProviderId.Create(providerId);
+        var facilityIdVo = FacilityId.Create(facilityId);
+        var positionIdVo = PositionId.Create(positionId);
 
         // Create domain entity
-        var assignment = new Domain.PlacementMatching.Assignment(providerId, facilityId, positionId, matchScoreVo);
+        var assignment = new Domain.PlacementMatching.Assignment(providerIdVo, facilityIdVo, positionIdVo, matchScoreVo);
 
         // Note: DbSet would be added to ApplicationDbContext once schema is defined
         // For now, we simulate the save
