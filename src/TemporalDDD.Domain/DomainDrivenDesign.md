@@ -15,12 +15,22 @@ All domain aggregates use **uint-based strongly-typed IDs** for internal identif
 - **Factory Methods**:
   - `Create(uint value)` - Creates ID with validation
   - `FromDatabase(uint value)` - Rehydrates from persistence (allows zero for new entities)
+- **Placement Rule**: 
+  - Place in `SharedKernel` namespace if referenced from multiple bounded contexts
+  - Place in the bounded context namespace if used only within that context
 
-**Examples**:
-- `ProviderId` - Provider identifier
-- `AssignmentId` - Assignment identifier
-- `FacilityId` - Facility identifier
-- `PositionId` - Position identifier
+**SharedKernel IDs** (cross-context):
+- `ProviderId` - Provider identifier (used across ProviderCredentialing, PlacementMatching, TimesheetProcessing)
+- `AssignmentId` - Assignment identifier (used in PlacementMatching)
+- `FacilityId` - Facility identifier (used in PlacementMatching)
+- `PositionId` - Position identifier (used in PlacementMatching)
+
+**Context-Specific IDs** (single bounded context):
+- `CredentialEvaluationId` - Credential Evaluation identifier (ProviderCredentialing)
+- `ProviderProfileId` - Provider Profile identifier (ProviderCredentialing)
+- `TimesheetId` - Timesheet identifier (TimesheetProcessing)
+- `FlightBookingId` - Flight Booking identifier (TravelLogistics)
+- `LodgingBookingId` - Lodging Booking identifier (TravelLogistics)
 
 ```csharp
 public sealed record ProviderId
@@ -275,13 +285,23 @@ public class Assignment
 
 ```
 TemporalDDD.Domain/
-├── SharedKernel/              # Cross-cutting value objects and IDs
+├── SharedKernel/              # Cross-cutting value objects and IDs (used across contexts)
 │   ├── ProviderId.cs
 │   ├── AssignmentId.cs
 │   ├── FacilityId.cs
 │   ├── PositionId.cs
+│   ├── AssignmentPublicId.cs
+│   ├── ProviderPublicId.cs
+│   ├── TimesheetPublicId.cs
+│   ├── FlightBookingPublicId.cs
+│   ├── LodgingBookingPublicId.cs
+│   ├── CredentialEvaluationPublicId.cs
+│   ├── Money.cs
+│   ├── DateRange.cs
 │   └── Email.cs
 ├── ProviderCredentialing/     # Provider credentialing domain
+│   ├── CredentialEvaluationId.cs
+│   ├── ProviderProfileId.cs
 │   ├── ValueObjects/
 │   │   ├── LicenseNumber.cs
 │   │   ├── MedicalBoard.cs
@@ -298,6 +318,7 @@ TemporalDDD.Domain/
 │   ├── Assignment.cs
 │   └── AssignmentStatus.cs
 ├── TimesheetProcessing/       # Timesheet processing domain
+│   ├── TimesheetId.cs
 │   ├── ValueObjects/
 │   │   ├── Hours.cs
 │   │   ├── HourlyRate.cs
@@ -305,6 +326,8 @@ TemporalDDD.Domain/
 │   ├── Timesheet.cs
 │   └── TimesheetStatus.cs
 ├── TravelLogistics/          # Travel logistics domain
+│   ├── FlightBookingId.cs
+│   ├── LodgingBookingId.cs
 │   ├── ValueObjects/
 │   │   ├── FlightNumber.cs
 │   │   ├── AirportCode.cs
@@ -350,7 +373,8 @@ When implementing new domain entities:
    - Use uint for internal ID
    - Add `Create()` and `FromDatabase()` factory methods
    - Add validation (non-zero)
-   - Place in SharedKernel namespace
+   - Place in SharedKernel namespace if referenced from multiple bounded contexts
+   - Place in bounded context namespace if used only within that context
 
 2. **Create PublicId** (if API exposure needed)
    - Use Guid with unique 3-letter prefix
