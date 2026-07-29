@@ -38,3 +38,14 @@ This project is a proof-of-concept demonstrating how to integrate Temporal into 
   /TemporalDDD.Api
     Controllers/
       OnboardingController.cs       <-- Starts workflows via HTTP
+```
+
+## Prerequisites
+* .NET 8 SDK
+* Local Temporal CLI (`temporal server start-dev`)
+
+## Getting Started
+1. Start the local Temporal dev server: `temporal server start-dev`
+2. Run the Worker project: `dotnet run --project src/TemporalDDD.Worker`
+3. Run the API project: `dotnet run --project src/TemporalDDD.Api`
+4. Trigger a workflow via POST to the API endpoint.
