@@ -92,7 +92,69 @@ public async Task<IActionResult> StartCredentialing(CredentialingRequest request
 - **Clear Intent**: The explicit `throw new InvalidOperationException` clearly signals to other developers (and to Temporal's retry engine) that this is not a user typo—it is a broken system invariant that requires engineering intervention.
 - **Temporal Serialization**: System.Text.Json serializes C# record types perfectly out of the box with zero configuration or domain pollution.
 
-### 2. Keep Workflows Orchestrated, Not Operational
+### 2. When to Throw Which Exception
+To ensure proper Temporal workflow behavior, we must completely divorce Domain Validation bugs from Business Rule failures. Here is the strict breakdown based on Temporal's execution model.
+
+#### Standard Exceptions (e.g., InvalidOperationException)
+**The Concept:** "My code is broken, or my environment is down. Pause everything until a human fixes it."
+
+**Temporal Behavior:** Triggers a Workflow Task Failure. The workflow does not fail. It goes into a suspended state and retries that specific block of code infinitely.
+
+**When to use it:**
+- Elevating DTOs to Domain Objects at the workflow boundary (because the API should have already validated this)
+- Null reference exceptions
+- Database connection failures inside activities
+
+**Correct Example:**
+```csharp
+// The API promised us this was a valid ID. If it's not, we have a system bug.
+var providerIdResult = ProviderId.Create(input.ProviderId);
+if (providerIdResult.IsFailure)
+{
+    // Throwing this freezes the workflow. A dev fixes the bug, restarts the worker, 
+    // and the workflow resumes successfully.
+    throw new InvalidOperationException($"System invariant broken: {providerIdResult.Error}");
+}
+```
+
+#### ApplicationFailureException
+**The Concept:** "The code works perfectly, the environment is healthy, but a strict Business Rule dictates this process must be permanently terminated."
+
+**Temporal Behavior:** Triggers a Workflow Execution Failure. The workflow immediately terminates. It turns red in the Temporal UI. It will never retry.
+
+**When to use it:**
+- A fraud detection service returns a hard "Deny" on an applicant
+- A user explicitly cancels an order that is past the point of no return
+- An external regulatory board rejects a medical license
+
+**Correct Example:**
+```csharp
+[WorkflowMethod]
+public async Task RunAsync(CredentialingInput input)
+{
+    // 1. DTO -> Domain Object (Using standard exception for code bugs)
+    var providerId = ProviderId.Create(input.ProviderId).Value 
+        ?? throw new InvalidOperationException("Invalid ID");
+
+    // 2. Business Logic Execution
+    var boardStatus = await Activities.CheckMedicalBoardAsync(providerId);
+
+    if (boardStatus == "LicenseRevoked")
+    {
+        // The system isn't broken; the doctor is legally disqualified.
+        // We permanently kill the workflow execution.
+        throw ApplicationFailureException.New(
+            "Applicant's medical license is revoked. Credentialing permanently failed.",
+            "BusinessRuleViolation"
+        );
+    }
+}
+```
+
+**Summary:**
+Never throw an `ApplicationFailureException` for a Domain validation failure (`IsFailure`) at the entry point of a workflow. Domain validation failures at the workflow boundary imply corrupted system state, which requires an `InvalidOperationException` to safely pause the workflow via a Task Failure. Reserve `ApplicationFailureException` strictly for explicit business process terminations.
+
+### 3. Keep Workflows Orchestrated, Not Operational
 Workflows should orchestrate activities, not contain business logic. Business logic belongs in activities or domain entities.
 
 **❌ Bad:**
@@ -186,17 +248,7 @@ await ExecuteActivityAsync(
 );
 ```
 
-### 8. Use Domain Exceptions for Business Failures
-Throw domain-specific exceptions for business logic failures, not generic exceptions.
-
-```csharp
-if (!_manualReviewSignal?.Approved == true)
-{
-    throw new ApplicationFailedException("Manual review rejected");
-}
-```
-
-### 9. Keep Workflow State Minimal
+### 8. Keep Workflow State Minimal
 Store only necessary state in workflow instance variables. Use primitive types for workflow state to ensure serializability. Avoid storing large objects or domain types.
 
 ```csharp
@@ -208,7 +260,7 @@ private Assignment? _assignment;
 private AssignmentId? _assignmentId;
 ```
 
-### 10. Use Descriptive Workflow IDs
+### 9. Use Descriptive Workflow IDs
 Generate workflow IDs that are both human-readable and unique.
 
 ```csharp
