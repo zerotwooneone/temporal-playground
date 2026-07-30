@@ -1,4 +1,8 @@
 using Microsoft.EntityFrameworkCore;
+using TemporalDDD.Domain.PlacementMatching;
+using TemporalDDD.Domain.ProviderCredentialing;
+using TemporalDDD.Domain.TimesheetProcessing;
+using TemporalDDD.Domain.TravelLogistics;
 
 namespace TemporalDDD.Infrastructure.Persistence;
 
@@ -9,6 +13,13 @@ public class ApplicationDbContext : DbContext
     {
     }
 
+    public DbSet<Assignment> Assignments => Set<Assignment>();
+    public DbSet<CredentialEvaluation> CredentialEvaluations => Set<CredentialEvaluation>();
+    public DbSet<ProviderProfile> ProviderProfiles => Set<ProviderProfile>();
+    public DbSet<Timesheet> Timesheets => Set<Timesheet>();
+    public DbSet<FlightBooking> FlightBookings => Set<FlightBooking>();
+    public DbSet<LodgingBooking> LodgingBookings => Set<LodgingBooking>();
+
     protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
     {
         if (!optionsBuilder.IsConfigured)
@@ -18,5 +29,10 @@ public class ApplicationDbContext : DbContext
             
             optionsBuilder.UseSqlite($"Data Source={dbPath}");
         }
+    }
+
+    protected override void OnModelCreating(ModelBuilder modelBuilder)
+    {
+        modelBuilder.ApplyConfigurationsFromAssembly(typeof(ApplicationDbContext).Assembly);
     }
 }

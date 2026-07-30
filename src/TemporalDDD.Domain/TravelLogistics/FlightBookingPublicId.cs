@@ -18,6 +18,25 @@ public sealed record FlightBookingPublicId
         return new FlightBookingPublicId(value);
     }
 
+    public static FlightBookingPublicId FromString(string value)
+    {
+        if (string.IsNullOrWhiteSpace(value))
+            throw new ArgumentException("FlightBookingPublicId cannot be null or whitespace", nameof(value));
+
+        var parts = value.Split('_');
+        if (parts.Length != 2)
+            throw new ArgumentException("FlightBookingPublicId must be in format 'PREFIX_Guid'", nameof(value));
+
+        if (parts[0] != Prefix)
+            throw new ArgumentException($"FlightBookingPublicId must have prefix '{Prefix}'", nameof(value));
+
+        var guidValue = Guid.Parse(parts[1]);
+        if (guidValue == Guid.Empty)
+            throw new ArgumentException("FlightBookingPublicId cannot be empty", nameof(value));
+
+        return new FlightBookingPublicId(guidValue);
+    }
+
     public static FlightBookingPublicId New() => new(Guid.NewGuid());
 
     public static implicit operator Guid(FlightBookingPublicId id) => id.Value;
