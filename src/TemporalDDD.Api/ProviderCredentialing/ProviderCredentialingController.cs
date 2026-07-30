@@ -54,7 +54,7 @@ public class ProviderCredentialingController : ControllerBase
             new WorkflowOptions
             {
                 Id = workflowId,
-                TaskQueue = "CREDENTIALING_TASK_QUEUE"
+                TaskQueue = "ONBOARDING_TASK_QUEUE"
             });
 
         return Ok(new { WorkflowId = workflowId, Message = "Provider credentialing workflow started" });
