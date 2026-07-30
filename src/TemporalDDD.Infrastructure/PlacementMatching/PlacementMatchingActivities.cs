@@ -4,17 +4,16 @@ using TemporalDDD.Application.PlacementMatching;
 using TemporalDDD.Domain.PlacementMatching;
 using TemporalDDD.Domain.PlacementMatching.ValueObjects;
 using TemporalDDD.Domain.SharedKernel;
-using TemporalDDD.Infrastructure.Persistence;
 
 namespace TemporalDDD.Infrastructure.PlacementMatching;
 
 public class PlacementMatchingActivities : IPlacementMatchingActivities
 {
-    private readonly ApplicationDbContext _dbContext;
+    private readonly IAssignmentRepository _assignmentRepository;
 
-    public PlacementMatchingActivities(ApplicationDbContext dbContext)
+    public PlacementMatchingActivities(IAssignmentRepository assignmentRepository)
     {
-        _dbContext = dbContext;
+        _assignmentRepository = assignmentRepository;
     }
 
     public async Task<decimal> CalculateMatchScoreAsync(uint providerId, uint facilityId, uint positionId)
@@ -33,9 +32,6 @@ public class PlacementMatchingActivities : IPlacementMatchingActivities
 
     public async Task<uint> ProposeAssignmentAsync(uint providerId, uint facilityId, uint positionId, decimal matchScore)
     {
-        // Simulate database operation to create assignment proposal
-        await _dbContext.Database.EnsureCreatedAsync();
-
         // Create value objects
         var matchScoreVo = MatchScore.Create(matchScore);
         var providerIdVo = ProviderId.Create(providerId);
@@ -43,11 +39,9 @@ public class PlacementMatchingActivities : IPlacementMatchingActivities
         var positionIdVo = PositionId.Create(positionId);
 
         // Create domain entity using factory
-        var assignment = Domain.PlacementMatching.Assignment.Create(providerIdVo, facilityIdVo, positionIdVo, matchScoreVo);
+        var assignment = Assignment.Create(providerIdVo, facilityIdVo, positionIdVo, matchScoreVo);
 
-        // Note: DbSet would be added to ApplicationDbContext once schema is defined
-        // For now, we simulate the save
-        await Task.Delay(100);
+        await _assignmentRepository.SaveAsync(assignment);
 
         Console.WriteLine($"[Assignment] Proposed assignment {assignment.Id} for provider {providerId} at facility {facilityId} (Score: {matchScore:F2})");
 
@@ -56,38 +50,36 @@ public class PlacementMatchingActivities : IPlacementMatchingActivities
 
     public async Task CommitAssignmentAsync(uint assignmentId, int expectedVersion)
     {
-        // Simulate database operation with Optimistic Concurrency Control (OCC)
-        await _dbContext.Database.EnsureCreatedAsync();
+        var assignmentIdVo = AssignmentId.Create(assignmentId);
+        var assignment = await _assignmentRepository.GetByIdAsync(assignmentIdVo);
 
-        // Create value object
-        var expectedVersionVo = AggregateVersion.Create(expectedVersion);
-
-        // In real implementation, this would:
-        // 1. Load the assignment from database
-        // 2. Check if Version == expectedVersion
-        // 3. If not, throw ConcurrencyException
-        // 4. If yes, update Status to Accepted and increment Version
-        // 5. Save changes
-
-        await Task.Delay(100);
-
-        // Simulate OCC check
-        var random = new Random();
-        if (random.Next(1, 100) == 1) // 1% chance of version conflict for testing
+        if (assignment == null)
         {
-            throw new DbUpdateConcurrencyException($"Optimistic concurrency violation: Assignment {assignmentId} was modified by another process");
+            throw new InvalidOperationException($"Assignment {assignmentId} not found");
         }
+
+        // Check version for OCC and accept the assignment
+        var expectedVersionVo = AggregateVersion.Create(expectedVersion);
+        assignment.Accept(expectedVersionVo);
+
+        await _assignmentRepository.SaveAsync(assignment);
 
         Console.WriteLine($"[Assignment] Committed assignment {assignmentId} with version check {expectedVersion}");
     }
 
     public async Task RevokeOfferAsync(uint assignmentId)
     {
-        // Simulate database operation to revoke offer
-        await _dbContext.Database.EnsureCreatedAsync();
+        var assignmentIdVo = AssignmentId.Create(assignmentId);
+        var assignment = await _assignmentRepository.GetByIdAsync(assignmentIdVo);
 
-        // In real implementation, this would load the assignment and call Revoke()
-        await Task.Delay(100);
+        if (assignment == null)
+        {
+            throw new InvalidOperationException($"Assignment {assignmentId} not found");
+        }
+
+        assignment.Revoke();
+
+        await _assignmentRepository.SaveAsync(assignment);
 
         Console.WriteLine($"[Assignment] Revoked offer {assignmentId}");
     }

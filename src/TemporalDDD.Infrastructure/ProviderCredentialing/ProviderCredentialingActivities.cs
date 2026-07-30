@@ -1,25 +1,37 @@
 using Microsoft.EntityFrameworkCore;
 using Temporalio.Activities;
 using TemporalDDD.Application.ProviderCredentialing;
+using TemporalDDD.Domain.ProviderCredentialing;
 using TemporalDDD.Domain.ProviderCredentialing.ValueObjects;
 using TemporalDDD.Domain.SharedKernel;
-using TemporalDDD.Infrastructure.Persistence;
+using TemporalDDD.Infrastructure.Testing;
 
 namespace TemporalDDD.Infrastructure.ProviderCredentialing;
 
 public class ProviderCredentialingActivities : IProviderCredentialingActivities
 {
-    private readonly ApplicationDbContext _dbContext;
+    private readonly ICredentialEvaluationRepository _credentialEvaluationRepository;
+    private readonly IProviderProfileRepository _providerProfileRepository;
+    private readonly ChaosHttpClient _chaosHttpClient;
 
-    public ProviderCredentialingActivities(ApplicationDbContext dbContext)
+    public ProviderCredentialingActivities(
+        ICredentialEvaluationRepository credentialEvaluationRepository,
+        IProviderProfileRepository providerProfileRepository,
+        ChaosHttpClient chaosHttpClient)
     {
-        _dbContext = dbContext;
+        _credentialEvaluationRepository = credentialEvaluationRepository;
+        _providerProfileRepository = providerProfileRepository;
+        _chaosHttpClient = chaosHttpClient;
     }
 
     public async Task<MedicalBoardLicenseInfo> FetchMedicalBoardLicenseAsync(string licenseNumber, string medicalBoard)
     {
-        // Simulate external API call to medical board
-        await Task.Delay(1000);
+        // Simulate external API call to medical board with chaos (100ms latency, 10% failure rate)
+        _chaosHttpClient
+            .WithLatency(TimeSpan.FromMilliseconds(100), TimeSpan.FromMilliseconds(100))
+            .WithFailureRate(0.10, System.Net.HttpStatusCode.InternalServerError);
+
+        var response = await _chaosHttpClient.GetAsync($"/api/medical-board/{medicalBoard}/license/{licenseNumber}");
 
         // Simulated response - in real implementation, this would call actual medical board API
         var isValid = !string.IsNullOrEmpty(licenseNumber) && licenseNumber.Length >= 8;
@@ -63,31 +75,34 @@ public class ProviderCredentialingActivities : IProviderCredentialingActivities
             evaluation.RequestManualReview();
         }
 
-        // Save to database (DB Write - separate from external API call)
-        await _dbContext.Database.EnsureCreatedAsync();
-        
-        // Note: DbSet would be added to ApplicationDbContext once schema is defined
-        // For now, we simulate the save
-        await Task.Delay(100);
+        // Save to database using repository
+        await _credentialEvaluationRepository.SaveAsync(evaluation);
     }
 
     public async Task RequestManualReviewAsync(uint evaluationId)
     {
-        // Simulate external notification (e.g., email, webhook)
-        await Task.Delay(500);
+        // Simulate external notification (e.g., email, webhook) with chaos
+        _chaosHttpClient
+            .WithLatency(TimeSpan.FromMilliseconds(100), TimeSpan.FromMilliseconds(100))
+            .WithFailureRate(0.10, System.Net.HttpStatusCode.InternalServerError);
 
-        // In real implementation, this would send notification to compliance team
+        await _chaosHttpClient.PostAsJsonAsync($"/api/notifications/manual-review/{evaluationId}", new { });
+
         Console.WriteLine($"[ManualReview] Request sent for evaluation {evaluationId}");
     }
 
     public async Task ActivateProviderProfileAsync(uint providerId)
     {
-        // Simulate database operation to activate provider
-        await _dbContext.Database.EnsureCreatedAsync();
-        
-        // Note: DbSet would be added to ApplicationDbContext once schema is defined
-        // For now, we simulate the activation
-        await Task.Delay(100);
+        var providerIdVo = ProviderProfileId.Create(providerId);
+        var providerProfile = await _providerProfileRepository.GetByIdAsync(providerIdVo);
+
+        if (providerProfile == null)
+        {
+            throw new InvalidOperationException($"Provider profile {providerId} not found");
+        }
+
+        providerProfile.Activate();
+        await _providerProfileRepository.SaveAsync(providerProfile);
 
         Console.WriteLine($"[ProviderActivation] Provider {providerId} activated successfully");
     }

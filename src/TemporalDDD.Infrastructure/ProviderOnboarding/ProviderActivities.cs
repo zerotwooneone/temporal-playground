@@ -8,26 +8,34 @@ namespace TemporalDDD.Infrastructure.ProviderOnboarding;
 
 public class ProviderActivities : IProviderActivities
 {
+    private readonly IProviderProfileRepository _providerProfileRepository;
+
+    public ProviderActivities(IProviderProfileRepository providerProfileRepository)
+    {
+        _providerProfileRepository = providerProfileRepository;
+    }
+
     [Activity]
     public async Task ActivateProvider(uint providerId, EvaluationStatus status)
     {
-        // Simulate database save
-        await Task.Delay(100);
-
-        var providerIdVo = ProviderId.Create(providerId);
-        var firstNameVo = PersonName.Create("John");
-        var lastNameVo = PersonName.Create("Doe");
-        var emailVo = Email.Create("john.doe@example.com");
-        var specialtyVo = Specialty.Cardiology;
+        var providerIdVo = ProviderProfileId.Create(providerId);
+        var providerProfile = await _providerProfileRepository.GetByIdAsync(providerIdVo);
         
-        var providerProfile = ProviderProfile.Create(firstNameVo, lastNameVo, emailVo, specialtyVo);
+        if (providerProfile == null)
+        {
+            // Create new provider profile if it doesn't exist
+            var firstNameVo = PersonName.Create("John");
+            var lastNameVo = PersonName.Create("Doe");
+            var emailVo = Email.Create("john.doe@example.com");
+            var specialtyVo = Specialty.Cardiology;
+            
+            providerProfile = ProviderProfile.Create(firstNameVo, lastNameVo, emailVo, specialtyVo);
+        }
         
         if (status == EvaluationStatus.Approved)
         {
             providerProfile.Activate();
-            
-            // In real scenario, save to database here
-            // await _repository.SaveAsync(providerProfile);
+            await _providerProfileRepository.SaveAsync(providerProfile);
         }
     }
 }

@@ -1,4 +1,5 @@
 using Microsoft.Extensions.Hosting;
+using Microsoft.Extensions.DependencyInjection;
 using Temporalio.Client;
 using Temporalio.Worker;
 using TemporalDDD.Application.ProviderOnboarding;
@@ -16,10 +17,11 @@ builder.Services.AddDatabase($"Data Source={dbPath}");
 // Add Testing utilities
 builder.Services.AddTesting();
 
-var client = await TemporalClient.ConnectAsync(new("localhost:7233"));
+// Register activities with DI
+builder.Services.AddTransient<ComplianceActivities>();
+builder.Services.AddTransient<ProviderActivities>();
 
-var complianceActivities = new ComplianceActivities();
-var providerActivities = new ProviderActivities();
+var client = await TemporalClient.ConnectAsync(new("localhost:7233"));
 
 using var tokenSource = new CancellationTokenSource();
 Console.CancelKeyPress += (_, eventArgs) =>
@@ -27,6 +29,11 @@ Console.CancelKeyPress += (_, eventArgs) =>
     tokenSource.Cancel();
     eventArgs.Cancel = true;
 };
+
+// Create service scope to resolve activities
+using var scope = builder.Services.BuildServiceProvider().CreateScope();
+var complianceActivities = scope.ServiceProvider.GetRequiredService<ComplianceActivities>();
+var providerActivities = scope.ServiceProvider.GetRequiredService<ProviderActivities>();
 
 using var worker = new TemporalWorker(
     client,

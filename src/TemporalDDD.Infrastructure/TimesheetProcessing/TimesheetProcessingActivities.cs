@@ -2,73 +2,66 @@ using Microsoft.EntityFrameworkCore;
 using Temporalio.Activities;
 using TemporalDDD.Application.TimesheetProcessing;
 using TemporalDDD.Domain.SharedKernel;
+using TemporalDDD.Domain.TimesheetProcessing;
 using TemporalDDD.Domain.TimesheetProcessing.ValueObjects;
-using TemporalDDD.Infrastructure.Persistence;
+using TemporalDDD.Infrastructure.Testing;
 
 namespace TemporalDDD.Infrastructure.TimesheetProcessing;
 
 public class TimesheetProcessingActivities : ITimesheetProcessingActivities
 {
-    private readonly ApplicationDbContext _dbContext;
+    private readonly ITimesheetRepository _timesheetRepository;
+    private readonly ChaosHttpClient _chaosHttpClient;
 
-    public TimesheetProcessingActivities(ApplicationDbContext dbContext)
+    public TimesheetProcessingActivities(ITimesheetRepository timesheetRepository, ChaosHttpClient chaosHttpClient)
     {
-        _dbContext = dbContext;
+        _timesheetRepository = timesheetRepository;
+        _chaosHttpClient = chaosHttpClient;
     }
 
     public async Task ValidateTimesheetRulesAsync(uint timesheetId)
     {
-        // Simulate database operation to load and validate timesheet
-        await _dbContext.Database.EnsureCreatedAsync();
+        var timesheetIdVo = TimesheetId.Create(timesheetId);
+        var timesheet = await _timesheetRepository.GetByIdAsync(timesheetIdVo);
 
-        // Create value objects
-        var periodVo = DateRange.Create(DateTime.UtcNow.AddDays(-30), DateTime.UtcNow);
-        var totalHoursVo = Hours.Create(160);
-        var hourlyRateVo = HourlyRate.Create(50);
-        var providerIdVo = ProviderId.Create(1); // Simulated provider ID
+        if (timesheet == null)
+        {
+            // Create value objects for new timesheet
+            var periodVo = DateRange.Create(DateTime.UtcNow.AddDays(-30), DateTime.UtcNow);
+            var totalHoursVo = Hours.Create(160);
+            var hourlyRateVo = HourlyRate.Create(50);
+            var providerIdVo = ProviderId.Create(1); // Simulated provider ID
 
-        // Create domain entity for validation using factory
-        var timesheet = Domain.TimesheetProcessing.Timesheet.Create(
-            providerId: providerIdVo,
-            period: periodVo,
-            totalHours: totalHoursVo,
-            hourlyRate: hourlyRateVo
-        );
+            // Create domain entity for validation using factory
+            timesheet = Domain.TimesheetProcessing.Timesheet.Create(
+                providerId: providerIdVo,
+                period: periodVo,
+                totalHours: totalHoursVo,
+                hourlyRate: hourlyRateVo
+            );
+        }
 
         // Validate business rules
         timesheet.Validate();
-
-        // Note: DbSet would be added to ApplicationDbContext once schema is defined
-        // For now, we simulate the save
-        await Task.Delay(100);
+        await _timesheetRepository.SaveAsync(timesheet);
 
         Console.WriteLine($"[TimesheetValidation] Timesheet {timesheetId} validated successfully");
     }
 
     public async Task<PayrollCalculationResult> CalculatePayrollAndTaxesAsync(uint timesheetId)
     {
-        // Simulate database operation to load timesheet and calculate payroll
-        await _dbContext.Database.EnsureCreatedAsync();
+        var timesheetIdVo = TimesheetId.Create(timesheetId);
+        var timesheet = await _timesheetRepository.GetByIdAsync(timesheetIdVo);
 
-        // Create value objects
-        var periodVo = DateRange.Create(DateTime.UtcNow.AddDays(-30), DateTime.UtcNow);
-        var totalHoursVo = Hours.Create(160);
-        var hourlyRateVo = HourlyRate.Create(50);
-        var providerIdVo = ProviderId.Create(1); // Simulated provider ID
-
-        // In real implementation, this would load the timesheet from database
-        var timesheet = Domain.TimesheetProcessing.Timesheet.Create(
-            providerId: providerIdVo,
-            period: periodVo,
-            totalHours: totalHoursVo,
-            hourlyRate: hourlyRateVo
-        );
+        if (timesheet == null)
+        {
+            throw new InvalidOperationException($"Timesheet {timesheetId} not found");
+        }
 
         // Calculate payroll with tax rate (e.g., 25%)
         const decimal taxRate = 0.25m;
         timesheet.CalculatePayroll(taxRate);
-
-        await Task.Delay(100);
+        await _timesheetRepository.SaveAsync(timesheet);
 
         Console.WriteLine($"[PayrollCalculation] Gross: {timesheet.GrossPay}, Tax: {timesheet.TaxAmount}, Net: {timesheet.NetPay}");
 
@@ -81,10 +74,13 @@ public class TimesheetProcessingActivities : ITimesheetProcessingActivities
 
     public async Task<string> SubmitBankTransferAsync(uint timesheetId, string idempotencyKey)
     {
-        // Simulate external API call to payment gateway with idempotency key
-        await Task.Delay(2000);
+        // Simulate external API call to payment gateway with chaos (100ms latency, 10% failure rate)
+        _chaosHttpClient
+            .WithLatency(TimeSpan.FromMilliseconds(100), TimeSpan.FromMilliseconds(100))
+            .WithFailureRate(0.10, System.Net.HttpStatusCode.InternalServerError);
 
-        // In real implementation, this would call the bank transfer API
+        var response = await _chaosHttpClient.PostAsJsonAsync($"/api/payments/transfer", new { TimesheetId = timesheetId, IdempotencyKey = idempotencyKey });
+
         // The idempotencyKey ensures that duplicate requests don't result in duplicate payments
         var paymentReference = $"PAY-{DateTime.UtcNow:yyyyMMddHHmmss}-{idempotencyKey.Substring(0, 8)}";
 
@@ -96,28 +92,23 @@ public class TimesheetProcessingActivities : ITimesheetProcessingActivities
 
     public async Task<string> GenerateAndSendInvoiceAsync(uint timesheetId, decimal facilityBillRate)
     {
-        // Simulate database operation to load timesheet and calculate facility bill
-        await _dbContext.Database.EnsureCreatedAsync();
+        var timesheetIdVo = TimesheetId.Create(timesheetId);
+        var timesheet = await _timesheetRepository.GetByIdAsync(timesheetIdVo);
 
-        // Create value objects
-        var periodVo = DateRange.Create(DateTime.UtcNow.AddDays(-30), DateTime.UtcNow);
-        var totalHoursVo = Hours.Create(160);
-        var hourlyRateVo = HourlyRate.Create(50);
-        var providerIdVo = ProviderId.Create(1); // Simulated provider ID
-
-        // In real implementation, this would load the timesheet from database
-        var timesheet = Domain.TimesheetProcessing.Timesheet.Create(
-            providerId: providerIdVo,
-            period: periodVo,
-            totalHours: totalHoursVo,
-            hourlyRate: hourlyRateVo
-        );
+        if (timesheet == null)
+        {
+            throw new InvalidOperationException($"Timesheet {timesheetId} not found");
+        }
 
         // Calculate facility bill (typically higher than provider pay rate)
         var facilityBillAmount = timesheet.TotalHours.Value * facilityBillRate;
 
-        // Simulate external API call to ERP system to send invoice
-        await Task.Delay(1000);
+        // Simulate external API call to ERP system with chaos (100ms latency, 10% failure rate)
+        _chaosHttpClient
+            .WithLatency(TimeSpan.FromMilliseconds(100), TimeSpan.FromMilliseconds(100))
+            .WithFailureRate(0.10, System.Net.HttpStatusCode.InternalServerError);
+
+        var response = await _chaosHttpClient.PostAsJsonAsync($"/api/erp/invoices", new { TimesheetId = timesheetId, FacilityBillRate = facilityBillRate });
 
         var invoiceNumber = $"INV-{DateTime.UtcNow:yyyyMMdd}-{Guid.NewGuid().ToString().Substring(0, 8).ToUpper()}";
 
