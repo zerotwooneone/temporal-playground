@@ -3,6 +3,7 @@ using TemporalDDD.Domain.PlacementMatching;
 using TemporalDDD.Domain.ProviderCredentialing;
 using TemporalDDD.Domain.TimesheetProcessing;
 using TemporalDDD.Domain.TravelLogistics;
+using TemporalDDD.Infrastructure.PlacementMatching;
 
 namespace TemporalDDD.Infrastructure.Persistence;
 
@@ -13,7 +14,7 @@ public class ApplicationDbContext : DbContext
     {
     }
 
-    public DbSet<Assignment> Assignments => Set<Assignment>();
+    public DbSet<AssignmentDbo> Assignments => Set<AssignmentDbo>();
     public DbSet<CredentialEvaluation> CredentialEvaluations => Set<CredentialEvaluation>();
     public DbSet<ProviderProfile> ProviderProfiles => Set<ProviderProfile>();
     public DbSet<Timesheet> Timesheets => Set<Timesheet>();

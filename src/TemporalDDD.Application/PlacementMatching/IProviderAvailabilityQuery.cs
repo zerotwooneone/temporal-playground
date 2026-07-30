@@ -5,7 +5,7 @@ namespace TemporalDDD.Application.PlacementMatching;
 
 public interface IProviderAvailabilityQuery
 {
-    Task<ProviderAvailabilityDto> GetProviderAvailabilityAsync(ProviderId providerId, DateRange period, CancellationToken cancellationToken = default);
+    Task<ProviderAvailabilityDto> GetProviderAvailabilityAsync(ProviderId providerId, DateTimeOffset start, DateTimeOffset end, CancellationToken cancellationToken = default);
 }
 
 public record ProviderAvailabilityDto(bool IsAvailable, AssignmentPublicId? ConflictingAssignmentId);

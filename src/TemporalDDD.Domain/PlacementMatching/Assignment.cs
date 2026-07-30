@@ -23,7 +23,7 @@ public sealed class Assignment
     {
         return new Assignment
         {
-            Id = AssignmentId.Create(0), // Temporary, will be set by DB
+            Id = AssignmentId.Create(1),
             PublicId = AssignmentPublicId.New(),
             ProviderId = providerId,
             FacilityId = facilityId,
@@ -34,8 +34,6 @@ public sealed class Assignment
             Version = AggregateVersion.Initial()
         };
     }
-
-    
 
     public void Accept(AggregateVersion expectedVersion)
     {

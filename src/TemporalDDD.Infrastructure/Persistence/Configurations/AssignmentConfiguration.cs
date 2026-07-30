@@ -1,15 +1,12 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
-using TemporalDDD.Domain.PlacementMatching;
-using TemporalDDD.Domain.PlacementMatching.ValueObjects;
-using TemporalDDD.Domain.SharedKernel;
-using TemporalDDD.Infrastructure.Persistence;
+using TemporalDDD.Infrastructure.PlacementMatching;
 
 namespace TemporalDDD.Infrastructure.Persistence.Configurations;
 
-public class AssignmentConfiguration : IEntityTypeConfiguration<Assignment>
+public class AssignmentConfiguration : IEntityTypeConfiguration<AssignmentDbo>
 {
-    public void Configure(EntityTypeBuilder<Assignment> builder)
+    public void Configure(EntityTypeBuilder<AssignmentDbo> builder)
     {
         builder.ToTable("Assignments");
 
@@ -20,51 +17,31 @@ public class AssignmentConfiguration : IEntityTypeConfiguration<Assignment>
 
         // PublicId - stored as TEXT with Unique Index
         builder.Property(x => x.PublicId)
-            .HasConversion(
-                p => p.ToString(),
-                s => AssignmentPublicId.FromString(s))
             .IsRequired(false);
 
         builder.HasIndex(x => x.PublicId)
             .IsUnique()
             .HasFilter("PublicId IS NOT NULL");
 
-        // ProviderId - FK to ProviderProfiles
-        builder.Property(x => x.ProviderId)
-            .HasConversion(
-                pid => pid.Value,
-                v => ProviderId.Create(v).Value!);
+        // ProviderId - FK to ProviderProfiles (uint)
+        builder.Property(x => x.ProviderId);
 
         // FacilityId - stored as uint
-        builder.Property(x => x.FacilityId)
-            .HasConversion(
-                fid => fid.Value,
-                v => FacilityId.Create(v).Value!);
+        builder.Property(x => x.FacilityId);
 
         // PositionId - stored as uint
-        builder.Property(x => x.PositionId)
-            .HasConversion(
-                pid => pid.Value,
-                v => PositionId.Create(v).Value!);
+        builder.Property(x => x.PositionId);
 
-        // Value Object - MatchScore flattened
-        builder.Property(x => x.MatchScore)
-            .HasConversion(
-                ms => ms.Value,
-                v => MatchScore.Create(v).Value!);
+        // MatchScore - stored as decimal
+        builder.Property(x => x.MatchScore);
 
-        // Smart Enum - stored as int
-        builder.Property(x => x.Status)
-            .HasConversion(
-                status => status.Value,
-                v => AssignmentStatus.FromValue(v));
+        // Status - stored as int
+        builder.Property(x => x.Status);
 
         // DateTimeOffset stored as Unix UTC milliseconds
-        builder.Property(x => x.ProposedAt)
-            .HasConversion(ValueConverters.DateTimeOffsetToUnixMillisecondsConverter);
+        builder.Property(x => x.ProposedAt);
 
-        builder.Property(x => x.AcceptedAt)
-            .HasConversion(ValueConverters.DateTimeOffsetToUnixMillisecondsConverter);
+        builder.Property(x => x.AcceptedAt);
 
         // OCC Version - concurrency token
         builder.Property(x => x.Version)
