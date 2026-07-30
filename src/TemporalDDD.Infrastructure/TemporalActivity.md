@@ -4,7 +4,60 @@ This document provides guidelines for creating effective Temporal activities in 
 
 ## Core Principles
 
-### 1. Activities Should Contain Business Logic
+### 1. Use Primitive DTOs for Activity Parameters
+Temporal activities must use a single, primitive-based Request Record (DTO) for their parameters to ensure clean JSON serialization and future-proof versioning.
+
+Activities should convert primitive DTO parameters to Domain types immediately upon entry. Because the workflow that calls the activity should have already validated this data, any failure during this elevation must be treated as a catastrophic system error (InvalidOperationException), not a standard validation error.
+
+**❌ Bad (Domain types or scattered primitives in signature):**
+```csharp
+// Bad: Domain types break serialization
+public async Task<MedicalBoardLicenseInfo> FetchMedicalBoardLicenseAsync(ProviderId provider, LicenseNumber license) 
+
+// Bad: Scattered primitives break Temporal versioning
+public async Task<MedicalBoardLicenseInfo> FetchMedicalBoardLicenseAsync(uint providerId, string licenseNumber) 
+```
+
+**✅ Good (Single Primitive Input Record with Explicit Assertions):**
+```csharp
+// 1. Define a strictly primitive Input Record in your Contracts project
+public record FetchLicenseInput(uint ProviderId, string LicenseNumber, string MedicalBoard);
+
+// 2. The Activity Signature accepts the single record
+[Activity]
+public async Task<MedicalBoardLicenseInfo> FetchMedicalBoardLicenseAsync(FetchLicenseInput input)
+{
+    // 3. Elevate to Domain types instantly using Catastrophic Assertions.
+    // We throw InvalidOperationException because the workflow already validated this. 
+    // If it fails here, a developer bypassed the workflow validation or our internal queue is corrupted.
+    
+    var providerIdResult = ProviderId.Create(input.ProviderId);
+    if (providerIdResult.IsFailure)
+        throw new InvalidOperationException($"Internal Corruption: Invalid ProviderId. {providerIdResult.Error}");
+        
+    var licenseResult = LicenseNumber.Create(input.LicenseNumber);
+    if (licenseResult.IsFailure)
+        throw new InvalidOperationException($"Internal Corruption: Invalid License. {licenseResult.Error}");
+        
+    var boardResult = MedicalBoard.Create(input.MedicalBoard);
+    if (boardResult.IsFailure)
+        throw new InvalidOperationException($"Internal Corruption: Invalid MedicalBoard. {boardResult.Error}");
+
+    // 4. Extract the guaranteed-valid values
+    var providerId = providerIdResult.Value;
+    var licenseNumber = licenseResult.Value;
+    var medicalBoard = boardResult.Value;
+
+    // ... proceed with pure Domain types
+}
+```
+
+**Why this is superior:**
+- **Versioning**: You can add `string StateCode` to `FetchLicenseInput` tomorrow without breaking the method signature of currently running activities.
+- **Clear Intent**: The explicit `throw new InvalidOperationException` clearly signals to other developers (and to Temporal's retry engine) that this is not a user typo—it is a broken system invariant that requires engineering intervention.
+- **Temporal Serialization**: System.Text.Json serializes C# record types perfectly out of the box with zero configuration or domain pollution.
+
+### 2. Activities Should Contain Business Logic
 Activities are where business logic belongs. Workflows should only orchestrate activities.
 
 **✅ Good:**
@@ -71,17 +124,52 @@ public async Task<string> SubmitBankTransferAsync(uint timesheetId, string idemp
 public async Task<string> GenerateAndSendInvoiceAsync(uint timesheetId, decimal facilityBillRate) { }
 ```
 
-### 5. Use Domain Types for Parameters and Return Values
-Prefer domain types over primitives for type safety and self-documenting code.
+### 5. Use Domain Types Internally, Primitives for Parameters
+Activity parameters should use primitive DTOs (see Principle 1), but activities should convert these to Domain types immediately and use Domain types internally for type safety and self-documenting code.
 
-**❌ Bad:**
+**❌ Bad (Using primitives throughout):**
 ```csharp
-public async Task<uint> CreateAssignment(uint providerId, uint facilityId, decimal score)
+public async Task<uint> ProposeAssignmentAsync(uint providerId, uint facilityId, decimal score)
+{
+    // Using primitives throughout - error-prone
+    var assignment = new Assignment(providerId, facilityId, score);
+    await _repository.SaveAsync(assignment);
+    return assignment.Id;
+}
 ```
 
-**✅ Good:**
+**✅ Good (Convert to Domain types, use internally):**
 ```csharp
-public async Task<uint> ProposeAssignmentAsync(ProviderId providerId, FacilityId facilityId, PositionId positionId, MatchScore matchScore)
+public async Task<AssignmentId> ProposeAssignmentAsync(ProposeAssignmentInput input)
+{
+    // Convert primitive DTO to Domain types with fail-fast validation
+    var providerIdResult = ProviderId.Create(input.ProviderId);
+    if (providerIdResult.IsFailure)
+        throw new InvalidOperationException($"Internal Corruption: Invalid ProviderId. {providerIdResult.Error}");
+    
+    var facilityIdResult = FacilityId.Create(input.FacilityId);
+    if (facilityIdResult.IsFailure)
+        throw new InvalidOperationException($"Internal Corruption: Invalid FacilityId. {facilityIdResult.Error}");
+    
+    var positionIdResult = PositionId.Create(input.PositionId);
+    if (positionIdResult.IsFailure)
+        throw new InvalidOperationException($"Internal Corruption: Invalid PositionId. {positionIdResult.Error}");
+    
+    var matchScoreResult = MatchScore.Create(input.MatchScore);
+    if (matchScoreResult.IsFailure)
+        throw new InvalidOperationException($"Internal Corruption: Invalid MatchScore. {matchScoreResult.Error}");
+
+    // Use Domain types internally for type safety
+    var assignment = Assignment.Create(
+        providerIdResult.Value,
+        facilityIdResult.Value,
+        positionIdResult.Value,
+        matchScoreResult.Value
+    );
+    
+    await _repository.SaveAsync(assignment);
+    return assignment.Id;
+}
 ```
 
 ### 6. Activities Should Not Make Workflow Orchestration Decisions
