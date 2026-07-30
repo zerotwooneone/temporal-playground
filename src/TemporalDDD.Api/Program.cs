@@ -1,11 +1,17 @@
 using Temporalio.Client;
+using TemporalDDD.Infrastructure;
 
 var builder = WebApplication.CreateBuilder(args);
-TemporalDDD.Api.DatabaseBootstrapper.Initialize(builder.Configuration);
+DatabaseBootstrapper.Initialize(builder.Configuration);
 
 // Add services to the container.
 builder.Services.AddControllers();
 builder.Services.AddOpenApi();
+
+// Add Database
+var localAppData = Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData);
+var dbPath = Path.Combine(localAppData, "TemporalDDD", "temporal_playground.sqlite");
+builder.Services.AddDatabase($"Data Source={dbPath}");
 
 // Add Temporal Client
 builder.Services.AddSingleton<ITemporalClient>(sp => 

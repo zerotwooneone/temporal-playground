@@ -20,6 +20,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\TemporalDDD.Application\TemporalDDD.Application.csproj" />
+    <ProjectReference Include="..\TemporalDDD.Infrastructure\TemporalDDD.Infrastructure.csproj" />
   </ItemGroup>
 
 </Project>

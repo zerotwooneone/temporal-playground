@@ -3,9 +3,15 @@ using Temporalio.Client;
 using Temporalio.Worker;
 using TemporalDDD.Application.ProviderOnboarding;
 using TemporalDDD.Infrastructure.ProviderOnboarding;
+using TemporalDDD.Infrastructure;
 
 var builder = Host.CreateApplicationBuilder(args);
-TemporalDDD.Worker.DatabaseBootstrapper.Initialize(builder.Configuration);
+DatabaseBootstrapper.Initialize(builder.Configuration);
+
+// Add Database
+var localAppData = Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData);
+var dbPath = Path.Combine(localAppData, "TemporalDDD", "temporal_playground.sqlite");
+builder.Services.AddDatabase($"Data Source={dbPath}");
 
 var client = await TemporalClient.ConnectAsync(new("localhost:7233"));
 
