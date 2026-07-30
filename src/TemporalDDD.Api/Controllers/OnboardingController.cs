@@ -1,6 +1,9 @@
 using Microsoft.AspNetCore.Mvc;
 using Temporalio.Client;
 using TemporalDDD.Application.ProviderOnboarding;
+using TemporalDDD.Domain.ProviderCredentialing;
+using TemporalDDD.Domain.ProviderCredentialing.ValueObjects;
+using TemporalDDD.Domain.SharedKernel;
 
 namespace TemporalDDD.Api.Controllers;
 
@@ -20,8 +23,12 @@ public class OnboardingController : ControllerBase
     {
         var workflowId = $"provider-onboarding-{request.ProviderId}";
         
+        // Convert primitives to domain types
+        var providerId = ProviderId.Create(request.ProviderId);
+        var licenseNumber = LicenseNumber.Create(request.LicenseNumber);
+        
         await _temporalClient.ExecuteWorkflowAsync(
-            (IProviderOnboardingWorkflow wf) => wf.RunAsync(request.ProviderId, request.LicenseNumber),
+            (IProviderOnboardingWorkflow wf) => wf.RunAsync(providerId, licenseNumber),
             new WorkflowOptions
             {
                 Id = workflowId,

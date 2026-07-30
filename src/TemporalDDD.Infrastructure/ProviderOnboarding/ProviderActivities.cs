@@ -16,10 +16,10 @@ public class ProviderActivities : IProviderActivities
     }
 
     [Activity]
-    public async Task ActivateProvider(uint providerId, EvaluationStatus status)
+    public async Task ActivateProvider(ProviderId providerId, EvaluationStatus status)
     {
-        var providerIdVo = ProviderProfileId.Create(providerId);
-        var providerProfile = await _providerProfileRepository.GetByIdAsync(providerIdVo);
+        var providerProfileId = ProviderProfileId.Create(providerId.Value);
+        var providerProfile = await _providerProfileRepository.GetByIdAsync(providerProfileId);
         
         if (providerProfile == null)
         {

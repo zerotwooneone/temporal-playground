@@ -1,12 +1,15 @@
 using Temporalio.Activities;
+using TemporalDDD.Domain.SharedKernel;
+using TemporalDDD.Domain.TravelLogistics;
+using TemporalDDD.Domain.TravelLogistics.ValueObjects;
 
 namespace TemporalDDD.Application.TravelLogistics;
 
 public interface ITravelLogisticsActivities
 {
-    Task<uint> BookFlightAsync(string flightNumber, string origin, string destination, DateTime departureTime, decimal cost);
-    Task<uint> BookLodgingAsync(string hotelName, string address, DateTime checkInDate, DateTime checkOutDate, decimal cost);
-    Task CancelFlightAsync(uint flightBookingId);
-    Task CancelLodgingAsync(uint lodgingBookingId);
-    Task NotifyTravelerAsync(string travelerEmail, string message, bool isCancellation);
+    Task<FlightBookingId> BookFlightAsync(FlightNumber flightNumber, AirportCode origin, AirportCode destination, FlightDepartureTime departureTime, Money cost);
+    Task<LodgingBookingId> BookLodgingAsync(HotelName hotelName, Address address, DateRange stayPeriod, Money cost);
+    Task CancelFlightAsync(FlightBookingId flightBookingId);
+    Task CancelLodgingAsync(LodgingBookingId lodgingBookingId);
+    Task NotifyTravelerAsync(Email travelerEmail, string message, bool isCancellation);
 }

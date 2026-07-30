@@ -1,18 +1,21 @@
 using Temporalio.Workflows;
 using TemporalDDD.Application.PlacementMatching;
+using TemporalDDD.Domain.PlacementMatching;
+using TemporalDDD.Domain.PlacementMatching.ValueObjects;
+using TemporalDDD.Domain.SharedKernel;
 
 namespace TemporalDDD.Application.PlacementMatching;
 
 [Workflow]
 public class PlacementMatchingWorkflow
 {
-    private uint? _assignmentId;
+    private AssignmentId? _assignmentId;
     private OfferAcceptedSignal? _offerAcceptedSignal;
     private OfferRejectedSignal? _offerRejectedSignal;
     private ProviderMatchedElsewhereSignal? _providerMatchedElsewhereSignal;
 
     [WorkflowRun]
-    public async Task RunAsync(uint providerId, uint facilityId, uint positionId)
+    public async Task RunAsync(ProviderId providerId, FacilityId facilityId, PositionId positionId)
     {
         // Step 1: Calculate Match Score
         var matchScore = await Workflow.ExecuteActivityAsync(
@@ -38,7 +41,7 @@ public class PlacementMatchingWorkflow
         {
             // Step 4a: Commit Assignment with OCC (Optimistic Concurrency Control)
             await Workflow.ExecuteActivityAsync(
-                (IPlacementMatchingActivities activities) => activities.CommitAssignmentAsync(_assignmentId.Value, expectedVersion: 1),
+                (IPlacementMatchingActivities activities) => activities.CommitAssignmentAsync(_assignmentId, AggregateVersion.Create(1)),
                 new ActivityOptions { StartToCloseTimeout = TimeSpan.FromMinutes(5) }
             );
         }
@@ -46,7 +49,7 @@ public class PlacementMatchingWorkflow
         {
             // Step 4b: Revoke Offer
             await Workflow.ExecuteActivityAsync(
-                (IPlacementMatchingActivities activities) => activities.RevokeOfferAsync(_assignmentId.Value),
+                (IPlacementMatchingActivities activities) => activities.RevokeOfferAsync(_assignmentId),
                 new ActivityOptions { StartToCloseTimeout = TimeSpan.FromMinutes(5) }
             );
         }

@@ -1,11 +1,14 @@
 using Temporalio.Activities;
+using TemporalDDD.Domain.PlacementMatching;
+using TemporalDDD.Domain.PlacementMatching.ValueObjects;
+using TemporalDDD.Domain.SharedKernel;
 
 namespace TemporalDDD.Application.PlacementMatching;
 
 public interface IPlacementMatchingActivities
 {
-    Task<decimal> CalculateMatchScoreAsync(uint providerId, uint facilityId, uint positionId);
-    Task<uint> ProposeAssignmentAsync(uint providerId, uint facilityId, uint positionId, decimal matchScore);
-    Task CommitAssignmentAsync(uint assignmentId, int expectedVersion);
-    Task RevokeOfferAsync(uint assignmentId);
+    Task<MatchScore> CalculateMatchScoreAsync(ProviderId providerId, FacilityId facilityId, PositionId positionId);
+    Task<AssignmentId> ProposeAssignmentAsync(ProviderId providerId, FacilityId facilityId, PositionId positionId, MatchScore matchScore);
+    Task CommitAssignmentAsync(AssignmentId assignmentId, AggregateVersion expectedVersion);
+    Task RevokeOfferAsync(AssignmentId assignmentId);
 }

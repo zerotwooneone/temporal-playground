@@ -1,20 +1,23 @@
 using Temporalio.Activities;
+using TemporalDDD.Domain.ProviderCredentialing;
+using TemporalDDD.Domain.ProviderCredentialing.ValueObjects;
+using TemporalDDD.Domain.SharedKernel;
 
 namespace TemporalDDD.Application.ProviderCredentialing;
 
 public interface IProviderCredentialingActivities
 {
-    Task<MedicalBoardLicenseInfo> FetchMedicalBoardLicenseAsync(string licenseNumber, string medicalBoard);
-    Task EvaluateAndSaveComplianceAsync(uint evaluationId, MedicalBoardLicenseInfo licenseInfo);
-    Task RequestManualReviewAsync(uint evaluationId);
-    Task ActivateProviderProfileAsync(uint providerId);
+    Task<MedicalBoardLicenseInfo> FetchMedicalBoardLicenseAsync(LicenseNumber licenseNumber, MedicalBoard medicalBoard);
+    Task<CredentialEvaluationId> EvaluateAndSaveComplianceAsync(ProviderId providerId, MedicalBoardLicenseInfo licenseInfo);
+    Task RequestManualReviewAsync(CredentialEvaluationId evaluationId);
+    Task ActivateProviderProfileAsync(ProviderProfileId providerId);
 }
 
 public record MedicalBoardLicenseInfo(
-    string LicenseNumber,
-    string MedicalBoard,
-    DateTimeOffset ExpiryDate,
+    LicenseNumber LicenseNumber,
+    MedicalBoard MedicalBoard,
+    LicenseExpiryDate ExpiryDate,
     bool IsValid,
-    uint ProviderId,
+    ProviderId ProviderId,
     string? Notes = null
 );

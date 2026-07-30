@@ -1,5 +1,7 @@
 using Temporalio.Workflows;
 using TemporalDDD.Domain.ProviderCredentialing;
+using TemporalDDD.Domain.ProviderCredentialing.ValueObjects;
+using TemporalDDD.Domain.SharedKernel;
 
 namespace TemporalDDD.Application.ProviderOnboarding;
 
@@ -7,7 +9,7 @@ namespace TemporalDDD.Application.ProviderOnboarding;
 public class ProviderOnboardingWorkflow : IProviderOnboardingWorkflow
 {
     [WorkflowRun]
-    public async Task RunAsync(uint providerId, string licenseNumber)
+    public async Task RunAsync(ProviderId providerId, LicenseNumber licenseNumber)
     {
         EvaluationStatus status = await Workflow.ExecuteActivityAsync(
             (IComplianceActivities a) => a.PerformComplianceCheck(licenseNumber),

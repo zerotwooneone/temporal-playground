@@ -2,6 +2,9 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Temporalio.Client;
 using TemporalDDD.Application.ProviderCredentialing;
+using TemporalDDD.Domain.ProviderCredentialing;
+using TemporalDDD.Domain.ProviderCredentialing.ValueObjects;
+using TemporalDDD.Domain.SharedKernel;
 using TemporalDDD.Infrastructure.Persistence;
 
 namespace TemporalDDD.Api.Controllers;
@@ -24,12 +27,18 @@ public class ProviderCredentialingController : ControllerBase
     {
         var workflowId = $"provider-credentialing-{request.ProviderId}-{Guid.NewGuid():N}";
         
+        // Convert primitives to domain types
+        var providerId = ProviderId.Create(request.ProviderId);
+        var licenseNumber = LicenseNumber.Create(request.LicenseNumber);
+        var medicalBoard = MedicalBoard.Create(request.MedicalBoard);
+        var expiryDate = LicenseExpiryDate.Create(request.ExpiryDate);
+        
         await _temporalClient.StartWorkflowAsync(
             (ProviderCredentialingWorkflow wf) => wf.RunAsync(
-                request.ProviderId,
-                request.LicenseNumber,
-                request.MedicalBoard,
-                request.ExpiryDate),
+                providerId,
+                licenseNumber,
+                medicalBoard,
+                expiryDate),
             new WorkflowOptions
             {
                 Id = workflowId,

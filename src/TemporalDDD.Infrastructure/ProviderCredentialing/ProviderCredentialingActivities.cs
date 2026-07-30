@@ -24,46 +24,40 @@ public class ProviderCredentialingActivities : IProviderCredentialingActivities
         _chaosHttpClient = chaosHttpClient;
     }
 
-    public async Task<MedicalBoardLicenseInfo> FetchMedicalBoardLicenseAsync(string licenseNumber, string medicalBoard)
+    public async Task<MedicalBoardLicenseInfo> FetchMedicalBoardLicenseAsync(LicenseNumber licenseNumber, MedicalBoard medicalBoard)
     {
         // Simulate external API call to medical board with chaos (100ms latency, 10% failure rate)
         _chaosHttpClient
             .WithLatency(TimeSpan.FromMilliseconds(100), TimeSpan.FromMilliseconds(100))
             .WithFailureRate(0.10, System.Net.HttpStatusCode.InternalServerError);
 
-        var response = await _chaosHttpClient.GetAsync($"/api/medical-board/{medicalBoard}/license/{licenseNumber}");
+        var response = await _chaosHttpClient.GetAsync($"/api/medical-board/{medicalBoard.Value}/license/{licenseNumber.Value}");
 
         // Simulated response - in real implementation, this would call actual medical board API
-        var isValid = !string.IsNullOrEmpty(licenseNumber) && licenseNumber.Length >= 8;
-        var expiryDate = DateTimeOffset.UtcNow.AddYears(2);
+        var isValid = licenseNumber.Value.Length >= 8;
+        var expiryDate = LicenseExpiryDate.Create(DateTimeOffset.UtcNow.AddYears(2));
 
         return new MedicalBoardLicenseInfo(
             LicenseNumber: licenseNumber,
             MedicalBoard: medicalBoard,
             ExpiryDate: expiryDate,
             IsValid: isValid,
-            ProviderId: 1, // Simulated provider ID
+            ProviderId: ProviderId.Create(1), // Simulated provider ID
             Notes: isValid ? "License verified successfully" : "License number format invalid"
         );
     }
 
-    public async Task EvaluateAndSaveComplianceAsync(uint evaluationId, MedicalBoardLicenseInfo licenseInfo)
+    public async Task<CredentialEvaluationId> EvaluateAndSaveComplianceAsync(ProviderId providerId, MedicalBoardLicenseInfo licenseInfo)
     {
         // Simulate business rule evaluation
-        var isCompliant = licenseInfo.IsValid && licenseInfo.ExpiryDate > DateTimeOffset.UtcNow.AddMonths(6);
-
-        // Create value objects
-        var licenseNumberVo = LicenseNumber.Create(licenseInfo.LicenseNumber);
-        var medicalBoardVo = MedicalBoard.Create(licenseInfo.MedicalBoard);
-        var licenseExpiryDateVo = LicenseExpiryDate.Create(licenseInfo.ExpiryDate);
-        var providerIdVo = ProviderId.Create(licenseInfo.ProviderId);
+        var isCompliant = licenseInfo.IsValid && licenseInfo.ExpiryDate.Value > DateTimeOffset.UtcNow.AddMonths(6);
 
         // Create domain entity using factory
         var evaluation = Domain.ProviderCredentialing.CredentialEvaluation.Create(
-            providerId: providerIdVo,
-            licenseNumber: licenseNumberVo,
-            medicalBoard: medicalBoardVo,
-            licenseExpiryDate: licenseExpiryDateVo
+            providerId: providerId,
+            licenseNumber: licenseInfo.LicenseNumber,
+            medicalBoard: licenseInfo.MedicalBoard,
+            licenseExpiryDate: licenseInfo.ExpiryDate
         );
 
         if (isCompliant)
@@ -77,33 +71,34 @@ public class ProviderCredentialingActivities : IProviderCredentialingActivities
 
         // Save to database using repository
         await _credentialEvaluationRepository.SaveAsync(evaluation);
+
+        return evaluation.Id;
     }
 
-    public async Task RequestManualReviewAsync(uint evaluationId)
+    public async Task RequestManualReviewAsync(CredentialEvaluationId evaluationId)
     {
         // Simulate external notification (e.g., email, webhook) with chaos
         _chaosHttpClient
             .WithLatency(TimeSpan.FromMilliseconds(100), TimeSpan.FromMilliseconds(100))
             .WithFailureRate(0.10, System.Net.HttpStatusCode.InternalServerError);
 
-        await _chaosHttpClient.PostAsJsonAsync($"/api/notifications/manual-review/{evaluationId}", new { });
+        await _chaosHttpClient.PostAsJsonAsync($"/api/notifications/manual-review/{evaluationId.Value}", new { });
 
-        Console.WriteLine($"[ManualReview] Request sent for evaluation {evaluationId}");
+        Console.WriteLine($"[ManualReview] Request sent for evaluation {evaluationId.Value}");
     }
 
-    public async Task ActivateProviderProfileAsync(uint providerId)
+    public async Task ActivateProviderProfileAsync(ProviderProfileId providerId)
     {
-        var providerIdVo = ProviderProfileId.Create(providerId);
-        var providerProfile = await _providerProfileRepository.GetByIdAsync(providerIdVo);
+        var providerProfile = await _providerProfileRepository.GetByIdAsync(providerId);
 
         if (providerProfile == null)
         {
-            throw new InvalidOperationException($"Provider profile {providerId} not found");
+            throw new InvalidOperationException($"Provider profile {providerId.Value} not found");
         }
 
         providerProfile.Activate();
         await _providerProfileRepository.SaveAsync(providerProfile);
 
-        Console.WriteLine($"[ProviderActivation] Provider {providerId} activated successfully");
+        Console.WriteLine($"[ProviderActivation] Provider {providerId.Value} activated successfully");
     }
 }

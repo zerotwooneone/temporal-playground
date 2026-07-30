@@ -23,74 +23,53 @@ public class TravelLogisticsActivities : ITravelLogisticsActivities
         _chaosHttpClient = chaosHttpClient;
     }
 
-    public async Task<uint> BookFlightAsync(string flightNumber, string origin, string destination, DateTime departureTime, decimal cost)
+    public async Task<FlightBookingId> BookFlightAsync(FlightNumber flightNumber, AirportCode origin, AirportCode destination, FlightDepartureTime departureTime, Money cost)
     {
         // Simulate external API call to flight booking system with chaos (100ms latency, 10% failure rate)
         _chaosHttpClient
             .WithLatency(TimeSpan.FromMilliseconds(100), TimeSpan.FromMilliseconds(100))
             .WithFailureRate(0.10, System.Net.HttpStatusCode.InternalServerError);
 
-        var response = await _chaosHttpClient.PostAsJsonAsync($"/api/flights/book", new { FlightNumber = flightNumber, Origin = origin, Destination = destination, DepartureTime = departureTime, Cost = cost });
-
-        // Create value objects
-        var flightNumberVo = FlightNumber.Create(flightNumber);
-        var originVo = AirportCode.Create(origin);
-        var destinationVo = AirportCode.Create(destination);
-        var departureTimeVo = FlightDepartureTime.Create(departureTime.ToUniversalTime());
-        var costVo = Money.Create(cost);
+        var response = await _chaosHttpClient.PostAsJsonAsync($"/api/flights/book", new { FlightNumber = flightNumber.Value, Origin = origin.Value, Destination = destination.Value, DepartureTime = departureTime.Value, Cost = cost.Amount });
 
         // Create domain entity using factory
-        var booking = Domain.TravelLogistics.FlightBooking.Create(flightNumberVo, originVo, destinationVo, departureTimeVo, costVo);
+        var booking = Domain.TravelLogistics.FlightBooking.Create(flightNumber, origin, destination, departureTime, cost);
         booking.Confirm();
 
         await _flightBookingRepository.SaveAsync(booking);
 
-        Console.WriteLine($"[FlightBooking] Booked flight {flightNumber} from {origin} to {destination} - ID: {booking.Id}");
+        Console.WriteLine($"[FlightBooking] Booked flight {flightNumber.Value} from {origin.Value} to {destination.Value} - ID: {booking.Id.Value}");
         
         return booking.Id;
     }
 
-    public async Task<uint> BookLodgingAsync(string hotelName, string address, DateTime checkInDate, DateTime checkOutDate, decimal cost)
+    public async Task<LodgingBookingId> BookLodgingAsync(HotelName hotelName, Address address, DateRange stayPeriod, Money cost)
     {
         // Simulate external API call to hotel booking system with chaos (100ms latency, 10% failure rate)
         _chaosHttpClient
             .WithLatency(TimeSpan.FromMilliseconds(100), TimeSpan.FromMilliseconds(100))
             .WithFailureRate(0.10, System.Net.HttpStatusCode.InternalServerError);
 
-        var response = await _chaosHttpClient.PostAsJsonAsync($"/api/hotels/book", new { HotelName = hotelName, Address = address, CheckInDate = checkInDate, CheckOutDate = checkOutDate, Cost = cost });
-
-        // Parse address components (simplified for demo)
-        var addressParts = address.Split(',');
-        var street = addressParts.Length > 0 ? addressParts[0].Trim() : "Unknown Street";
-        var city = addressParts.Length > 1 ? addressParts[1].Trim() : "Unknown City";
-        var state = addressParts.Length > 2 ? addressParts[2].Trim() : "Unknown State";
-        var zipCode = addressParts.Length > 3 ? addressParts[3].Trim() : "00000";
-
-        // Create value objects
-        var hotelNameVo = HotelName.Create(hotelName);
-        var addressVo = Address.Create(street, city, state, zipCode);
-        var stayPeriodVo = DateRange.Create(checkInDate, checkOutDate);
-        var costVo = Money.Create(cost);
+        var response = await _chaosHttpClient.PostAsJsonAsync($"/api/hotels/book", new { HotelName = hotelName.Value, Address = address.ToString(), CheckInDate = stayPeriod.Start, CheckOutDate = stayPeriod.End, Cost = cost.Amount });
 
         // Create domain entity using factory
-        var booking = Domain.TravelLogistics.LodgingBooking.Create(hotelNameVo, addressVo, stayPeriodVo, costVo);
+        var booking = Domain.TravelLogistics.LodgingBooking.Create(hotelName, address, stayPeriod, cost);
         booking.Confirm();
 
         await _lodgingBookingRepository.SaveAsync(booking);
 
-        Console.WriteLine($"[LodgingBooking] Booked hotel {hotelName} at {address} - ID: {booking.Id}");
+        Console.WriteLine($"[LodgingBooking] Booked hotel {hotelName.Value} at {address.ToString()} - ID: {booking.Id.Value}");
         
         return booking.Id;
     }
 
-    public async Task CancelFlightAsync(uint flightBookingId)
+    public async Task CancelFlightAsync(FlightBookingId flightBookingId)
     {
-        var flightBookingIdVo = FlightBookingId.Create(flightBookingId);
-        var booking = await _flightBookingRepository.GetByIdAsync(flightBookingIdVo);
+        var booking = await _flightBookingRepository.GetByIdAsync(flightBookingId);
 
         if (booking == null)
         {
-            throw new InvalidOperationException($"Flight booking {flightBookingId} not found");
+            throw new InvalidOperationException($"Flight booking {flightBookingId.Value} not found");
         }
 
         booking.MarkAsCancelled();
@@ -101,19 +80,18 @@ public class TravelLogisticsActivities : ITravelLogisticsActivities
             .WithLatency(TimeSpan.FromMilliseconds(100), TimeSpan.FromMilliseconds(100))
             .WithFailureRate(0.10, System.Net.HttpStatusCode.InternalServerError);
 
-        await _chaosHttpClient.PostAsJsonAsync($"/api/flights/cancel/{flightBookingId}", new { });
+        await _chaosHttpClient.PostAsJsonAsync($"/api/flights/cancel/{flightBookingId.Value}", new { });
 
-        Console.WriteLine($"[FlightCancellation] Cancelled flight booking {flightBookingId}");
+        Console.WriteLine($"[FlightCancellation] Cancelled flight booking {flightBookingId.Value}");
     }
 
-    public async Task CancelLodgingAsync(uint lodgingBookingId)
+    public async Task CancelLodgingAsync(LodgingBookingId lodgingBookingId)
     {
-        var lodgingBookingIdVo = LodgingBookingId.Create(lodgingBookingId);
-        var booking = await _lodgingBookingRepository.GetByIdAsync(lodgingBookingIdVo);
+        var booking = await _lodgingBookingRepository.GetByIdAsync(lodgingBookingId);
 
         if (booking == null)
         {
-            throw new InvalidOperationException($"Lodging booking {lodgingBookingId} not found");
+            throw new InvalidOperationException($"Lodging booking {lodgingBookingId.Value} not found");
         }
 
         booking.MarkAsCancelled();
@@ -124,12 +102,12 @@ public class TravelLogisticsActivities : ITravelLogisticsActivities
             .WithLatency(TimeSpan.FromMilliseconds(100), TimeSpan.FromMilliseconds(100))
             .WithFailureRate(0.10, System.Net.HttpStatusCode.InternalServerError);
 
-        await _chaosHttpClient.PostAsJsonAsync($"/api/hotels/cancel/{lodgingBookingId}", new { });
+        await _chaosHttpClient.PostAsJsonAsync($"/api/hotels/cancel/{lodgingBookingId.Value}", new { });
 
-        Console.WriteLine($"[LodgingCancellation] Cancelled lodging booking {lodgingBookingId}");
+        Console.WriteLine($"[LodgingCancellation] Cancelled lodging booking {lodgingBookingId.Value}");
     }
 
-    public async Task NotifyTravelerAsync(string travelerEmail, string message, bool isCancellation)
+    public async Task NotifyTravelerAsync(Email travelerEmail, string message, bool isCancellation)
     {
         // Simulate external notification (email/SMS) with chaos (100ms latency, 10% failure rate)
         _chaosHttpClient
@@ -137,9 +115,9 @@ public class TravelLogisticsActivities : ITravelLogisticsActivities
             .WithFailureRate(0.10, System.Net.HttpStatusCode.InternalServerError);
 
         var notificationType = isCancellation ? "cancellation" : "confirmation";
-        await _chaosHttpClient.PostAsJsonAsync($"/api/notifications/{notificationType}", new { Email = travelerEmail, Message = message });
+        await _chaosHttpClient.PostAsJsonAsync($"/api/notifications/{notificationType}", new { Email = travelerEmail.Value, Message = message });
 
         var notificationTypeDisplay = isCancellation ? "CANCELLATION" : "CONFIRMATION";
-        Console.WriteLine($"[TravelerNotification] {notificationTypeDisplay} sent to {travelerEmail}: {message}");
+        Console.WriteLine($"[TravelerNotification] {notificationTypeDisplay} sent to {travelerEmail.Value}: {message}");
     }
 }

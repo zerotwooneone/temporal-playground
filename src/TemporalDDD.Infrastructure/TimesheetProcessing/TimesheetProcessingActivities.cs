@@ -19,25 +19,24 @@ public class TimesheetProcessingActivities : ITimesheetProcessingActivities
         _chaosHttpClient = chaosHttpClient;
     }
 
-    public async Task ValidateTimesheetRulesAsync(uint timesheetId)
+    public async Task ValidateTimesheetRulesAsync(TimesheetId timesheetId)
     {
-        var timesheetIdVo = TimesheetId.Create(timesheetId);
-        var timesheet = await _timesheetRepository.GetByIdAsync(timesheetIdVo);
+        var timesheet = await _timesheetRepository.GetByIdAsync(timesheetId);
 
         if (timesheet == null)
         {
             // Create value objects for new timesheet
-            var periodVo = DateRange.Create(DateTime.UtcNow.AddDays(-30), DateTime.UtcNow);
-            var totalHoursVo = Hours.Create(160);
-            var hourlyRateVo = HourlyRate.Create(50);
-            var providerIdVo = ProviderId.Create(1); // Simulated provider ID
+            var period = DateRange.Create(DateTime.UtcNow.AddDays(-30), DateTime.UtcNow);
+            var totalHours = Hours.Create(160);
+            var hourlyRate = HourlyRate.Create(50);
+            var providerId = ProviderId.Create(1); // Simulated provider ID
 
             // Create domain entity for validation using factory
             timesheet = Domain.TimesheetProcessing.Timesheet.Create(
-                providerId: providerIdVo,
-                period: periodVo,
-                totalHours: totalHoursVo,
-                hourlyRate: hourlyRateVo
+                providerId: providerId,
+                period: period,
+                totalHours: totalHours,
+                hourlyRate: hourlyRate
             );
         }
 
@@ -45,17 +44,16 @@ public class TimesheetProcessingActivities : ITimesheetProcessingActivities
         timesheet.Validate();
         await _timesheetRepository.SaveAsync(timesheet);
 
-        Console.WriteLine($"[TimesheetValidation] Timesheet {timesheetId} validated successfully");
+        Console.WriteLine($"[TimesheetValidation] Timesheet {timesheetId.Value} validated successfully");
     }
 
-    public async Task<PayrollCalculationResult> CalculatePayrollAndTaxesAsync(uint timesheetId)
+    public async Task<PayrollCalculationResult> CalculatePayrollAndTaxesAsync(TimesheetId timesheetId)
     {
-        var timesheetIdVo = TimesheetId.Create(timesheetId);
-        var timesheet = await _timesheetRepository.GetByIdAsync(timesheetIdVo);
+        var timesheet = await _timesheetRepository.GetByIdAsync(timesheetId);
 
         if (timesheet == null)
         {
-            throw new InvalidOperationException($"Timesheet {timesheetId} not found");
+            throw new InvalidOperationException($"Timesheet {timesheetId.Value} not found");
         }
 
         // Calculate payroll with tax rate (e.g., 25%)
@@ -66,54 +64,53 @@ public class TimesheetProcessingActivities : ITimesheetProcessingActivities
         Console.WriteLine($"[PayrollCalculation] Gross: {timesheet.GrossPay}, Tax: {timesheet.TaxAmount}, Net: {timesheet.NetPay}");
 
         return new PayrollCalculationResult(
-            GrossPay: timesheet.GrossPay.Amount,
-            TaxAmount: timesheet.TaxAmount.Amount,
-            NetPay: timesheet.NetPay.Amount
+            GrossPay: timesheet.GrossPay,
+            TaxAmount: timesheet.TaxAmount,
+            NetPay: timesheet.NetPay
         );
     }
 
-    public async Task<string> SubmitBankTransferAsync(uint timesheetId, string idempotencyKey)
+    public async Task<string> SubmitBankTransferAsync(TimesheetId timesheetId, string idempotencyKey)
     {
         // Simulate external API call to payment gateway with chaos (100ms latency, 10% failure rate)
         _chaosHttpClient
             .WithLatency(TimeSpan.FromMilliseconds(100), TimeSpan.FromMilliseconds(100))
             .WithFailureRate(0.10, System.Net.HttpStatusCode.InternalServerError);
 
-        var response = await _chaosHttpClient.PostAsJsonAsync($"/api/payments/transfer", new { TimesheetId = timesheetId, IdempotencyKey = idempotencyKey });
+        var response = await _chaosHttpClient.PostAsJsonAsync($"/api/payments/transfer", new { TimesheetId = timesheetId.Value, IdempotencyKey = idempotencyKey });
 
         // The idempotencyKey ensures that duplicate requests don't result in duplicate payments
         var paymentReference = $"PAY-{DateTime.UtcNow:yyyyMMddHHmmss}-{idempotencyKey.Substring(0, 8)}";
 
-        Console.WriteLine($"[BankTransfer] Submitted transfer for timesheet {timesheetId} with idempotency key: {idempotencyKey}");
+        Console.WriteLine($"[BankTransfer] Submitted transfer for timesheet {timesheetId.Value} with idempotency key: {idempotencyKey}");
         Console.WriteLine($"[BankTransfer] Payment reference: {paymentReference}");
 
         return paymentReference;
     }
 
-    public async Task<string> GenerateAndSendInvoiceAsync(uint timesheetId, decimal facilityBillRate)
+    public async Task<string> GenerateAndSendInvoiceAsync(TimesheetId timesheetId, Money facilityBillRate)
     {
-        var timesheetIdVo = TimesheetId.Create(timesheetId);
-        var timesheet = await _timesheetRepository.GetByIdAsync(timesheetIdVo);
+        var timesheet = await _timesheetRepository.GetByIdAsync(timesheetId);
 
         if (timesheet == null)
         {
-            throw new InvalidOperationException($"Timesheet {timesheetId} not found");
+            throw new InvalidOperationException($"Timesheet {timesheetId.Value} not found");
         }
 
         // Calculate facility bill (typically higher than provider pay rate)
-        var facilityBillAmount = timesheet.TotalHours.Value * facilityBillRate;
+        var facilityBillAmount = Money.Create(timesheet.TotalHours.Value * facilityBillRate.Amount);
 
         // Simulate external API call to ERP system with chaos (100ms latency, 10% failure rate)
         _chaosHttpClient
             .WithLatency(TimeSpan.FromMilliseconds(100), TimeSpan.FromMilliseconds(100))
             .WithFailureRate(0.10, System.Net.HttpStatusCode.InternalServerError);
 
-        var response = await _chaosHttpClient.PostAsJsonAsync($"/api/erp/invoices", new { TimesheetId = timesheetId, FacilityBillRate = facilityBillRate });
+        var response = await _chaosHttpClient.PostAsJsonAsync($"/api/erp/invoices", new { TimesheetId = timesheetId.Value, FacilityBillRate = facilityBillRate.Amount });
 
         var invoiceNumber = $"INV-{DateTime.UtcNow:yyyyMMdd}-{Guid.NewGuid().ToString().Substring(0, 8).ToUpper()}";
 
-        Console.WriteLine($"[InvoiceGeneration] Generated invoice {invoiceNumber} for timesheet {timesheetId}");
-        Console.WriteLine($"[InvoiceGeneration] Facility bill amount: {facilityBillAmount:C} (Rate: {facilityBillRate:C}/hr)");
+        Console.WriteLine($"[InvoiceGeneration] Generated invoice {invoiceNumber} for timesheet {timesheetId.Value}");
+        Console.WriteLine($"[InvoiceGeneration] Facility bill amount: {facilityBillAmount} (Rate: {facilityBillRate}/hr)");
 
         return invoiceNumber;
     }
