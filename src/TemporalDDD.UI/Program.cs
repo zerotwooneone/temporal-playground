@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Components.Web;
 using TemporalDDD.UI.Data;
 using TemporalDDD.UI.Services;
 using MudBlazor.Services;
+using System.Net.Http;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -11,10 +12,13 @@ builder.Services.AddRazorPages();
 builder.Services.AddServerSideBlazor();
 builder.Services.AddMudServices();
 
-// Add HttpClient for API communication
+// Add HttpClient for API communication with SSL bypass for development
 builder.Services.AddHttpClient("TemporalApi", client =>
 {
     client.BaseAddress = new Uri(builder.Configuration["ApiBaseUrl"] ?? "https://localhost:5001");
+}).ConfigurePrimaryHttpMessageHandler(() => new HttpClientHandler
+{
+    ServerCertificateCustomValidationCallback = HttpClientHandler.DangerousAcceptAnyServerCertificateValidator
 });
 
 // Add Persona State Service
