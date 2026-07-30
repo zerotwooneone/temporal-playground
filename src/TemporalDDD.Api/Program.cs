@@ -13,6 +13,9 @@ var localAppData = Environment.GetFolderPath(Environment.SpecialFolder.LocalAppl
 var dbPath = Path.Combine(localAppData, "TemporalDDD", "temporal_playground.sqlite");
 builder.Services.AddDatabase($"Data Source={dbPath}");
 
+// Add Testing utilities
+builder.Services.AddTesting();
+
 // Add Temporal Client
 builder.Services.AddSingleton<ITemporalClient>(sp => 
 {

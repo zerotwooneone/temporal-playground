@@ -1,6 +1,7 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using TemporalDDD.Infrastructure.Persistence;
+using TemporalDDD.Infrastructure.Testing;
 
 namespace TemporalDDD.Infrastructure;
 
@@ -13,6 +14,14 @@ public static class DependencyInjection
         
         services.AddDbContext<ApplicationDbContext>(options =>
             options.UseSqlite(connectionStringWithWal));
+
+        return services;
+    }
+
+    public static IServiceCollection AddTesting(this IServiceCollection services)
+    {
+        // Register testing utilities for chaos simulation
+        services.AddTransient<ChaosHttpClient>();
 
         return services;
     }
