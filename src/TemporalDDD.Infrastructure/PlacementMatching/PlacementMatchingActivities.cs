@@ -24,7 +24,7 @@ public class PlacementMatchingActivities : IPlacementMatchingActivities
         // In real implementation, this would use ML model or business rules
         var random = new Random();
         var matchScoreValue = (decimal)(random.Next(60, 100) + (random.NextDouble() * 0.9));
-        var matchScore = MatchScore.Create(matchScoreValue);
+        var matchScore = MatchScore.Create(matchScoreValue).Value!;
 
         Console.WriteLine($"[MatchScore] Calculated score {matchScore.Value:F2} for provider {providerId.Value} at facility {facilityId.Value}");
 

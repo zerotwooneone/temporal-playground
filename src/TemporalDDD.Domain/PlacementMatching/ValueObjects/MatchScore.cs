@@ -1,3 +1,5 @@
+using TemporalDDD.Domain.SharedKernel;
+
 namespace TemporalDDD.Domain.PlacementMatching.ValueObjects;
 
 public sealed record MatchScore
@@ -9,12 +11,12 @@ public sealed record MatchScore
         Value = value;
     }
 
-    public static MatchScore Create(decimal value)
+    public static Result<MatchScore> Create(decimal value)
     {
         if (value < 0.0m || value > 100.0m)
-            throw new ArgumentException("Match score must be between 0.0 and 100.0", nameof(value));
+            return Result<MatchScore>.Failure("Match score must be between 0.0 and 100.0");
 
-        return new MatchScore(value);
+        return Result<MatchScore>.Success(new MatchScore(value));
     }
 
     public static MatchScore Zero() => new(0.0m);

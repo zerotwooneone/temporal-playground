@@ -1,3 +1,5 @@
+using TemporalDDD.Domain.SharedKernel;
+
 namespace TemporalDDD.Domain.PlacementMatching;
 
 public sealed record PositionId
@@ -9,12 +11,12 @@ public sealed record PositionId
         Value = value;
     }
 
-    public static PositionId Create(uint value)
+    public static Result<PositionId> Create(uint value)
     {
         if (value == 0)
-            throw new ArgumentException("PositionId cannot be zero", nameof(value));
+            return Result<PositionId>.Failure("PositionId cannot be zero");
 
-        return new PositionId(value);
+        return Result<PositionId>.Success(new PositionId(value));
     }
 
     

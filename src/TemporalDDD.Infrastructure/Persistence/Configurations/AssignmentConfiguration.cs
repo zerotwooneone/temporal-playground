@@ -39,19 +39,19 @@ public class AssignmentConfiguration : IEntityTypeConfiguration<Assignment>
         builder.Property(x => x.FacilityId)
             .HasConversion(
                 fid => fid.Value,
-                v => FacilityId.Create(v));
+                v => FacilityId.Create(v).Value!);
 
         // PositionId - stored as uint
         builder.Property(x => x.PositionId)
             .HasConversion(
                 pid => pid.Value,
-                v => PositionId.Create(v));
+                v => PositionId.Create(v).Value!);
 
         // Value Object - MatchScore flattened
         builder.Property(x => x.MatchScore)
             .HasConversion(
                 ms => ms.Value,
-                v => MatchScore.Create(v));
+                v => MatchScore.Create(v).Value!);
 
         // Smart Enum - stored as int
         builder.Property(x => x.Status)
