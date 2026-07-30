@@ -272,6 +272,50 @@ public async Task<MedicalBoardLicenseInfo> FetchMedicalBoardLicenseAsync(string 
 - **Activity methods**: `{Verb}{Noun}Async` (e.g., `FetchMedicalBoardLicenseAsync`, `EvaluateComplianceAsync`)
 - **Activity interfaces**: `I{Feature}Activities` (e.g., `IProviderCredentialingActivities`)
 
+## [Activity] Attribute Placement
+
+**Important**: If you are using an interface to call your activity in the workflow, the `[Activity]` attribute MUST be on the interface, not just the implementation class.
+
+**❌ Bad:**
+```csharp
+// Interface - missing [Activity] attribute
+public interface IProviderCredentialingActivities
+{
+    Task<MedicalBoardLicenseInfo> FetchMedicalBoardLicenseAsync(LicenseNumber licenseNumber, MedicalBoard medicalBoard);
+}
+
+// Implementation - has [Activity] attribute (incorrect placement)
+public class ProviderCredentialingActivities : IProviderCredentialingActivities
+{
+    [Activity]
+    public async Task<MedicalBoardLicenseInfo> FetchMedicalBoardLicenseAsync(LicenseNumber licenseNumber, MedicalBoard medicalBoard)
+    {
+        // ...
+    }
+}
+```
+
+**✅ Good:**
+```csharp
+// Interface - has [Activity] attribute (correct placement)
+public interface IProviderCredentialingActivities
+{
+    [Activity]
+    Task<MedicalBoardLicenseInfo> FetchMedicalBoardLicenseAsync(LicenseNumber licenseNumber, MedicalBoard medicalBoard);
+}
+
+// Implementation - no [Activity] attribute needed
+public class ProviderCredentialingActivities : IProviderCredentialingActivities
+{
+    public async Task<MedicalBoardLicenseInfo> FetchMedicalBoardLicenseAsync(LicenseNumber licenseNumber, MedicalBoard medicalBoard)
+    {
+        // ...
+    }
+}
+```
+
+**Rationale**: Temporal uses the interface to discover activity methods when workflows call activities via interfaces. The `[Activity]` attribute on the interface method ensures proper registration and discovery.
+
 ## Activity Registration
 
 Register activities in the Worker project's dependency injection container:
