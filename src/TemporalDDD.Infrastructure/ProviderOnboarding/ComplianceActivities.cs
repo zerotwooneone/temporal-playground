@@ -26,9 +26,9 @@ public class ComplianceActivities : IComplianceActivities
 
         var response = await _chaosHttpClient.GetAsync($"/api/medical-board/{licenseNumber.Value}");
 
-        var providerIdVo = ProviderId.Create(1); // Simulated provider ID
-        var medicalBoardVo = MedicalBoard.Create("Default");
-        var licenseExpiryDateVo = LicenseExpiryDate.Create(DateTimeOffset.UtcNow.AddYears(2));
+        var providerIdVo = ProviderId.Create(1).Value!; // Simulated provider ID
+        var medicalBoardVo = MedicalBoard.Create("Default").Value!;
+        var licenseExpiryDateVo = LicenseExpiryDate.Create(DateTimeOffset.UtcNow.AddYears(2)).Value!;
         
         var evaluation = CredentialEvaluation.Create(providerIdVo, licenseNumber, medicalBoardVo, licenseExpiryDateVo);
         

@@ -33,7 +33,7 @@ public class TimesheetConfiguration : IEntityTypeConfiguration<Timesheet>
         builder.Property(x => x.ProviderId)
             .HasConversion(
                 pid => pid.Value,
-                v => ProviderId.FromDatabase(v));
+                v => ProviderId.Create(v).Value!);
 
         // DateRange Value Object - flattened using ComplexProperty
         builder.ComplexProperty(x => x.Period, pb =>

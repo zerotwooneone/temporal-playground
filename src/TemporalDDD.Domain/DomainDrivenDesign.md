@@ -46,7 +46,6 @@ public sealed record ProviderId
         return new ProviderId(value);
     }
 
-    public static ProviderId FromDatabase(uint value) => new(value);
     public static implicit operator uint(ProviderId id) => id.Value;
 }
 ```
@@ -116,31 +115,6 @@ public static Assignment Create(ProviderId providerId, FacilityId facilityId, Po
         Status = AssignmentStatus.Proposed,
         ProposedAt = DateTimeOffset.UtcNow,
         Version = AggregateVersion.Initial()
-    };
-}
-```
-
-#### FromDatabase Factory
-- **Purpose**: Rehydrates aggregates from persistence
-- **ID Behavior**: Uses actual database uint value
-- **PublicId Behavior**: Rehydrates from stored Guid (nullable)
-- **Usage**: When loading entities from database
-
-```csharp
-public static Assignment FromDatabase(uint id, Guid? publicId, ProviderId providerId, FacilityId facilityId, PositionId positionId, MatchScore matchScore, AssignmentStatus status, DateTimeOffset proposedAt, DateTimeOffset? acceptedAt, AggregateVersion version)
-{
-    return new Assignment
-    {
-        Id = AssignmentId.FromDatabase(id),
-        PublicId = publicId.HasValue ? AssignmentPublicId.Create(publicId.Value) : null,
-        ProviderId = providerId,
-        FacilityId = facilityId,
-        PositionId = positionId,
-        MatchScore = matchScore,
-        Status = status,
-        ProposedAt = proposedAt,
-        AcceptedAt = acceptedAt,
-        Version = version
     };
 }
 ```
@@ -346,7 +320,67 @@ TemporalDDD.Domain/
 │   └── BookingStatus.cs
 ```
 
-### 10. Anti-Patterns to Avoid
+### 10. No FromDatabase Methods on Domain Types
+
+**Rule**: Domain value objects and entity IDs should NOT have `FromDatabase` or similar bypass-validation factory methods.
+
+**Rationale**:
+- Domain types should always enforce their invariants
+- Bypassing validation creates a backdoor for invalid data to enter the domain
+- Infrastructure layer should handle persistence concerns, not the domain layer
+- If data from the database is invalid, it should be fixed at the source, not bypassed
+- Maintains consistency and prevents data corruption
+
+**❌ Bad**:
+```csharp
+public static LicenseNumber FromDatabase(string value) => new(value); // Bypasses validation
+```
+
+### 11. No Validation Bypass in Repositories
+
+**Rule**: Repositories and infrastructure code should NEVER bypass domain type validation. All domain types must be created through their validated `Create` methods returning `Result<T>`.
+
+**Rationale**:
+- Domain invariants must be enforced consistently across all layers
+- Bypassing validation in infrastructure creates a backdoor for invalid data
+- If database contains invalid data, it should be fixed at the source (migrations, constraints)
+- Trust in the domain model requires consistent validation everywhere
+- Prevents data corruption from spreading through the system
+
+**How to Handle Database Rehydration**:
+- Trust that database contains valid data (enforced by constraints and migrations)
+- If validation fails on rehydration, it indicates data corruption that should be addressed
+- Use EF Core value converters that call the validated `Create` method
+- Handle `Result<T>` failures appropriately (log error, throw exception, or fix data)
+
+**❌ Bad**:
+```csharp
+// In repository - bypassing validation
+var licenseNumber = new LicenseNumber(dbValue); // Direct constructor call
+var providerId = ProviderId.FromDatabase(dbValue); // Bypass method
+```
+
+**✅ Good**:
+```csharp
+// In repository - using validated Create
+var licenseNumberResult = LicenseNumber.Create(dbValue);
+if (licenseNumberResult.IsFailure)
+{
+    throw new InvalidOperationException($"Invalid data in database: {licenseNumberResult.Error}");
+}
+var licenseNumber = licenseNumberResult.Value;
+```
+
+**✅ Good** (EF Core Configuration):
+```csharp
+// In EF Core configuration
+builder.Property(x => x.LicenseNumber)
+    .HasConversion(
+        ln => ln.Value,
+        s => LicenseNumber.Create(s).Value); // Calls validated Create, assumes valid data
+```
+
+### 12. Anti-Patterns to Avoid
 
 **Do NOT**:
 - Use primitive types for domain concepts (Primitive Obsession)
@@ -359,6 +393,7 @@ TemporalDDD.Domain/
 - Use standard enums for status types (use Smart Enums)
 - Generate IDs in domain layer (database should generate uint IDs)
 - Create duplicate entities across namespaces
+- Create `FromDatabase` or bypass-validation methods on domain types
 
 **DO**:
 - Use strongly-typed IDs for all identifiers

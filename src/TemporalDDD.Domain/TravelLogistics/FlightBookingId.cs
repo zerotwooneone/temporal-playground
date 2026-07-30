@@ -13,7 +13,6 @@ public sealed record FlightBookingId
         return new FlightBookingId(value);
     }
 
-    public static FlightBookingId FromDatabase(uint value) => new(value);
     public static implicit operator uint(FlightBookingId id) => id.Value;
     public override string ToString() => Value.ToString();
 }

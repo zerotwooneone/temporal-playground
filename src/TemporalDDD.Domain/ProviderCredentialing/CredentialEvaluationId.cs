@@ -13,7 +13,6 @@ public sealed record CredentialEvaluationId
         return new CredentialEvaluationId(value);
     }
 
-    public static CredentialEvaluationId FromDatabase(uint value) => new(value);
     public static implicit operator uint(CredentialEvaluationId id) => id.Value;
     public override string ToString() => Value.ToString();
 }

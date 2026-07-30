@@ -17,8 +17,7 @@ public sealed record AssignmentId
         return new AssignmentId(value);
     }
 
-    // Factory method for rehydration from database
-    public static AssignmentId FromDatabase(uint value) => new(value);
+    
 
     public static implicit operator uint(AssignmentId id) => id.Value;
 

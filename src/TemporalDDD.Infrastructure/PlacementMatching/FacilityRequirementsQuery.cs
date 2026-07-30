@@ -32,7 +32,7 @@ public class FacilityRequirementsQuery : IFacilityRequirementsQuery
 
         var medicalBoards = facility.AcceptedMedicalBoards
             .Split(',', StringSplitOptions.RemoveEmptyEntries)
-            .Select(mb => MedicalBoard.Create(mb.Trim()))
+            .Select(mb => MedicalBoard.Create(mb.Trim()).Value)
             .ToList();
 
         return new FacilityRequirementsDto(

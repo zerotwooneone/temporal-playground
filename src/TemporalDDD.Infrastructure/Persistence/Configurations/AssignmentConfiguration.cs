@@ -33,19 +33,19 @@ public class AssignmentConfiguration : IEntityTypeConfiguration<Assignment>
         builder.Property(x => x.ProviderId)
             .HasConversion(
                 pid => pid.Value,
-                v => ProviderId.FromDatabase(v));
+                v => ProviderId.Create(v).Value!);
 
         // FacilityId - stored as uint
         builder.Property(x => x.FacilityId)
             .HasConversion(
                 fid => fid.Value,
-                v => FacilityId.FromDatabase(v));
+                v => FacilityId.Create(v));
 
         // PositionId - stored as uint
         builder.Property(x => x.PositionId)
             .HasConversion(
                 pid => pid.Value,
-                v => PositionId.FromDatabase(v));
+                v => PositionId.Create(v));
 
         // Value Object - MatchScore flattened
         builder.Property(x => x.MatchScore)

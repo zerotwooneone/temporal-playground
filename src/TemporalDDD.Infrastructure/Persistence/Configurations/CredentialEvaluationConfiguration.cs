@@ -33,28 +33,28 @@ public class CredentialEvaluationConfiguration : IEntityTypeConfiguration<Creden
         builder.Property(x => x.ProviderId)
             .HasConversion(
                 pid => pid.Value,
-                v => ProviderId.FromDatabase(v));
+                v => ProviderId.Create(v).Value!);
 
         // Value Objects - flattened
         builder.Property(x => x.LicenseNumber)
             .HasConversion(
                 ln => ln.Value,
-                s => LicenseNumber.Create(s));
+                s => LicenseNumber.Create(s).Value!);
 
         builder.Property(x => x.MedicalBoard)
             .HasConversion(
                 mb => mb.Value,
-                s => MedicalBoard.Create(s));
+                s => MedicalBoard.Create(s).Value!);
 
         builder.Property(x => x.LicenseExpiryDate)
             .HasConversion(
                 led => led.Value,
-                dt => LicenseExpiryDate.Create(dt));
+                dt => LicenseExpiryDate.Create(dt).Value!);
 
         builder.Property(x => x.ComplianceNotes)
             .HasConversion(
                 cn => cn.Value,
-                s => ComplianceNotes.Create(s));
+                s => ComplianceNotes.Create(s).Value!);
 
         // DateTimeOffset stored as Unix UTC milliseconds
         builder.Property(x => x.EvaluatedAt)

@@ -38,22 +38,7 @@ public sealed class FlightBooking
         };
     }
 
-    // Factory for rehydrating from database
-    public static FlightBooking FromDatabase(uint id, Guid? publicId, FlightNumber flightNumber, AirportCode origin, AirportCode destination, FlightDepartureTime departureTime, Money cost, BookingStatus status, DateTimeOffset bookedAt)
-    {
-        return new FlightBooking
-        {
-            Id = FlightBookingId.FromDatabase(id),
-            PublicId = publicId.HasValue ? FlightBookingPublicId.Create(publicId.Value) : null,
-            FlightNumber = flightNumber,
-            Origin = origin,
-            Destination = destination,
-            DepartureTime = departureTime,
-            Cost = cost,
-            Status = status,
-            BookedAt = bookedAt
-        };
-    }
+    
 
     public void Confirm()
     {

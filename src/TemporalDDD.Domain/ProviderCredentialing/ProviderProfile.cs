@@ -36,23 +36,7 @@ public sealed class ProviderProfile
         };
     }
 
-    // Factory for rehydrating from database
-    public static ProviderProfile FromDatabase(uint id, Guid? publicId, PersonName firstName, PersonName lastName, Email email, Specialty specialty, bool isActive, DateTimeOffset? activatedAt, DateTimeOffset createdAt, AggregateVersion version)
-    {
-        return new ProviderProfile
-        {
-            Id = ProviderProfileId.FromDatabase(id),
-            PublicId = publicId.HasValue ? ProviderPublicId.Create(publicId.Value) : null,
-            FirstName = firstName,
-            LastName = lastName,
-            Email = email,
-            Specialty = specialty,
-            IsActive = isActive,
-            ActivatedAt = activatedAt,
-            CreatedAt = createdAt,
-            Version = version
-        };
-    }
+    
 
     public void Activate()
     {

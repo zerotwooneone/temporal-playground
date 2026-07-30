@@ -39,27 +39,7 @@ public sealed class Timesheet
         };
     }
 
-    // Factory for rehydrating from database
-    public static Timesheet FromDatabase(uint id, Guid? publicId, ProviderId providerId, DateRange period, Hours totalHours, HourlyRate hourlyRate, Money grossPay, Money taxAmount, Money netPay, TimesheetStatus status, DateTimeOffset submittedAt, DateTimeOffset? processedAt, PaymentReference? paymentReference, string? rejectionReason)
-    {
-        return new Timesheet
-        {
-            Id = TimesheetId.FromDatabase(id),
-            PublicId = publicId.HasValue ? TimesheetPublicId.Create(publicId.Value) : null,
-            ProviderId = providerId,
-            Period = period,
-            TotalHours = totalHours,
-            HourlyRate = hourlyRate,
-            GrossPay = grossPay,
-            TaxAmount = taxAmount,
-            NetPay = netPay,
-            Status = status,
-            SubmittedAt = submittedAt,
-            ProcessedAt = processedAt,
-            PaymentReference = paymentReference,
-            RejectionReason = rejectionReason
-        };
-    }
+    
 
     public void Validate()
     {

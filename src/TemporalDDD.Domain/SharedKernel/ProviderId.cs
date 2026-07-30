@@ -17,9 +17,6 @@ public sealed record ProviderId
         return Result<ProviderId>.Success(new ProviderId(value));
     }
 
-    // Factory method for rehydration from database
-    public static ProviderId FromDatabase(uint value) => new(value);
-
     public static implicit operator uint(ProviderId id) => id.Value;
 
     public override string ToString() => Value.ToString();

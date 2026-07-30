@@ -13,7 +13,6 @@ public sealed record LodgingBookingId
         return new LodgingBookingId(value);
     }
 
-    public static LodgingBookingId FromDatabase(uint value) => new(value);
     public static implicit operator uint(LodgingBookingId id) => id.Value;
     public override string ToString() => Value.ToString();
 }

@@ -31,39 +31,23 @@ public sealed class CredentialEvaluation
             LicenseExpiryDate = licenseExpiryDate,
             Status = EvaluationStatus.Pending,
             EvaluatedAt = DateTimeOffset.UtcNow,
-            ComplianceNotes = ComplianceNotes.Create(null)
+            ComplianceNotes = ComplianceNotes.Create(null).Value!
         };
     }
 
-    // Factory for rehydrating from database
-    public static CredentialEvaluation FromDatabase(uint id, Guid? publicId, ProviderId providerId, LicenseNumber licenseNumber, MedicalBoard medicalBoard, LicenseExpiryDate licenseExpiryDate, bool isCompliant, string complianceNotes, DateTimeOffset evaluatedAt, EvaluationStatus status)
-    {
-        return new CredentialEvaluation
-        {
-            Id = CredentialEvaluationId.FromDatabase(id),
-            PublicId = publicId.HasValue ? CredentialEvaluationPublicId.Create(publicId.Value) : null,
-            ProviderId = providerId,
-            LicenseNumber = licenseNumber,
-            MedicalBoard = medicalBoard,
-            LicenseExpiryDate = licenseExpiryDate,
-            IsCompliant = isCompliant,
-            ComplianceNotes = ComplianceNotes.Create(complianceNotes),
-            EvaluatedAt = evaluatedAt,
-            Status = status
-        };
-    }
+    
 
     public void MarkAsCompliant(string? notes = null)
     {
         IsCompliant = true;
-        ComplianceNotes = ComplianceNotes.Create(notes);
+        ComplianceNotes = ComplianceNotes.Create(notes).Value ?? throw new InvalidOperationException("Invalid ComplianceNotes");
         Status = EvaluationStatus.Approved;
     }
 
     public void MarkAsNonCompliant(string notes)
     {
         IsCompliant = false;
-        ComplianceNotes = ComplianceNotes.Create(notes);
+        ComplianceNotes = ComplianceNotes.Create(notes).Value ?? throw new InvalidOperationException("Invalid ComplianceNotes");
         Status = EvaluationStatus.Rejected;
     }
 

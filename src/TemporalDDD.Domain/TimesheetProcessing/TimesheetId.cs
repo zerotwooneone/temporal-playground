@@ -13,7 +13,6 @@ public sealed record TimesheetId
         return new TimesheetId(value);
     }
 
-    public static TimesheetId FromDatabase(uint value) => new(value);
     public static implicit operator uint(TimesheetId id) => id.Value;
     public override string ToString() => Value.ToString();
 }

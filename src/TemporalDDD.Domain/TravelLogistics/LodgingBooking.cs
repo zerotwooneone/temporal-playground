@@ -36,21 +36,7 @@ public sealed class LodgingBooking
         };
     }
 
-    // Factory for rehydrating from database
-    public static LodgingBooking FromDatabase(uint id, Guid? publicId, HotelName hotelName, Address address, DateRange stayPeriod, Money cost, BookingStatus status, DateTimeOffset bookedAt)
-    {
-        return new LodgingBooking
-        {
-            Id = LodgingBookingId.FromDatabase(id),
-            PublicId = publicId.HasValue ? LodgingBookingPublicId.Create(publicId.Value) : null,
-            HotelName = hotelName,
-            Address = address,
-            StayPeriod = stayPeriod,
-            Cost = cost,
-            Status = status,
-            BookedAt = bookedAt
-        };
-    }
+    
 
     public void Confirm()
     {

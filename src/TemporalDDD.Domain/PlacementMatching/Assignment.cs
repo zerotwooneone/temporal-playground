@@ -35,23 +35,7 @@ public sealed class Assignment
         };
     }
 
-    // Factory for rehydrating from database
-    public static Assignment FromDatabase(uint id, Guid? publicId, ProviderId providerId, FacilityId facilityId, PositionId positionId, MatchScore matchScore, AssignmentStatus status, DateTimeOffset proposedAt, DateTimeOffset? acceptedAt, AggregateVersion version)
-    {
-        return new Assignment
-        {
-            Id = AssignmentId.FromDatabase(id),
-            PublicId = publicId.HasValue ? AssignmentPublicId.Create(publicId.Value) : null,
-            ProviderId = providerId,
-            FacilityId = facilityId,
-            PositionId = positionId,
-            MatchScore = matchScore,
-            Status = status,
-            ProposedAt = proposedAt,
-            AcceptedAt = acceptedAt,
-            Version = version
-        };
-    }
+    
 
     public void Accept(AggregateVersion expectedVersion)
     {

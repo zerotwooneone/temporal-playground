@@ -17,9 +17,7 @@ public sealed record PositionId
         return new PositionId(value);
     }
 
-    // Factory method for rehydration from database
-    public static PositionId FromDatabase(uint value) => new(value);
-
+    
     public static implicit operator uint(PositionId id) => id.Value;
 
     public override string ToString() => Value.ToString();

@@ -35,14 +35,15 @@ public class ProviderCredentialingActivities : IProviderCredentialingActivities
 
         // Simulated response - in real implementation, this would call actual medical board API
         var isValid = licenseNumber.Value.Length >= 8;
-        var expiryDate = LicenseExpiryDate.Create(DateTimeOffset.UtcNow.AddYears(2));
+        var expiryDateResult = LicenseExpiryDate.Create(DateTimeOffset.UtcNow.AddYears(2));
+        var providerIdResult = ProviderId.Create(1);
 
         return new MedicalBoardLicenseInfo(
             LicenseNumber: licenseNumber,
             MedicalBoard: medicalBoard,
-            ExpiryDate: expiryDate,
+            ExpiryDate: expiryDateResult.Value,
             IsValid: isValid,
-            ProviderId: ProviderId.Create(1), // Simulated provider ID
+            ProviderId: providerIdResult.Value,
             Notes: isValid ? "License verified successfully" : "License number format invalid"
         );
     }
