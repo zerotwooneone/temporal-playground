@@ -14,8 +14,9 @@ public sealed record BookingStatus
     public static readonly BookingStatus Pending = new(0, "Pending");
     public static readonly BookingStatus Confirmed = new(1, "Confirmed");
     public static readonly BookingStatus Cancelled = new(2, "Cancelled");
+    public static readonly BookingStatus NoShow = new(3, "NoShow");
 
-    private static readonly BookingStatus[] AllStatuses = { Pending, Confirmed, Cancelled };
+    private static readonly BookingStatus[] AllStatuses = { Pending, Confirmed, Cancelled, NoShow };
 
     public static BookingStatus FromValue(int value)
     {

@@ -18,6 +18,7 @@ public class Timesheet
     public DateTimeOffset SubmittedAt { get; private set; }
     public DateTimeOffset? ProcessedAt { get; private set; }
     public PaymentReference? PaymentReference { get; private set; }
+    public string? RejectionReason { get; private set; }
 
     private Timesheet() { }
 
@@ -39,7 +40,7 @@ public class Timesheet
     }
 
     // Factory for rehydrating from database
-    public static Timesheet FromDatabase(uint id, Guid? publicId, ProviderId providerId, DateRange period, Hours totalHours, HourlyRate hourlyRate, Money grossPay, Money taxAmount, Money netPay, TimesheetStatus status, DateTimeOffset submittedAt, DateTimeOffset? processedAt, PaymentReference? paymentReference)
+    public static Timesheet FromDatabase(uint id, Guid? publicId, ProviderId providerId, DateRange period, Hours totalHours, HourlyRate hourlyRate, Money grossPay, Money taxAmount, Money netPay, TimesheetStatus status, DateTimeOffset submittedAt, DateTimeOffset? processedAt, PaymentReference? paymentReference, string? rejectionReason)
     {
         return new Timesheet
         {
@@ -55,14 +56,63 @@ public class Timesheet
             Status = status,
             SubmittedAt = submittedAt,
             ProcessedAt = processedAt,
-            PaymentReference = paymentReference
+            PaymentReference = paymentReference,
+            RejectionReason = rejectionReason
         };
     }
 
     public void Validate()
     {
-        // Value objects already enforce their own validation
-        // Additional business validation if needed
+        if (Status != TimesheetStatus.Submitted)
+            throw new InvalidOperationException($"Cannot validate timesheet in status: {Status}");
+
+        Status = TimesheetStatus.Validated;
+    }
+
+    public void Approve()
+    {
+        if (Status != TimesheetStatus.Validated)
+            throw new InvalidOperationException($"Cannot approve timesheet in status: {Status}");
+
+        Status = TimesheetStatus.Approved;
+    }
+
+    public void Reject(string reason)
+    {
+        if (Status != TimesheetStatus.Validated && Status != TimesheetStatus.Submitted)
+            throw new InvalidOperationException($"Cannot reject timesheet in status: {Status}");
+
+        if (string.IsNullOrWhiteSpace(reason))
+            throw new ArgumentException("Rejection reason cannot be null or whitespace", nameof(reason));
+
+        Status = TimesheetStatus.Rejected;
+        RejectionReason = reason;
+    }
+
+    public void Submit()
+    {
+        if (Status != TimesheetStatus.Rejected)
+            throw new InvalidOperationException($"Cannot resubmit timesheet in status: {Status}");
+
+        Status = TimesheetStatus.Submitted;
+        RejectionReason = null;
+    }
+
+    public Money CalculateGrossPay(decimal overtimeMultiplier = 1.5m)
+    {
+        // Standard pay for first 40 hours
+        var standardHours = TotalHours.Value > 40.0m ? 40.0m : TotalHours.Value;
+        var standardPay = Money.Create(standardHours * HourlyRate.Value, "USD");
+
+        // Overtime pay for hours over 40
+        if (TotalHours.Value > 40.0m)
+        {
+            var overtimeHours = TotalHours.Value - 40.0m;
+            var overtimePay = Money.Create(overtimeHours * HourlyRate.Value * overtimeMultiplier, "USD");
+            return standardPay + overtimePay;
+        }
+
+        return standardPay;
     }
 
     public void CalculatePayroll(decimal taxRate)
@@ -77,7 +127,7 @@ public class Timesheet
 
     public void MarkAsProcessed(PaymentReference paymentReference)
     {
-        if (Status != TimesheetStatus.Submitted)
+        if (Status != TimesheetStatus.Approved)
             throw new InvalidOperationException($"Cannot process timesheet in status: {Status}");
 
         Status = TimesheetStatus.Processed;
