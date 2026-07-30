@@ -158,6 +158,52 @@ public async Task<EvaluationResult> EvaluateComplianceAsync(LicenseInfo licenseI
 // Workflow orchestrates the sequence
 ```
 
+### 9. Activities Should Not Call Internal APIs
+Activities should not make HTTP calls to the application's own API endpoints (localhost). Instead, execute the logic directly by calling the appropriate application layer interfaces, repositories, or domain methods.
+
+**Rationale**:
+- Eliminates unnecessary HTTP overhead and latency
+- Avoids serialization/deserialization costs
+- Provides compile-time type safety
+- Simplifies error handling and debugging
+- Reduces network dependencies within the same process
+- Enables better testability without HTTP mocking
+
+**❌ Bad:**
+```csharp
+public async Task<CredentialEvaluationId> EvaluateLicenseAsync(ProviderId providerId, LicenseNumber licenseNumber)
+{
+    // Making HTTP call to internal API - unnecessary overhead
+    var response = await _httpClient.PostAsJsonAsync("/api/providercredentialing/start", new
+    {
+        ProviderId = providerId.Value,
+        LicenseNumber = licenseNumber.Value
+    });
+    var result = await response.Content.ReadFromJsonAsync<StartCredentialingResponse>();
+    return result.EvaluationId;
+}
+```
+
+**✅ Good:**
+```csharp
+public async Task<CredentialEvaluationId> EvaluateLicenseAsync(ProviderId providerId, LicenseNumber licenseNumber)
+{
+    // Execute logic directly using domain and application layer
+    var evaluation = CredentialEvaluation.Create(
+        providerId,
+        licenseNumber,
+        MedicalBoard.Create("Default").Value,
+        LicenseExpiryDate.Create(DateTimeOffset.UtcNow.AddYears(2)).Value);
+    
+    evaluation.MarkAsCompliant("License verified successfully");
+    await _credentialEvaluationRepository.SaveAsync(evaluation);
+    
+    return evaluation.Id;
+}
+```
+
+**Note**: Activities should only make HTTP calls to truly external systems (third-party APIs, external services, etc.), not to the application's own API endpoints.
+
 ## Dependency Injection
 
 Activities should use constructor injection for dependencies (repositories, HTTP clients, etc.).
