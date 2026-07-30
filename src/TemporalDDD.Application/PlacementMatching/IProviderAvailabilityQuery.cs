@@ -8,4 +8,4 @@ public interface IProviderAvailabilityQuery
     Task<ProviderAvailabilityDto> GetProviderAvailabilityAsync(ProviderId providerId, DateRange period, CancellationToken cancellationToken = default);
 }
 
-public record ProviderAvailabilityDto(bool IsAvailable, string? ConflictingAssignmentId);
+public record ProviderAvailabilityDto(bool IsAvailable, AssignmentPublicId? ConflictingAssignmentId);
