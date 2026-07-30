@@ -1,10 +1,17 @@
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.DependencyInjection;
-using Temporalio.Client;
-using Temporalio.Worker;
 using TemporalDDD.Application.ProviderOnboarding;
+using TemporalDDD.Application.ProviderCredentialing;
+using TemporalDDD.Application.PlacementMatching;
+using TemporalDDD.Application.TimesheetProcessing;
+using TemporalDDD.Application.TravelLogistics;
 using TemporalDDD.Infrastructure.ProviderOnboarding;
+using TemporalDDD.Infrastructure.ProviderCredentialing;
+using TemporalDDD.Infrastructure.PlacementMatching;
+using TemporalDDD.Infrastructure.TimesheetProcessing;
+using TemporalDDD.Infrastructure.TravelLogistics;
 using TemporalDDD.Infrastructure;
+using Temporalio.Extensions.Hosting;
 
 var builder = Host.CreateApplicationBuilder(args);
 
@@ -20,37 +27,34 @@ builder.Services.AddHostedService<DatabaseInitializationService>();
 builder.Services.AddTesting();
 
 // Register activities with DI
-builder.Services.AddTransient<ComplianceActivities>();
-builder.Services.AddTransient<ProviderActivities>();
+builder.Services.AddScoped<ComplianceActivities>();
+builder.Services.AddScoped<ProviderActivities>();
+builder.Services.AddScoped<ProviderCredentialingActivities>();
+builder.Services.AddScoped<PlacementMatchingActivities>();
+builder.Services.AddScoped<TimesheetProcessingActivities>();
+builder.Services.AddScoped<TravelLogisticsActivities>();
 
-var client = await TemporalClient.ConnectAsync(new("localhost:7233"));
+// Register the Temporal Worker Service
+builder.Services.AddHostedTemporalWorker("localhost:7233", "default", "ONBOARDING_TASK_QUEUE")
+    .ConfigureOptions(options =>
+    {
+        // Register the Workflows
+        options.AddWorkflow<ProviderOnboardingWorkflow>();
+        options.AddWorkflow<ProviderCredentialingWorkflow>();
+        options.AddWorkflow<PlacementMatchingWorkflow>();
+        options.AddWorkflow<TimesheetProcessingWorkflow>();
+        options.AddWorkflow<TravelLogisticsSagaWorkflow>();
+    })
+    // Register all Activities using DI
+    .AddScopedActivities<ComplianceActivities>()
+    .AddScopedActivities<ProviderActivities>()
+    .AddScopedActivities<ProviderCredentialingActivities>()
+    .AddScopedActivities<PlacementMatchingActivities>()
+    .AddScopedActivities<TimesheetProcessingActivities>()
+    .AddScopedActivities<TravelLogisticsActivities>();
 
-using var tokenSource = new CancellationTokenSource();
-Console.CancelKeyPress += (_, eventArgs) =>
-{
-    tokenSource.Cancel();
-    eventArgs.Cancel = true;
-};
-
-// Create service scope to resolve activities
-using var scope = builder.Services.BuildServiceProvider().CreateScope();
-var complianceActivities = scope.ServiceProvider.GetRequiredService<ComplianceActivities>();
-var providerActivities = scope.ServiceProvider.GetRequiredService<ProviderActivities>();
-
-using var worker = new TemporalWorker(
-    client,
-    new TemporalWorkerOptions("ONBOARDING_TASK_QUEUE")
-        .AddActivity(complianceActivities.PerformComplianceCheck)
-        .AddActivity(providerActivities.ActivateProvider)
-        .AddWorkflow<ProviderOnboardingWorkflow>());
+var app = builder.Build();
 
 Console.WriteLine("Worker started. Press Ctrl+C to exit.");
 
-try
-{
-    await worker.ExecuteAsync(tokenSource.Token);
-}
-catch (OperationCanceledException)
-{
-    Console.WriteLine("Worker cancelled");
-}
+await app.RunAsync();
