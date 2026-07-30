@@ -1,9 +1,50 @@
-﻿@page "/"
+@page "/"
+@inject PersonaStateService PersonaStateService
 
-<PageTitle>Index</PageTitle>
+<PageTitle>Welcome - TemporalDDD Sandbox</PageTitle>
 
-<h1>Hello, world!</h1>
+<MudContainer MaxWidth="MaxWidth.Medium" Class="mt-8">
+    <MudCard>
+        <MudCardHeader>
+            <MudText Typo="Typo.h4">Welcome to the TemporalDDD Sandbox</MudText>
+        </MudCardHeader>
+        <MudCardContent>
+            <MudText Typo="Typo.h6" Class="mb-4">
+                You are currently acting as: <MudText Typo="Typo.h6" Color="Color.Primary">@PersonaStateService.GetRoleDisplayName(PersonaStateService.CurrentUserRole)</MudText>
+            </MudText>
+            <MudDivider Class="my-4" />
+            <MudText Typo="Typo.body1" Class="mb-4">
+                This is an interactive role-based sandbox for testing Temporal workflows. 
+                Use the navigation drawer on the left to access different workflow testing interfaces.
+            </MudText>
+            <MudText Typo="Typo.body2" Class="mb-2">
+                <MudIcon Icon="@Icons.Material.Filled.Info" Class="mr-2" />
+                Use the role selector in the top-right to switch between personas.
+            </MudText>
+            <MudText Typo="Typo.body2">
+                <MudIcon Icon="@Icons.Material.Filled.BugReport" Class="mr-2" />
+                Use the Dev Tools button to simulate external system webhooks.
+            </MudText>
+        </MudCardContent>
+        <MudCardActions>
+            <MudButton Href="/workflows/onboarding" Variant="Variant.Outlined" Color="Color.Primary">
+                Start Provider Onboarding
+            </MudButton>
+            <MudButton Href="/workflows/credentialing" Variant="Variant.Outlined" Color="Color.Secondary">
+                Test Credentialing Workflow
+            </MudButton>
+        </MudCardActions>
+    </MudCard>
+</MudContainer>
 
-Welcome to your new app.
-
-<SurveyPrompt Title="How is Blazor working for you?" />
+@code {
+    protected override void OnInitialized()
+    {
+        PersonaStateService.OnChange += StateHasChanged;
+    }
+    
+    public void Dispose()
+    {
+        PersonaStateService.OnChange -= StateHasChanged;
+    }
+}

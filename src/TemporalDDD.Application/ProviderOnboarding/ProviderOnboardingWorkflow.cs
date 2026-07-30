@@ -3,8 +3,10 @@ using TemporalDDD.Domain.ProviderCredentialing;
 
 namespace TemporalDDD.Application.ProviderOnboarding;
 
+[Workflow]
 public class ProviderOnboardingWorkflow : IProviderOnboardingWorkflow
 {
+    [WorkflowRun]
     public async Task RunAsync(uint providerId, string licenseNumber)
     {
         EvaluationStatus status = await Workflow.ExecuteActivityAsync(

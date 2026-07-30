@@ -1,8 +1,7 @@
 using Microsoft.AspNetCore.Components;
 using Microsoft.AspNetCore.Components.Web;
 using TemporalDDD.UI.Data;
-using TemporalDDD.Infrastructure;
-using Temporalio.Client;
+using TemporalDDD.UI.Services;
 using MudBlazor.Services;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -12,20 +11,14 @@ builder.Services.AddRazorPages();
 builder.Services.AddServerSideBlazor();
 builder.Services.AddMudServices();
 
-// Add Database
-var localAppData = Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData);
-var dbPath = Path.Combine(localAppData, "TemporalDDD", "temporal_playground.sqlite");
-builder.Services.AddDatabase($"Data Source={dbPath}");
-
-// Add Testing utilities
-builder.Services.AddTesting();
-
-// Add Temporal Client
-builder.Services.AddSingleton<ITemporalClient>(sp =>
+// Add HttpClient for API communication
+builder.Services.AddHttpClient("TemporalApi", client =>
 {
-    var client = TemporalClient.ConnectAsync(new("localhost:7233")).GetAwaiter().GetResult();
-    return client;
+    client.BaseAddress = new Uri(builder.Configuration["ApiBaseUrl"] ?? "https://localhost:5001");
 });
+
+// Add Persona State Service
+builder.Services.AddScoped<PersonaStateService>();
 
 var app = builder.Build();
 

@@ -1,19 +1,69 @@
 @inherits LayoutComponentBase
+@inject PersonaStateService PersonaStateService
 
-<PageTitle>TemporalDDD.UI</PageTitle>
+<PageTitle>TemporalDDD Sandbox</PageTitle>
 
 <MudLayout>
     <MudAppBar Elevation="2">
-        <MudIconButton Icon="@Icons.Material.Filled.Menu" Color="Color.Inherit" Edge="Edge.Start" OnClick="ToggleDrawer" />
-        <MudText Typo="Typo.h6" Class="ml-3">TemporalDDD Workflow Dashboard</MudText>
+        <MudIconButton Icon="@Icons.Material.Filled.Menu" Color="Color.Inherit" Edge="Edge.Start" OnClick="ToggleLeftDrawer" />
+        <MudText Typo="Typo.h6" Class="ml-3">TemporalDDD Sandbox</MudText>
+        
+        <MudSpacer />
+        
+        <MudSelect T="UserRole" Label="Current Role" Variant="Variant.Text" Dense="true" Class="mr-4" 
+                   Value="@PersonaStateService.CurrentUserRole" ValueChanged="OnRoleChanged">
+            <MudSelectItem T="UserRole" Value="@UserRole.Admin">Admin</MudSelectItem>
+            <MudSelectItem T="UserRole" Value="@UserRole.PlacementSpecialist">Marcus (Placement Specialist)</MudSelectItem>
+            <MudSelectItem T="UserRole" Value="@UserRole.Credentialing">Sarah (Credentialing)</MudSelectItem>
+            <MudSelectItem T="UserRole" Value="@UserRole.Provider">Dr. Emily (Provider)</MudSelectItem>
+        </MudSelect>
+        
+        <MudIconButton Icon="@Icons.Material.Filled.BugReport" Color="Color.Inherit" Edge="Edge.End" OnClick="ToggleRightDrawer" />
     </MudAppBar>
     
-    <MudDrawer @bind-Open="@_drawerOpen" ClipMode="DrawerClipMode.Always">
+    <MudDrawer @bind-Open="@_leftDrawerOpen" ClipMode="DrawerClipMode.Always" Anchor="Anchor.Left">
         <MudNavItems>
-            <MudNavLink Href="/provider-credentialing" Icon="@Icons.Material.Filled.VerifiedUser">
+            <MudNavLink Href="/" Icon="@Icons.Material.Filled.Home">
+                Home
+            </MudNavLink>
+            <MudNavLink Href="/workflows/onboarding" Icon="@Icons.Material.Filled.PersonAdd">
+                Provider Onboarding
+            </MudNavLink>
+            <MudNavLink Href="/workflows/placement" Icon="@Icons.Material.Filled.Handshake">
+                Placement Matching
+            </MudNavLink>
+            <MudNavLink Href="/workflows/credentialing" Icon="@Icons.Material.Filled.VerifiedUser">
                 Provider Credentialing
             </MudNavLink>
+            <MudNavLink Href="/workflows/timesheets" Icon="@Icons.Material.Filled.Receipt">
+                Timesheet Processing
+            </MudNavLink>
+            <MudNavLink Href="/workflows/travel" Icon="@Icons.Material.Filled.Flight">
+                Travel Logistics
+            </MudNavLink>
         </MudNavItems>
+    </MudDrawer>
+    
+    <MudDrawer @bind-Open="@_rightDrawerOpen" ClipMode="DrawerClipMode.Always" Anchor="Anchor.Right">
+        <MudText Typo="Typo.h6" Class="pa-4">External System Simulator</MudText>
+        <MudDivider />
+        <MudText Typo="Typo.body2" Class="pa-4">
+            These buttons simulate external webhooks hitting the API.
+        </MudText>
+        <div class="pa-4">
+            <MudButton Variant="Variant.Filled" Color="Color.Primary" FullWidth="true" Class="mb-2">
+                Simulate Medical Board API Response
+            </MudButton>
+            <MudButton Variant="Variant.Filled" Color="Color.Warning" FullWidth="true" Class="mb-2">
+                Simulate Competitor Placement (Revoke)
+            </MudButton>
+            <MudButton Variant="Variant.Filled" Color="Color.Success" FullWidth="true" Class="mb-2">
+                Simulate Bank Transfer Cleared
+            </MudButton>
+            <MudButton Variant="Variant.Filled" Color="Color.Error" FullWidth="true">
+                Simulate Bank Transfer Failed
+            </MudButton>
+        </div>
     </MudDrawer>
     
     <MudMainContent>
@@ -24,10 +74,31 @@
 </MudLayout>
 
 @code {
-    private bool _drawerOpen = true;
+    private bool _leftDrawerOpen = true;
+    private bool _rightDrawerOpen = false;
     
-    private void ToggleDrawer()
+    protected override void OnInitialized()
     {
-        _drawerOpen = !_drawerOpen;
+        PersonaStateService.OnChange += StateHasChanged;
+    }
+    
+    private void ToggleLeftDrawer()
+    {
+        _leftDrawerOpen = !_leftDrawerOpen;
+    }
+    
+    private void ToggleRightDrawer()
+    {
+        _rightDrawerOpen = !_rightDrawerOpen;
+    }
+    
+    private void OnRoleChanged(UserRole role)
+    {
+        PersonaStateService.CurrentUserRole = role;
+    }
+    
+    public void Dispose()
+    {
+        PersonaStateService.OnChange -= StateHasChanged;
     }
 }
