@@ -122,7 +122,7 @@ public class ProviderCredentialingController : ControllerBase
         };
     }
 
-    public record StartCredentialingRequest(uint ProviderId, string LicenseNumber, string MedicalBoard, DateTime ExpiryDate);
+    public record StartCredentialingRequest(uint ProviderId, string LicenseNumber, string MedicalBoard, DateTimeOffset ExpiryDate);
     public record ManualReviewRequest(bool IsApproved, string? Notes);
     public record CredentialEvaluationStatus
     {

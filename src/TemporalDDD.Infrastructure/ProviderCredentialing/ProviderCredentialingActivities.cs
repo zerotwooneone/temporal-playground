@@ -25,8 +25,20 @@ public class ProviderCredentialingActivities : IProviderCredentialingActivities
     }
 
     [Activity]
-    public async Task<MedicalBoardLicenseInfo> FetchMedicalBoardLicenseAsync(LicenseNumber licenseNumber, MedicalBoard medicalBoard)
+    public async Task<MedicalBoardLicenseInfo> FetchMedicalBoardLicenseAsync(FetchLicenseInput input)
     {
+        // Convert primitive DTO to Domain types with fail-fast validation
+        var licenseNumberResult = LicenseNumber.Create(input.LicenseNumber);
+        if (licenseNumberResult.IsFailure)
+            throw new InvalidOperationException($"Internal Corruption: Invalid LicenseNumber. {licenseNumberResult.Error}");
+        
+        var medicalBoardResult = MedicalBoard.Create(input.MedicalBoard);
+        if (medicalBoardResult.IsFailure)
+            throw new InvalidOperationException($"Internal Corruption: Invalid MedicalBoard. {medicalBoardResult.Error}");
+
+        var licenseNumber = licenseNumberResult.Value;
+        var medicalBoard = medicalBoardResult.Value;
+
         // Simulate external API call to medical board with chaos (100ms latency, 10% failure rate)
         _chaosHttpClient
             .WithLatency(TimeSpan.FromMilliseconds(100), TimeSpan.FromMilliseconds(100))
@@ -50,8 +62,45 @@ public class ProviderCredentialingActivities : IProviderCredentialingActivities
     }
 
     [Activity]
-    public async Task<CredentialEvaluationId> EvaluateAndSaveComplianceAsync(ProviderId providerId, MedicalBoardLicenseInfo licenseInfo)
+    public async Task<CredentialEvaluationId> EvaluateAndSaveComplianceAsync(EvaluateComplianceInput input)
     {
+        // Convert primitive DTO to Domain types with fail-fast validation
+        var providerIdResult = ProviderId.Create(input.ProviderId);
+        if (providerIdResult.IsFailure)
+            throw new InvalidOperationException($"Internal Corruption: Invalid ProviderId. {providerIdResult.Error}");
+        
+        var licenseNumberResult = LicenseNumber.Create(input.LicenseNumber);
+        if (licenseNumberResult.IsFailure)
+            throw new InvalidOperationException($"Internal Corruption: Invalid LicenseNumber. {licenseNumberResult.Error}");
+        
+        var medicalBoardResult = MedicalBoard.Create(input.MedicalBoard);
+        if (medicalBoardResult.IsFailure)
+            throw new InvalidOperationException($"Internal Corruption: Invalid MedicalBoard. {medicalBoardResult.Error}");
+        
+        var expiryDateResult = LicenseExpiryDate.Create(input.ExpiryDate);
+        if (expiryDateResult.IsFailure)
+            throw new InvalidOperationException($"Internal Corruption: Invalid ExpiryDate. {expiryDateResult.Error}");
+        
+        var providerIdResult2 = ProviderId.Create(input.ProviderIdResult);
+        if (providerIdResult2.IsFailure)
+            throw new InvalidOperationException($"Internal Corruption: Invalid ProviderIdResult. {providerIdResult2.Error}");
+
+        var providerId = providerIdResult.Value;
+        var licenseNumber = licenseNumberResult.Value;
+        var medicalBoard = medicalBoardResult.Value;
+        var expiryDate = expiryDateResult.Value;
+        var providerIdResultValue = providerIdResult2.Value;
+
+        // Reconstruct MedicalBoardLicenseInfo from primitive DTO
+        var licenseInfo = new MedicalBoardLicenseInfo(
+            LicenseNumber: licenseNumber,
+            MedicalBoard: medicalBoard,
+            ExpiryDate: expiryDate,
+            IsValid: input.IsValid,
+            ProviderId: providerIdResultValue,
+            Notes: input.Notes
+        );
+
         // Simulate business rule evaluation
         var isCompliant = licenseInfo.IsValid && licenseInfo.ExpiryDate.Value > DateTimeOffset.UtcNow.AddMonths(6);
 
@@ -79,8 +128,15 @@ public class ProviderCredentialingActivities : IProviderCredentialingActivities
     }
 
     [Activity]
-    public async Task RequestManualReviewAsync(CredentialEvaluationId evaluationId)
+    public async Task RequestManualReviewAsync(RequestManualReviewInput input)
     {
+        // Convert primitive DTO to Domain types with fail-fast validation
+        var evaluationIdResult = CredentialEvaluationId.Create(input.EvaluationId);
+        if (evaluationIdResult.IsFailure)
+            throw new InvalidOperationException($"Internal Corruption: Invalid CredentialEvaluationId. {evaluationIdResult.Error}");
+
+        var evaluationId = evaluationIdResult.Value;
+
         // Simulate external notification (e.g., email, webhook) with chaos
         _chaosHttpClient
             .WithLatency(TimeSpan.FromMilliseconds(100), TimeSpan.FromMilliseconds(100))
@@ -92,18 +148,25 @@ public class ProviderCredentialingActivities : IProviderCredentialingActivities
     }
 
     [Activity]
-    public async Task ActivateProviderProfileAsync(ProviderProfileId providerId)
+    public async Task ActivateProviderProfileAsync(ActivateProviderProfileInput input)
     {
-        var providerProfile = await _providerProfileRepository.GetByIdAsync(providerId);
+        // Convert primitive DTO to Domain types with fail-fast validation
+        var providerProfileIdResult = ProviderProfileId.Create(input.ProviderProfileId);
+        if (providerProfileIdResult.IsFailure)
+            throw new InvalidOperationException($"Internal Corruption: Invalid ProviderProfileId. {providerProfileIdResult.Error}");
+
+        var providerProfileId = providerProfileIdResult.Value;
+
+        var providerProfile = await _providerProfileRepository.GetByIdAsync(providerProfileId);
 
         if (providerProfile == null)
         {
-            throw new InvalidOperationException($"Provider profile {providerId.Value} not found");
+            throw new InvalidOperationException($"Provider profile {providerProfileId.Value} not found");
         }
 
         providerProfile.Activate();
         await _providerProfileRepository.SaveAsync(providerProfile);
 
-        Console.WriteLine($"[ProviderActivation] Provider {providerId.Value} activated successfully");
+        Console.WriteLine($"[ProviderActivation] Provider {providerProfileId.Value} activated successfully");
     }
 }

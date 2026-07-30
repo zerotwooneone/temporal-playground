@@ -139,7 +139,7 @@ Controllers should only handle HTTP concerns: routing, request/response mapping,
 Request and response DTOs should be defined as records for immutability and conciseness.
 
 ```csharp
-public record StartCredentialingRequest(uint ProviderId, string LicenseNumber, string MedicalBoard, DateTime ExpiryDate);
+public record StartCredentialingRequest(uint ProviderId, string LicenseNumber, string MedicalBoard, DateTimeOffset ExpiryDate);
 public record CredentialEvaluationStatus
 {
     public string WorkflowId { get; init; } = string.Empty;

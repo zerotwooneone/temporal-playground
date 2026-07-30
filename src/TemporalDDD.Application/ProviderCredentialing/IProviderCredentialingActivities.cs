@@ -8,15 +8,22 @@ namespace TemporalDDD.Application.ProviderCredentialing;
 public interface IProviderCredentialingActivities
 {
     [Activity]
-    Task<MedicalBoardLicenseInfo> FetchMedicalBoardLicenseAsync(LicenseNumber licenseNumber, MedicalBoard medicalBoard);
+    Task<MedicalBoardLicenseInfo> FetchMedicalBoardLicenseAsync(FetchLicenseInput input);
     [Activity]
-    Task<CredentialEvaluationId> EvaluateAndSaveComplianceAsync(ProviderId providerId, MedicalBoardLicenseInfo licenseInfo);
+    Task<CredentialEvaluationId> EvaluateAndSaveComplianceAsync(EvaluateComplianceInput input);
     [Activity]
-    Task RequestManualReviewAsync(CredentialEvaluationId evaluationId);
+    Task RequestManualReviewAsync(RequestManualReviewInput input);
     [Activity]
-    Task ActivateProviderProfileAsync(ProviderProfileId providerId);
+    Task ActivateProviderProfileAsync(ActivateProviderProfileInput input);
 }
 
+// Primitive DTOs for activity parameters
+public record FetchLicenseInput(string LicenseNumber, string MedicalBoard);
+public record EvaluateComplianceInput(uint ProviderId, string LicenseNumber, string MedicalBoard, DateTimeOffset ExpiryDate, bool IsValid, uint ProviderIdResult, string? Notes = null);
+public record RequestManualReviewInput(uint EvaluationId);
+public record ActivateProviderProfileInput(uint ProviderProfileId);
+
+// Domain result types
 public record MedicalBoardLicenseInfo(
     LicenseNumber LicenseNumber,
     MedicalBoard MedicalBoard,

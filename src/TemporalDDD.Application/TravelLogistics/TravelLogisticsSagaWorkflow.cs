@@ -73,20 +73,20 @@ public class TravelLogisticsSagaWorkflow
         {
             // Step 1: Book Flight (External API)
             _flightBookingId = await Workflow.ExecuteActivityAsync(
-                (ITravelLogisticsActivities activities) => activities.BookFlightAsync(flightNumber, origin, destination, departureTimeValue, flightCost),
+                (ITravelLogisticsActivities activities) => activities.BookFlightAsync(new BookFlightInput(flightNumber.Value, origin.Value, destination.Value, departureTimeValue.Value, flightCost.Amount)),
                 new ActivityOptions { StartToCloseTimeout = TimeSpan.FromMinutes(5) }
             );
 
             // Step 2: Book Lodging (External API)
             _lodgingBookingId = await Workflow.ExecuteActivityAsync(
-                (ITravelLogisticsActivities activities) => activities.BookLodgingAsync(hotelName, address, stayPeriod, lodgingCost),
+                (ITravelLogisticsActivities activities) => activities.BookLodgingAsync(new BookLodgingInput(hotelName.Value, address.Street, address.City, address.State, address.ZipCode, stayPeriod.Start, stayPeriod.End, lodgingCost.Amount)),
                 new ActivityOptions { StartToCloseTimeout = TimeSpan.FromMinutes(5) }
             );
 
             // Step 3: Notify Traveler with confirmation
-            var confirmationMessage = $"Your travel is booked! Flight: {flightNumber.Value} on {departureTime:yyyy-MM-dd}, Hotel: {hotelName.Value} from {stayPeriod.Start:yyyy-MM-dd} to {stayPeriod.End:yyyy-MM-dd}";
+            var confirmationMessage = $"Your travel is booked! Flight: {flightNumber.Value} on {departureTimeValue.Value:yyyy-MM-dd}, Hotel: {hotelName.Value} from {stayPeriod.Start:yyyy-MM-dd} to {stayPeriod.End:yyyy-MM-dd}";
             await Workflow.ExecuteActivityAsync(
-                (ITravelLogisticsActivities activities) => activities.NotifyTravelerAsync(travelerEmail, confirmationMessage, isCancellation: false),
+                (ITravelLogisticsActivities activities) => activities.NotifyTravelerAsync(new NotifyTravelerInput(travelerEmail.Value, confirmationMessage, false)),
                 new ActivityOptions { StartToCloseTimeout = TimeSpan.FromMinutes(5) }
             );
         }
@@ -96,7 +96,7 @@ public class TravelLogisticsSagaWorkflow
             if (_flightBookingId is not null)
             {
                 await Workflow.ExecuteActivityAsync(
-                    (ITravelLogisticsActivities activities) => activities.CancelFlightAsync(_flightBookingId),
+                    (ITravelLogisticsActivities activities) => activities.CancelFlightAsync(new CancelFlightInput(_flightBookingId.Value)),
                     new ActivityOptions { StartToCloseTimeout = TimeSpan.FromMinutes(5) }
                 );
             }
@@ -105,7 +105,7 @@ public class TravelLogisticsSagaWorkflow
             if (_lodgingBookingId is not null)
             {
                 await Workflow.ExecuteActivityAsync(
-                    (ITravelLogisticsActivities activities) => activities.CancelLodgingAsync(_lodgingBookingId),
+                    (ITravelLogisticsActivities activities) => activities.CancelLodgingAsync(new CancelLodgingInput(_lodgingBookingId.Value)),
                     new ActivityOptions { StartToCloseTimeout = TimeSpan.FromMinutes(5) }
                 );
             }
@@ -113,7 +113,7 @@ public class TravelLogisticsSagaWorkflow
             // Notify traveler of cancellation
             var cancellationMessage = "Your travel booking could not be completed. All reservations have been cancelled.";
             await Workflow.ExecuteActivityAsync(
-                (ITravelLogisticsActivities activities) => activities.NotifyTravelerAsync(travelerEmail, cancellationMessage, isCancellation: true),
+                (ITravelLogisticsActivities activities) => activities.NotifyTravelerAsync(new NotifyTravelerInput(travelerEmail.Value, cancellationMessage, true)),
                 new ActivityOptions { StartToCloseTimeout = TimeSpan.FromMinutes(5) }
             );
 

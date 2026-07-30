@@ -7,5 +7,8 @@ namespace TemporalDDD.Application.ProviderOnboarding;
 public interface IComplianceActivities
 {
     [Activity]
-    Task<EvaluationStatus> PerformComplianceCheck(LicenseNumber licenseNumber);
+    Task<EvaluationStatus> PerformComplianceCheck(PerformComplianceInput input);
 }
+
+// Primitive DTOs for activity parameters
+public record PerformComplianceInput(string LicenseNumber);

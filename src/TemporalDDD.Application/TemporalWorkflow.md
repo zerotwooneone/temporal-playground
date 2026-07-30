@@ -21,7 +21,7 @@ public async Task RunAsync(uint providerId, string licenseNumber)
 **✅ Good (Single Primitive Input Record with Explicit Assertions):**
 ```csharp
 // 1. Define a strictly primitive Input Record in your Contracts project
-public record CredentialingInput(uint ProviderId, string LicenseNumber, string MedicalBoard, DateTime ExpiryDate);
+public record CredentialingInput(uint ProviderId, string LicenseNumber, string MedicalBoard, DateTimeOffset ExpiryDate);
 
 // 2. The Workflow Signature accepts the single record
 [WorkflowMethod]

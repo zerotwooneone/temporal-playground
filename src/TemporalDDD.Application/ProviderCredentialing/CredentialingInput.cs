@@ -8,5 +8,5 @@ public record CredentialingInput(
     uint ProviderId,
     string LicenseNumber,
     string MedicalBoard,
-    DateTime ExpiryDate
+    DateTimeOffset ExpiryDate
 );

@@ -17,8 +17,15 @@ public class ComplianceActivities : IComplianceActivities
     }
 
     [Activity]
-    public async Task<EvaluationStatus> PerformComplianceCheck(LicenseNumber licenseNumber)
+    public async Task<EvaluationStatus> PerformComplianceCheck(PerformComplianceInput input)
     {
+        // Convert primitive DTO to Domain types with fail-fast validation
+        var licenseNumberResult = LicenseNumber.Create(input.LicenseNumber);
+        if (licenseNumberResult.IsFailure)
+            throw new InvalidOperationException($"Internal Corruption: Invalid LicenseNumber. {licenseNumberResult.Error}");
+
+        var licenseNumber = licenseNumberResult.Value;
+
         // Simulate external API call with chaos (100ms latency, 10% failure rate)
         _chaosHttpClient
             .WithLatency(TimeSpan.FromMilliseconds(100), TimeSpan.FromMilliseconds(100))

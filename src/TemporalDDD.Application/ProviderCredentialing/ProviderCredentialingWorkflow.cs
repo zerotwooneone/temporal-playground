@@ -37,13 +37,21 @@ public class ProviderCredentialingWorkflow
         var licenseExpiryDate = licenseExpiryDateResult.Value;
         // Step 1: Fetch Medical Board License (External API Read)
         var licenseInfo = await Workflow.ExecuteActivityAsync(
-            (IProviderCredentialingActivities activities) => activities.FetchMedicalBoardLicenseAsync(licenseNumber, medicalBoard),
+            (IProviderCredentialingActivities activities) => activities.FetchMedicalBoardLicenseAsync(new FetchLicenseInput(licenseNumber.Value, medicalBoard.Value)),
             new ActivityOptions { StartToCloseTimeout = TimeSpan.FromMinutes(5) }
         );
 
         // Step 2: Evaluate and Save Compliance (DB Write)
         var evaluationId = await Workflow.ExecuteActivityAsync(
-            (IProviderCredentialingActivities activities) => activities.EvaluateAndSaveComplianceAsync(providerId, licenseInfo),
+            (IProviderCredentialingActivities activities) => activities.EvaluateAndSaveComplianceAsync(new EvaluateComplianceInput(
+                providerId.Value,
+                licenseInfo.LicenseNumber.Value,
+                licenseInfo.MedicalBoard.Value,
+                licenseInfo.ExpiryDate.Value,
+                licenseInfo.IsValid,
+                licenseInfo.ProviderId.Value,
+                licenseInfo.Notes
+            )),
             new ActivityOptions { StartToCloseTimeout = TimeSpan.FromMinutes(5) }
         );
 
@@ -51,7 +59,7 @@ public class ProviderCredentialingWorkflow
         if (!licenseInfo.IsValid)
         {
             await Workflow.ExecuteActivityAsync(
-                (IProviderCredentialingActivities activities) => activities.RequestManualReviewAsync(evaluationId),
+                (IProviderCredentialingActivities activities) => activities.RequestManualReviewAsync(new RequestManualReviewInput(evaluationId.Value)),
                 new ActivityOptions { StartToCloseTimeout = TimeSpan.FromMinutes(5) }
             );
 
@@ -67,7 +75,7 @@ public class ProviderCredentialingWorkflow
         // Step 5: Activate Provider Profile (DB Write)
         var providerProfileId = ProviderProfileId.Create(providerId.Value).Value!;
         await Workflow.ExecuteActivityAsync(
-            (IProviderCredentialingActivities activities) => activities.ActivateProviderProfileAsync(providerProfileId),
+            (IProviderCredentialingActivities activities) => activities.ActivateProviderProfileAsync(new ActivateProviderProfileInput(providerProfileId.Value)),
             new ActivityOptions { StartToCloseTimeout = TimeSpan.FromMinutes(5) }
         );
     }

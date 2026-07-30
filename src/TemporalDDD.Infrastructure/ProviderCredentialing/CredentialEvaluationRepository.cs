@@ -53,7 +53,10 @@ public class CredentialEvaluationRepository : ICredentialEvaluationRepository
         var medicalBoard = MedicalBoard.Create(dbo.MedicalBoard).Value ?? throw new InvalidOperationException($"Invalid medical board in database: {dbo.MedicalBoard}");
         var licenseExpiryDate = LicenseExpiryDate.Create(dbo.LicenseExpiryDate).Value ?? throw new InvalidOperationException($"Invalid license expiry date in database: {dbo.LicenseExpiryDate}");
         var complianceNotes = ComplianceNotes.Create(dbo.ComplianceNotes).Value ?? throw new InvalidOperationException($"Invalid compliance notes in database: {dbo.ComplianceNotes}");
-        var status = EvaluationStatus.FromValue(dbo.Status);
+        var statusResult = EvaluationStatus.FromValue(dbo.Status);
+        if (statusResult.IsFailure)
+            throw new InvalidOperationException($"Invalid EvaluationStatus in database: {dbo.Status}. {statusResult.Error}");
+        var status = statusResult.Value;
         var evaluatedAt = DateTimeOffset.FromUnixTimeMilliseconds(dbo.EvaluatedAt);
 
         CredentialEvaluationPublicId? publicId = null;

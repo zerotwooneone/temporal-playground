@@ -16,8 +16,20 @@ public class ProviderActivities : IProviderActivities
     }
 
     [Activity]
-    public async Task ActivateProvider(ProviderId providerId, EvaluationStatus status)
+    public async Task ActivateProvider(ActivateProviderInput input)
     {
+        // Convert primitive DTO to Domain types with fail-fast validation
+        var providerIdResult = ProviderId.Create(input.ProviderId);
+        if (providerIdResult.IsFailure)
+            throw new InvalidOperationException($"Internal Corruption: Invalid ProviderId. {providerIdResult.Error}");
+        
+        var statusResult = EvaluationStatus.FromValue(input.Status);
+        if (statusResult.IsFailure)
+            throw new InvalidOperationException($"Internal Corruption: Invalid EvaluationStatus. {statusResult.Error}");
+
+        var providerId = providerIdResult.Value;
+        var status = statusResult.Value;
+
         var providerProfileId = ProviderProfileId.Create(providerId.Value).Value!;
         var providerProfile = await _providerProfileRepository.GetByIdAsync(providerProfileId);
         

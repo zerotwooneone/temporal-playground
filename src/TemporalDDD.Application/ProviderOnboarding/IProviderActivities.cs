@@ -8,5 +8,8 @@ namespace TemporalDDD.Application.ProviderOnboarding;
 public interface IProviderActivities
 {
     [Activity]
-    Task ActivateProvider(ProviderId providerId, EvaluationStatus status);
+    Task ActivateProvider(ActivateProviderInput input);
 }
+
+// Primitive DTOs for activity parameters
+public record ActivateProviderInput(uint ProviderId, int Status);

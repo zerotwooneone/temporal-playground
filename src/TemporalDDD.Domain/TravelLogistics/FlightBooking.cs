@@ -70,7 +70,7 @@ public sealed class FlightBooking
         Status = BookingStatus.Cancelled;
     }
 
-    public Money CalculateRefundAmount(DateTime cancellationRequestDate)
+    public Money CalculateRefundAmount(DateTimeOffset cancellationRequestDate)
     {
         if (Status != BookingStatus.Confirmed && Status != BookingStatus.Pending)
             return Money.Zero(Cost.Currency);

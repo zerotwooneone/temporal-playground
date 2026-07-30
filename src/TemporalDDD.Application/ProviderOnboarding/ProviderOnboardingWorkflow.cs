@@ -23,13 +23,13 @@ public class ProviderOnboardingWorkflow : IProviderOnboardingWorkflow
         var providerId = providerIdResult.Value;
         var licenseNumber = licenseNumberResult.Value;
         EvaluationStatus status = await Workflow.ExecuteActivityAsync(
-            (IComplianceActivities a) => a.PerformComplianceCheck(licenseNumber),
+            (IComplianceActivities a) => a.PerformComplianceCheck(new PerformComplianceInput(licenseNumber.Value)),
             new() { StartToCloseTimeout = TimeSpan.FromMinutes(5) });
 
         if (status == EvaluationStatus.Approved)
         {
             await Workflow.ExecuteActivityAsync(
-                (IProviderActivities a) => a.ActivateProvider(providerId, status),
+                (IProviderActivities a) => a.ActivateProvider(new ActivateProviderInput(providerId.Value, (int)status)),
                 new() { StartToCloseTimeout = TimeSpan.FromMinutes(5) });
         }
     }

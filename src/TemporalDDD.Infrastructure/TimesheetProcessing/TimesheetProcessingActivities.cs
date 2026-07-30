@@ -20,8 +20,14 @@ public class TimesheetProcessingActivities : ITimesheetProcessingActivities
     }
 
     [Activity]
-    public async Task ValidateTimesheetRulesAsync(TimesheetId timesheetId)
+    public async Task ValidateTimesheetRulesAsync(ValidateTimesheetInput input)
     {
+        // Convert primitive DTO to Domain types with fail-fast validation
+        var timesheetIdResult = TimesheetId.Create(input.TimesheetId);
+        if (timesheetIdResult.IsFailure)
+            throw new InvalidOperationException($"Internal Corruption: Invalid TimesheetId. {timesheetIdResult.Error}");
+
+        var timesheetId = timesheetIdResult.Value;
         var timesheet = await _timesheetRepository.GetByIdAsync(timesheetId);
 
         if (timesheet == null)
@@ -49,8 +55,14 @@ public class TimesheetProcessingActivities : ITimesheetProcessingActivities
     }
 
     [Activity]
-    public async Task<PayrollCalculationResult> CalculatePayrollAndTaxesAsync(TimesheetId timesheetId)
+    public async Task<PayrollCalculationResult> CalculatePayrollAndTaxesAsync(CalculatePayrollInput input)
     {
+        // Convert primitive DTO to Domain types with fail-fast validation
+        var timesheetIdResult = TimesheetId.Create(input.TimesheetId);
+        if (timesheetIdResult.IsFailure)
+            throw new InvalidOperationException($"Internal Corruption: Invalid TimesheetId. {timesheetIdResult.Error}");
+
+        var timesheetId = timesheetIdResult.Value;
         var timesheet = await _timesheetRepository.GetByIdAsync(timesheetId);
 
         if (timesheet == null)
@@ -73,27 +85,46 @@ public class TimesheetProcessingActivities : ITimesheetProcessingActivities
     }
 
     [Activity]
-    public async Task<string> SubmitBankTransferAsync(TimesheetId timesheetId, string idempotencyKey)
+    public async Task<string> SubmitBankTransferAsync(SubmitBankTransferInput input)
     {
+        // Convert primitive DTO to Domain types with fail-fast validation
+        var timesheetIdResult = TimesheetId.Create(input.TimesheetId);
+        if (timesheetIdResult.IsFailure)
+            throw new InvalidOperationException($"Internal Corruption: Invalid TimesheetId. {timesheetIdResult.Error}");
+
+        var timesheetId = timesheetIdResult.Value;
+
         // Simulate external API call to payment gateway with chaos (100ms latency, 10% failure rate)
         _chaosHttpClient
             .WithLatency(TimeSpan.FromMilliseconds(100), TimeSpan.FromMilliseconds(100))
             .WithFailureRate(0.10, System.Net.HttpStatusCode.InternalServerError);
 
-        var response = await _chaosHttpClient.PostAsJsonAsync("https://payment-gateway.example.com/api/transfer", new { TimesheetId = timesheetId.Value, IdempotencyKey = idempotencyKey });
+        var response = await _chaosHttpClient.PostAsJsonAsync("https://payment-gateway.example.com/api/transfer", new { TimesheetId = timesheetId.Value, IdempotencyKey = input.IdempotencyKey });
 
         // The idempotencyKey ensures that duplicate requests don't result in duplicate payments
-        var paymentReference = $"PAY-{DateTime.UtcNow:yyyyMMddHHmmss}-{idempotencyKey.Substring(0, 8)}";
+        var paymentReference = $"PAY-{DateTime.UtcNow:yyyyMMddHHmmss}-{input.IdempotencyKey.Substring(0, 8)}";
 
-        Console.WriteLine($"[BankTransfer] Submitted transfer for timesheet {timesheetId.Value} with idempotency key: {idempotencyKey}");
+        Console.WriteLine($"[BankTransfer] Submitted transfer for timesheet {timesheetId.Value} with idempotency key: {input.IdempotencyKey}");
         Console.WriteLine($"[BankTransfer] Payment reference: {paymentReference}");
 
         return paymentReference;
     }
 
     [Activity]
-    public async Task<string> GenerateAndSendInvoiceAsync(TimesheetId timesheetId, Money facilityBillRate)
+    public async Task<string> GenerateAndSendInvoiceAsync(GenerateInvoiceInput input)
     {
+        // Convert primitive DTO to Domain types with fail-fast validation
+        var timesheetIdResult = TimesheetId.Create(input.TimesheetId);
+        if (timesheetIdResult.IsFailure)
+            throw new InvalidOperationException($"Internal Corruption: Invalid TimesheetId. {timesheetIdResult.Error}");
+        
+        var facilityBillRateResult = Money.Create(input.FacilityBillRate);
+        if (facilityBillRateResult.IsFailure)
+            throw new InvalidOperationException($"Internal Corruption: Invalid FacilityBillRate. {facilityBillRateResult.Error}");
+
+        var timesheetId = timesheetIdResult.Value;
+        var facilityBillRate = facilityBillRateResult.Value;
+
         var timesheet = await _timesheetRepository.GetByIdAsync(timesheetId);
 
         if (timesheet == null)

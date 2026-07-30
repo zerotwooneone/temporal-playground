@@ -142,7 +142,7 @@ Value objects are immutable, validated, and identified by their attributes:
 - `Specialty` - Smart enum with predefined values
 - `FlightNumber` - IATA format validation
 - `AirportCode` - 3 uppercase letter validation
-- `FlightDepartureTime` - UTC DateTime enforcement
+- `FlightDepartureTime` - UTC DateTimeOffset enforcement
 - `Address` - Street, City, State, ZipCode validation
 - `MatchScore` - Range validation 0.0 to 100.0
 - `AggregateVersion` - Version tracking with increment

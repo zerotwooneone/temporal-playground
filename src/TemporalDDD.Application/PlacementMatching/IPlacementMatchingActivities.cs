@@ -8,11 +8,17 @@ namespace TemporalDDD.Application.PlacementMatching;
 public interface IPlacementMatchingActivities
 {
     [Activity]
-    Task<MatchScore> CalculateMatchScoreAsync(ProviderId providerId, FacilityId facilityId, PositionId positionId);
+    Task<MatchScore> CalculateMatchScoreAsync(CalculateMatchScoreInput input);
     [Activity]
-    Task<AssignmentId> ProposeAssignmentAsync(ProviderId providerId, FacilityId facilityId, PositionId positionId, MatchScore matchScore);
+    Task<AssignmentId> ProposeAssignmentAsync(ProposeAssignmentInput input);
     [Activity]
-    Task CommitAssignmentAsync(AssignmentId assignmentId, AggregateVersion expectedVersion);
+    Task CommitAssignmentAsync(CommitAssignmentInput input);
     [Activity]
-    Task RevokeOfferAsync(AssignmentId assignmentId);
+    Task RevokeOfferAsync(RevokeOfferInput input);
 }
+
+// Primitive DTOs for activity parameters
+public record CalculateMatchScoreInput(uint ProviderId, uint FacilityId, uint PositionId);
+public record ProposeAssignmentInput(uint ProviderId, uint FacilityId, uint PositionId, decimal MatchScore);
+public record CommitAssignmentInput(uint AssignmentId, int ExpectedVersion);
+public record RevokeOfferInput(uint AssignmentId);

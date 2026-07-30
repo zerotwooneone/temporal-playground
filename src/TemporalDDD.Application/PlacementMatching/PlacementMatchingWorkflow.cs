@@ -35,13 +35,13 @@ public class PlacementMatchingWorkflow
         var positionId = positionIdResult.Value;
         // Step 1: Calculate Match Score
         var matchScore = await Workflow.ExecuteActivityAsync(
-            (IPlacementMatchingActivities activities) => activities.CalculateMatchScoreAsync(providerId, facilityId, positionId),
+            (IPlacementMatchingActivities activities) => activities.CalculateMatchScoreAsync(new CalculateMatchScoreInput(providerId.Value, facilityId.Value, positionId.Value)),
             new ActivityOptions { StartToCloseTimeout = TimeSpan.FromMinutes(5) }
         );
 
         // Step 2: Propose Assignment
         _assignmentId = await Workflow.ExecuteActivityAsync(
-            (IPlacementMatchingActivities activities) => activities.ProposeAssignmentAsync(providerId, facilityId, positionId, matchScore),
+            (IPlacementMatchingActivities activities) => activities.ProposeAssignmentAsync(new ProposeAssignmentInput(providerId.Value, facilityId.Value, positionId.Value, matchScore.Value)),
             new ActivityOptions { StartToCloseTimeout = TimeSpan.FromMinutes(5) }
         );
 
@@ -57,7 +57,7 @@ public class PlacementMatchingWorkflow
         {
             // Step 4a: Commit Assignment with OCC (Optimistic Concurrency Control)
             await Workflow.ExecuteActivityAsync(
-                (IPlacementMatchingActivities activities) => activities.CommitAssignmentAsync(_assignmentId, AggregateVersion.Create(1).Value!),
+                (IPlacementMatchingActivities activities) => activities.CommitAssignmentAsync(new CommitAssignmentInput(_assignmentId.Value, 1)),
                 new ActivityOptions { StartToCloseTimeout = TimeSpan.FromMinutes(5) }
             );
         }
@@ -65,7 +65,7 @@ public class PlacementMatchingWorkflow
         {
             // Step 4b: Revoke Offer
             await Workflow.ExecuteActivityAsync(
-                (IPlacementMatchingActivities activities) => activities.RevokeOfferAsync(_assignmentId),
+                (IPlacementMatchingActivities activities) => activities.RevokeOfferAsync(new RevokeOfferInput(_assignmentId.Value)),
                 new ActivityOptions { StartToCloseTimeout = TimeSpan.FromMinutes(5) }
             );
         }

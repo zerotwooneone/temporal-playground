@@ -1,3 +1,5 @@
+using TemporalDDD.Domain.SharedKernel;
+
 namespace TemporalDDD.Domain.ProviderCredentialing;
 
 public sealed record EvaluationStatus
@@ -18,10 +20,12 @@ public sealed record EvaluationStatus
 
     private static readonly EvaluationStatus[] AllStatuses = { Pending, Approved, Rejected, ManualReviewRequired };
 
-    public static EvaluationStatus FromValue(int value)
+    public static Result<EvaluationStatus> FromValue(int value)
     {
-        return AllStatuses.FirstOrDefault(s => s.Value == value) 
-            ?? throw new ArgumentException($"Invalid EvaluationStatus value: {value}", nameof(value));
+        var status = AllStatuses.FirstOrDefault(s => s.Value == value);
+        if (status == null)
+            return Result<EvaluationStatus>.Failure($"Invalid EvaluationStatus value: {value}");
+        return Result<EvaluationStatus>.Success(status);
     }
 
     public static implicit operator int(EvaluationStatus status) => status.Value;
