@@ -20,7 +20,26 @@ public sealed class Timesheet
     public PaymentReference? PaymentReference { get; private set; }
     public string? RejectionReason { get; private set; }
 
-    private Timesheet() { }
+    internal Timesheet() { }
+
+    // Internal constructor for infrastructure rehydration
+    internal Timesheet(TimesheetId id, TimesheetPublicId? publicId, ProviderId providerId, DateRange period, Hours totalHours, HourlyRate hourlyRate, Money grossPay, Money taxAmount, Money netPay, TimesheetStatus status, DateTimeOffset submittedAt, DateTimeOffset? processedAt, PaymentReference? paymentReference, string? rejectionReason)
+    {
+        Id = id;
+        PublicId = publicId;
+        ProviderId = providerId;
+        Period = period;
+        TotalHours = totalHours;
+        HourlyRate = hourlyRate;
+        GrossPay = grossPay;
+        TaxAmount = taxAmount;
+        NetPay = netPay;
+        Status = status;
+        SubmittedAt = submittedAt;
+        ProcessedAt = processedAt;
+        PaymentReference = paymentReference;
+        RejectionReason = rejectionReason;
+    }
 
     // Factory for creating new timesheet (ID will be set by database)
     public static Timesheet Create(ProviderId providerId, DateRange period, Hours totalHours, HourlyRate hourlyRate)

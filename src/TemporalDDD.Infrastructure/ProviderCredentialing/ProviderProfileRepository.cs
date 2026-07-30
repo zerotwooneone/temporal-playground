@@ -63,24 +63,19 @@ public class ProviderProfileRepository : IProviderProfileRepository
             publicId = ProviderPublicId.FromString(dbo.PublicId);
         }
 
-        // Use reflection to call private constructor for rehydration
-        var profile = (ProviderProfile)Activator.CreateInstance(
-            typeof(ProviderProfile),
-            nonPublic: true)!;
-        
-        // Set properties via reflection (infrastructure concern)
-        typeof(ProviderProfile).GetProperty(nameof(ProviderProfile.Id))?.SetValue(profile, ProviderProfileId.Create(dbo.Id).Value ?? throw new InvalidOperationException($"Invalid provider profile ID in database: {dbo.Id}"));
-        typeof(ProviderProfile).GetProperty(nameof(ProviderProfile.PublicId))?.SetValue(profile, publicId);
-        typeof(ProviderProfile).GetProperty(nameof(ProviderProfile.FirstName))?.SetValue(profile, firstName);
-        typeof(ProviderProfile).GetProperty(nameof(ProviderProfile.LastName))?.SetValue(profile, lastName);
-        typeof(ProviderProfile).GetProperty(nameof(ProviderProfile.Email))?.SetValue(profile, email);
-        typeof(ProviderProfile).GetProperty(nameof(ProviderProfile.Specialty))?.SetValue(profile, specialty);
-        typeof(ProviderProfile).GetProperty(nameof(ProviderProfile.IsActive))?.SetValue(profile, dbo.IsActive);
-        typeof(ProviderProfile).GetProperty(nameof(ProviderProfile.ActivatedAt))?.SetValue(profile, activatedAt);
-        typeof(ProviderProfile).GetProperty(nameof(ProviderProfile.CreatedAt))?.SetValue(profile, createdAt);
-        typeof(ProviderProfile).GetProperty(nameof(ProviderProfile.Version))?.SetValue(profile, version);
-
-        return profile;
+        // Use internal constructor for rehydration (infrastructure concern)
+        return new ProviderProfile(
+            id: ProviderProfileId.Create(dbo.Id).Value ?? throw new InvalidOperationException($"Invalid provider profile ID in database: {dbo.Id}"),
+            publicId: publicId,
+            firstName: firstName,
+            lastName: lastName,
+            email: email,
+            specialty: specialty,
+            isActive: dbo.IsActive,
+            activatedAt: activatedAt,
+            createdAt: createdAt,
+            version: version
+        );
     }
 
     private ProviderProfileDbo MapToDbo(ProviderProfile profile)

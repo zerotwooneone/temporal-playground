@@ -14,7 +14,20 @@ public sealed class LodgingBooking
     public BookingStatus Status { get; private set; }
     public DateTimeOffset BookedAt { get; private set; }
 
-    private LodgingBooking() { }
+    internal LodgingBooking() { }
+
+    // Internal constructor for infrastructure rehydration
+    internal LodgingBooking(LodgingBookingId id, LodgingBookingPublicId? publicId, HotelName hotelName, Address address, DateRange stayPeriod, Money cost, BookingStatus status, DateTimeOffset bookedAt)
+    {
+        Id = id;
+        PublicId = publicId;
+        HotelName = hotelName;
+        Address = address;
+        StayPeriod = stayPeriod;
+        Cost = cost;
+        Status = status;
+        BookedAt = bookedAt;
+    }
 
     // Factory for creating new booking (ID will be set by database)
     public static LodgingBooking Create(HotelName hotelName, Address address, DateRange stayPeriod, Money cost)

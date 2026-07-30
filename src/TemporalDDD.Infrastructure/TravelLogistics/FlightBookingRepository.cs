@@ -62,23 +62,18 @@ public class FlightBookingRepository : IFlightBookingRepository
             publicId = FlightBookingPublicId.FromString(dbo.PublicId);
         }
 
-        // Use reflection to call private constructor for rehydration
-        var booking = (FlightBooking)Activator.CreateInstance(
-            typeof(FlightBooking),
-            nonPublic: true)!;
-        
-        // Set properties via reflection (infrastructure concern)
-        typeof(FlightBooking).GetProperty(nameof(FlightBooking.Id))?.SetValue(booking, FlightBookingId.Create(dbo.Id).Value ?? throw new InvalidOperationException($"Invalid flight booking ID in database: {dbo.Id}"));
-        typeof(FlightBooking).GetProperty(nameof(FlightBooking.PublicId))?.SetValue(booking, publicId);
-        typeof(FlightBooking).GetProperty(nameof(FlightBooking.FlightNumber))?.SetValue(booking, flightNumber);
-        typeof(FlightBooking).GetProperty(nameof(FlightBooking.Origin))?.SetValue(booking, origin);
-        typeof(FlightBooking).GetProperty(nameof(FlightBooking.Destination))?.SetValue(booking, destination);
-        typeof(FlightBooking).GetProperty(nameof(FlightBooking.DepartureTime))?.SetValue(booking, departureTime);
-        typeof(FlightBooking).GetProperty(nameof(FlightBooking.Cost))?.SetValue(booking, cost);
-        typeof(FlightBooking).GetProperty(nameof(FlightBooking.Status))?.SetValue(booking, status);
-        typeof(FlightBooking).GetProperty(nameof(FlightBooking.BookedAt))?.SetValue(booking, bookedAt);
-
-        return booking;
+        // Use internal constructor for rehydration (infrastructure concern)
+        return new FlightBooking(
+            id: FlightBookingId.Create(dbo.Id).Value ?? throw new InvalidOperationException($"Invalid flight booking ID in database: {dbo.Id}"),
+            publicId: publicId,
+            flightNumber: flightNumber,
+            origin: origin,
+            destination: destination,
+            departureTime: departureTime,
+            cost: cost,
+            status: status,
+            bookedAt: bookedAt
+        );
     }
 
     private FlightBookingDbo MapToDbo(FlightBooking booking)

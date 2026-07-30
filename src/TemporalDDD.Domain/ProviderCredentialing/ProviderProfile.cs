@@ -17,7 +17,22 @@ public sealed class ProviderProfile
     public DateTimeOffset CreatedAt { get; private set; }
     public AggregateVersion Version { get; private set; }
 
-    private ProviderProfile() { }
+    internal ProviderProfile() { }
+
+    // Internal constructor for infrastructure rehydration
+    internal ProviderProfile(ProviderProfileId id, ProviderPublicId? publicId, PersonName firstName, PersonName lastName, Email email, Specialty specialty, bool isActive, DateTimeOffset? activatedAt, DateTimeOffset createdAt, AggregateVersion version)
+    {
+        Id = id;
+        PublicId = publicId;
+        FirstName = firstName;
+        LastName = lastName;
+        Email = email;
+        Specialty = specialty;
+        IsActive = isActive;
+        ActivatedAt = activatedAt;
+        CreatedAt = createdAt;
+        Version = version;
+    }
 
     // Factory for creating new profile (ID will be set by database)
     public static ProviderProfile Create(PersonName firstName, PersonName lastName, Email email, Specialty specialty)

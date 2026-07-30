@@ -63,22 +63,17 @@ public class LodgingBookingRepository : ILodgingBookingRepository
             publicId = LodgingBookingPublicId.FromString(dbo.PublicId);
         }
 
-        // Use reflection to call private constructor for rehydration
-        var booking = (LodgingBooking)Activator.CreateInstance(
-            typeof(LodgingBooking),
-            nonPublic: true)!;
-        
-        // Set properties via reflection (infrastructure concern)
-        typeof(LodgingBooking).GetProperty(nameof(LodgingBooking.Id))?.SetValue(booking, LodgingBookingId.Create(dbo.Id).Value ?? throw new InvalidOperationException($"Invalid lodging booking ID in database: {dbo.Id}"));
-        typeof(LodgingBooking).GetProperty(nameof(LodgingBooking.PublicId))?.SetValue(booking, publicId);
-        typeof(LodgingBooking).GetProperty(nameof(LodgingBooking.HotelName))?.SetValue(booking, hotelName);
-        typeof(LodgingBooking).GetProperty(nameof(LodgingBooking.Address))?.SetValue(booking, address);
-        typeof(LodgingBooking).GetProperty(nameof(LodgingBooking.StayPeriod))?.SetValue(booking, stayPeriod);
-        typeof(LodgingBooking).GetProperty(nameof(LodgingBooking.Cost))?.SetValue(booking, cost);
-        typeof(LodgingBooking).GetProperty(nameof(LodgingBooking.Status))?.SetValue(booking, status);
-        typeof(LodgingBooking).GetProperty(nameof(LodgingBooking.BookedAt))?.SetValue(booking, bookedAt);
-
-        return booking;
+        // Use internal constructor for rehydration (infrastructure concern)
+        return new LodgingBooking(
+            id: LodgingBookingId.Create(dbo.Id).Value ?? throw new InvalidOperationException($"Invalid lodging booking ID in database: {dbo.Id}"),
+            publicId: publicId,
+            hotelName: hotelName,
+            address: address,
+            stayPeriod: stayPeriod,
+            cost: cost,
+            status: status,
+            bookedAt: bookedAt
+        );
     }
 
     private LodgingBookingDbo MapToDbo(LodgingBooking booking)

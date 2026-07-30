@@ -15,7 +15,21 @@ public sealed class FlightBooking
     public BookingStatus Status { get; private set; }
     public DateTimeOffset BookedAt { get; private set; }
 
-    private FlightBooking() { }
+    internal FlightBooking() { }
+
+    // Internal constructor for infrastructure rehydration
+    internal FlightBooking(FlightBookingId id, FlightBookingPublicId? publicId, FlightNumber flightNumber, AirportCode origin, AirportCode destination, FlightDepartureTime departureTime, Money cost, BookingStatus status, DateTimeOffset bookedAt)
+    {
+        Id = id;
+        PublicId = publicId;
+        FlightNumber = flightNumber;
+        Origin = origin;
+        Destination = destination;
+        DepartureTime = departureTime;
+        Cost = cost;
+        Status = status;
+        BookedAt = bookedAt;
+    }
 
     // Factory for creating new booking (ID will be set by database)
     public static FlightBooking Create(FlightNumber flightNumber, AirportCode origin, AirportCode destination, FlightDepartureTime departureTime, Money cost)

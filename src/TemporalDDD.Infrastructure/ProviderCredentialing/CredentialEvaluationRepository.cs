@@ -62,24 +62,19 @@ public class CredentialEvaluationRepository : ICredentialEvaluationRepository
             publicId = CredentialEvaluationPublicId.FromString(dbo.PublicId);
         }
 
-        // Use reflection to call private constructor for rehydration
-        var evaluation = (CredentialEvaluation)Activator.CreateInstance(
-            typeof(CredentialEvaluation),
-            nonPublic: true)!;
-        
-        // Set properties via reflection (infrastructure concern)
-        typeof(CredentialEvaluation).GetProperty(nameof(CredentialEvaluation.Id))?.SetValue(evaluation, CredentialEvaluationId.Create(dbo.Id).Value ?? throw new InvalidOperationException($"Invalid credential evaluation ID in database: {dbo.Id}"));
-        typeof(CredentialEvaluation).GetProperty(nameof(CredentialEvaluation.PublicId))?.SetValue(evaluation, publicId);
-        typeof(CredentialEvaluation).GetProperty(nameof(CredentialEvaluation.ProviderId))?.SetValue(evaluation, providerId);
-        typeof(CredentialEvaluation).GetProperty(nameof(CredentialEvaluation.LicenseNumber))?.SetValue(evaluation, licenseNumber);
-        typeof(CredentialEvaluation).GetProperty(nameof(CredentialEvaluation.MedicalBoard))?.SetValue(evaluation, medicalBoard);
-        typeof(CredentialEvaluation).GetProperty(nameof(CredentialEvaluation.LicenseExpiryDate))?.SetValue(evaluation, licenseExpiryDate);
-        typeof(CredentialEvaluation).GetProperty(nameof(CredentialEvaluation.IsCompliant))?.SetValue(evaluation, dbo.IsCompliant);
-        typeof(CredentialEvaluation).GetProperty(nameof(CredentialEvaluation.ComplianceNotes))?.SetValue(evaluation, complianceNotes);
-        typeof(CredentialEvaluation).GetProperty(nameof(CredentialEvaluation.EvaluatedAt))?.SetValue(evaluation, evaluatedAt);
-        typeof(CredentialEvaluation).GetProperty(nameof(CredentialEvaluation.Status))?.SetValue(evaluation, status);
-
-        return evaluation;
+        // Use internal constructor for rehydration (infrastructure concern)
+        return new CredentialEvaluation(
+            id: CredentialEvaluationId.Create(dbo.Id).Value ?? throw new InvalidOperationException($"Invalid credential evaluation ID in database: {dbo.Id}"),
+            publicId: publicId,
+            providerId: providerId,
+            licenseNumber: licenseNumber,
+            medicalBoard: medicalBoard,
+            licenseExpiryDate: licenseExpiryDate,
+            isCompliant: dbo.IsCompliant,
+            complianceNotes: complianceNotes,
+            evaluatedAt: evaluatedAt,
+            status: status
+        );
     }
 
     private CredentialEvaluationDbo MapToDbo(CredentialEvaluation evaluation)

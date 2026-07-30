@@ -63,24 +63,19 @@ public class AssignmentRepository : IAssignmentRepository
             publicId = AssignmentPublicId.FromString(dbo.PublicId);
         }
 
-        // Use reflection to call private constructor for rehydration
-        var assignment = (Assignment)Activator.CreateInstance(
-            typeof(Assignment),
-            nonPublic: true)!;
-        
-        // Set properties via reflection (infrastructure concern)
-        typeof(Assignment).GetProperty(nameof(Assignment.Id))?.SetValue(assignment, AssignmentId.Create(dbo.Id).Value ?? throw new InvalidOperationException($"Invalid assignment ID in database: {dbo.Id}"));
-        typeof(Assignment).GetProperty(nameof(Assignment.PublicId))?.SetValue(assignment, publicId);
-        typeof(Assignment).GetProperty(nameof(Assignment.ProviderId))?.SetValue(assignment, providerId);
-        typeof(Assignment).GetProperty(nameof(Assignment.FacilityId))?.SetValue(assignment, facilityId);
-        typeof(Assignment).GetProperty(nameof(Assignment.PositionId))?.SetValue(assignment, positionId);
-        typeof(Assignment).GetProperty(nameof(Assignment.MatchScore))?.SetValue(assignment, matchScore);
-        typeof(Assignment).GetProperty(nameof(Assignment.Status))?.SetValue(assignment, status);
-        typeof(Assignment).GetProperty(nameof(Assignment.ProposedAt))?.SetValue(assignment, proposedAt);
-        typeof(Assignment).GetProperty(nameof(Assignment.AcceptedAt))?.SetValue(assignment, acceptedAt);
-        typeof(Assignment).GetProperty(nameof(Assignment.Version))?.SetValue(assignment, version);
-
-        return assignment;
+        // Use internal constructor for rehydration (infrastructure concern)
+        return new Assignment(
+            id: AssignmentId.Create(dbo.Id).Value ?? throw new InvalidOperationException($"Invalid assignment ID in database: {dbo.Id}"),
+            publicId: publicId,
+            providerId: providerId,
+            facilityId: facilityId,
+            positionId: positionId,
+            matchScore: matchScore,
+            status: status,
+            proposedAt: proposedAt,
+            acceptedAt: acceptedAt,
+            version: version
+        );
     }
 
     private AssignmentDbo MapToDbo(Assignment assignment)

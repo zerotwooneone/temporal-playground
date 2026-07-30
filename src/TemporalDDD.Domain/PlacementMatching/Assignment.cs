@@ -16,7 +16,22 @@ public sealed class Assignment
     public DateTimeOffset? AcceptedAt { get; private set; }
     public AggregateVersion Version { get; private set; }
 
-    private Assignment() { }
+    internal Assignment() { }
+
+    // Internal constructor for infrastructure rehydration
+    internal Assignment(AssignmentId id, AssignmentPublicId? publicId, ProviderId providerId, FacilityId facilityId, PositionId positionId, MatchScore matchScore, AssignmentStatus status, DateTimeOffset proposedAt, DateTimeOffset? acceptedAt, AggregateVersion version)
+    {
+        Id = id;
+        PublicId = publicId;
+        ProviderId = providerId;
+        FacilityId = facilityId;
+        PositionId = positionId;
+        MatchScore = matchScore;
+        Status = status;
+        ProposedAt = proposedAt;
+        AcceptedAt = acceptedAt;
+        Version = version;
+    }
 
     // Factory for creating new assignment (ID will be set by database)
     public static Assignment Create(ProviderId providerId, FacilityId facilityId, PositionId positionId, MatchScore matchScore)

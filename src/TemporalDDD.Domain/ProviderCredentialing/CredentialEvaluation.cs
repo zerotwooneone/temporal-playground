@@ -16,7 +16,22 @@ public sealed class CredentialEvaluation
     public DateTimeOffset EvaluatedAt { get; private set; }
     public EvaluationStatus Status { get; private set; }
 
-    private CredentialEvaluation() { }
+    internal CredentialEvaluation() { }
+
+    // Internal constructor for infrastructure rehydration
+    internal CredentialEvaluation(CredentialEvaluationId id, CredentialEvaluationPublicId? publicId, ProviderId providerId, LicenseNumber licenseNumber, MedicalBoard medicalBoard, LicenseExpiryDate licenseExpiryDate, bool isCompliant, ComplianceNotes complianceNotes, DateTimeOffset evaluatedAt, EvaluationStatus status)
+    {
+        Id = id;
+        PublicId = publicId;
+        ProviderId = providerId;
+        LicenseNumber = licenseNumber;
+        MedicalBoard = medicalBoard;
+        LicenseExpiryDate = licenseExpiryDate;
+        IsCompliant = isCompliant;
+        ComplianceNotes = complianceNotes;
+        EvaluatedAt = evaluatedAt;
+        Status = status;
+    }
 
     // Factory for creating new evaluation (ID will be set by database)
     public static CredentialEvaluation Create(ProviderId providerId, LicenseNumber licenseNumber, MedicalBoard medicalBoard, LicenseExpiryDate licenseExpiryDate)

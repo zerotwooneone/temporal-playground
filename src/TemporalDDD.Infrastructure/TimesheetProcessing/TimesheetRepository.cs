@@ -73,28 +73,23 @@ public class TimesheetRepository : ITimesheetRepository
             publicId = TimesheetPublicId.FromString(dbo.PublicId);
         }
 
-        // Use reflection to call private constructor for rehydration
-        var timesheet = (Timesheet)Activator.CreateInstance(
-            typeof(Timesheet),
-            nonPublic: true)!;
-        
-        // Set properties via reflection (infrastructure concern)
-        typeof(Timesheet).GetProperty(nameof(Timesheet.Id))?.SetValue(timesheet, TimesheetId.Create(dbo.Id).Value ?? throw new InvalidOperationException($"Invalid timesheet ID in database: {dbo.Id}"));
-        typeof(Timesheet).GetProperty(nameof(Timesheet.PublicId))?.SetValue(timesheet, publicId);
-        typeof(Timesheet).GetProperty(nameof(Timesheet.ProviderId))?.SetValue(timesheet, providerId);
-        typeof(Timesheet).GetProperty(nameof(Timesheet.Period))?.SetValue(timesheet, period);
-        typeof(Timesheet).GetProperty(nameof(Timesheet.TotalHours))?.SetValue(timesheet, totalHours);
-        typeof(Timesheet).GetProperty(nameof(Timesheet.HourlyRate))?.SetValue(timesheet, hourlyRate);
-        typeof(Timesheet).GetProperty(nameof(Timesheet.GrossPay))?.SetValue(timesheet, grossPay);
-        typeof(Timesheet).GetProperty(nameof(Timesheet.TaxAmount))?.SetValue(timesheet, taxAmount);
-        typeof(Timesheet).GetProperty(nameof(Timesheet.NetPay))?.SetValue(timesheet, netPay);
-        typeof(Timesheet).GetProperty(nameof(Timesheet.Status))?.SetValue(timesheet, status);
-        typeof(Timesheet).GetProperty(nameof(Timesheet.SubmittedAt))?.SetValue(timesheet, submittedAt);
-        typeof(Timesheet).GetProperty(nameof(Timesheet.ProcessedAt))?.SetValue(timesheet, processedAt);
-        typeof(Timesheet).GetProperty(nameof(Timesheet.PaymentReference))?.SetValue(timesheet, paymentReference);
-        typeof(Timesheet).GetProperty(nameof(Timesheet.RejectionReason))?.SetValue(timesheet, dbo.RejectionReason);
-
-        return timesheet;
+        // Use internal constructor for rehydration (infrastructure concern)
+        return new Timesheet(
+            id: TimesheetId.Create(dbo.Id).Value ?? throw new InvalidOperationException($"Invalid timesheet ID in database: {dbo.Id}"),
+            publicId: publicId,
+            providerId: providerId,
+            period: period,
+            totalHours: totalHours,
+            hourlyRate: hourlyRate,
+            grossPay: grossPay,
+            taxAmount: taxAmount,
+            netPay: netPay,
+            status: status,
+            submittedAt: submittedAt,
+            processedAt: processedAt,
+            paymentReference: paymentReference,
+            rejectionReason: dbo.RejectionReason
+        );
     }
 
     private TimesheetDbo MapToDbo(Timesheet timesheet)
