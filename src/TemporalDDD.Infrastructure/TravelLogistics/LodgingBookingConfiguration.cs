@@ -1,15 +1,12 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
-using TemporalDDD.Domain.SharedKernel;
-using TemporalDDD.Domain.TravelLogistics;
-using TemporalDDD.Domain.TravelLogistics.ValueObjects;
-using TemporalDDD.Infrastructure.Persistence;
+using TemporalDDD.Infrastructure.TravelLogistics;
 
 namespace TemporalDDD.Infrastructure.TravelLogistics;
 
-public class LodgingBookingConfiguration : IEntityTypeConfiguration<LodgingBooking>
+public class LodgingBookingConfiguration : IEntityTypeConfiguration<LodgingBookingDbo>
 {
-    public void Configure(EntityTypeBuilder<LodgingBooking> builder)
+    public void Configure(EntityTypeBuilder<LodgingBookingDbo> builder)
     {
         builder.ToTable("LodgingBookings");
 
@@ -20,69 +17,35 @@ public class LodgingBookingConfiguration : IEntityTypeConfiguration<LodgingBooki
 
         // PublicId - stored as TEXT with Unique Index
         builder.Property(x => x.PublicId)
-            .HasConversion(
-                p => p.ToString(),
-                s => LodgingBookingPublicId.FromString(s))
             .IsRequired(false);
 
         builder.HasIndex(x => x.PublicId)
             .IsUnique()
             .HasFilter("PublicId IS NOT NULL");
 
-        // Value Objects - flattened
-        builder.Property(x => x.HotelName)
-            .HasConversion(
-                hn => hn.Value,
-                s => HotelName.Create(s));
+        // Value Objects - flattened as primitives
+        builder.Property(x => x.HotelName);
 
-        // Address Value Object - flattened using ComplexProperty
-        builder.ComplexProperty(x => x.Address, a =>
-        {
-            a.Property(p => p.Street)
-                .HasColumnName("AddressStreet");
+        // Address Value Object - flattened as primitives
+        builder.Property(x => x.AddressStreet);
+        builder.Property(x => x.AddressCity);
+        builder.Property(x => x.AddressState);
+        builder.Property(x => x.AddressZipCode);
 
-            a.Property(p => p.City)
-                .HasColumnName("AddressCity");
+        // DateRange Value Object - flattened as primitives
+        builder.Property(x => x.StayPeriodStartUtc);
+        builder.Property(x => x.StayPeriodEndUtc);
 
-            a.Property(p => p.State)
-                .HasColumnName("AddressState");
-
-            a.Property(p => p.ZipCode)
-                .HasColumnName("AddressZipCode");
-        });
-
-        // DateRange Value Object - flattened using ComplexProperty
-        builder.ComplexProperty(x => x.StayPeriod, sp =>
-        {
-            sp.Property(p => p.Start)
-                .HasColumnName("StayPeriodStartUtc")
-                .HasConversion(ValueConverters.DateTimeToUnixMillisecondsConverter);
-
-            sp.Property(p => p.End)
-                .HasColumnName("StayPeriodEndUtc")
-                .HasConversion(ValueConverters.DateTimeToUnixMillisecondsConverter);
-        });
-
-        // Money Value Object - flattened using ComplexProperty
-        builder.ComplexProperty(x => x.Cost, c =>
-        {
-            c.Property(p => p.Amount)
-                .HasColumnName("CostAmount")
-                .HasColumnType("TEXT");
-
-            c.Property(p => p.Currency)
-                .HasColumnName("CostCurrency")
-                .HasMaxLength(3);
-        });
+        // Money Value Object - flattened as primitives
+        builder.Property(x => x.CostAmount)
+            .HasColumnType("TEXT");
+        builder.Property(x => x.CostCurrency)
+            .HasMaxLength(3);
 
         // Smart Enum - stored as int
-        builder.Property(x => x.Status)
-            .HasConversion(
-                bs => bs.Value,
-                v => BookingStatus.FromValue(v));
+        builder.Property(x => x.Status);
 
         // DateTimeOffset stored as Unix UTC milliseconds
-        builder.Property(x => x.BookedAt)
-            .HasConversion(ValueConverters.DateTimeOffsetToUnixMillisecondsConverter);
+        builder.Property(x => x.BookedAt);
     }
 }

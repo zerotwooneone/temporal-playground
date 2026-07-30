@@ -1,5 +1,7 @@
-﻿using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore;
 using TemporalDDD.Domain.ProviderCredentialing;
+using TemporalDDD.Domain.ProviderCredentialing.ValueObjects;
+using TemporalDDD.Domain.SharedKernel;
 using TemporalDDD.Infrastructure.Persistence;
 
 namespace TemporalDDD.Infrastructure.ProviderCredentialing;
@@ -15,8 +17,12 @@ public class CredentialEvaluationRepository : ICredentialEvaluationRepository
 
     public async Task<CredentialEvaluation?> GetByIdAsync(CredentialEvaluationId id, CancellationToken cancellationToken = default)
     {
-        return await _dbContext.CredentialEvaluations
+        var dbo = await _dbContext.CredentialEvaluations
             .FirstOrDefaultAsync(e => e.Id == id.Value, cancellationToken);
+        
+        if (dbo == null) return null;
+        
+        return MapToDomain(dbo);
     }
 
     public async Task SaveAsync(CredentialEvaluation aggregate, CancellationToken cancellationToken = default)
@@ -24,17 +30,72 @@ public class CredentialEvaluationRepository : ICredentialEvaluationRepository
         var existing = await _dbContext.CredentialEvaluations
             .FirstOrDefaultAsync(e => e.Id == aggregate.Id.Value, cancellationToken);
 
+        var dbo = MapToDbo(aggregate);
+
         if (existing == null)
         {
-            _dbContext.CredentialEvaluations.Add(aggregate);
+            _dbContext.CredentialEvaluations.Add(dbo);
         }
         else
         {
             _dbContext.Entry(existing).State = EntityState.Detached;
-            _dbContext.CredentialEvaluations.Attach(aggregate);
-            _dbContext.Entry(aggregate).State = EntityState.Modified;
+            _dbContext.CredentialEvaluations.Attach(dbo);
+            _dbContext.Entry(dbo).State = EntityState.Modified;
         }
 
         await _dbContext.SaveChangesAsync(cancellationToken);
+    }
+
+    private CredentialEvaluation MapToDomain(CredentialEvaluationDbo dbo)
+    {
+        var providerId = ProviderId.Create(dbo.ProviderId).Value;
+        var licenseNumber = LicenseNumber.Create(dbo.LicenseNumber).Value;
+        var medicalBoard = MedicalBoard.Create(dbo.MedicalBoard).Value;
+        var licenseExpiryDate = LicenseExpiryDate.Create(dbo.LicenseExpiryDate).Value;
+        var complianceNotes = ComplianceNotes.Create(dbo.ComplianceNotes).Value;
+        var status = EvaluationStatus.FromValue(dbo.Status);
+        var evaluatedAt = DateTimeOffset.FromUnixTimeMilliseconds(dbo.EvaluatedAt);
+
+        CredentialEvaluationPublicId? publicId = null;
+        if (!string.IsNullOrEmpty(dbo.PublicId))
+        {
+            publicId = CredentialEvaluationPublicId.FromString(dbo.PublicId);
+        }
+
+        // Use reflection to call private constructor for rehydration
+        var evaluation = (CredentialEvaluation)Activator.CreateInstance(
+            typeof(CredentialEvaluation),
+            nonPublic: true)!;
+        
+        // Set properties via reflection (infrastructure concern)
+        typeof(CredentialEvaluation).GetProperty(nameof(CredentialEvaluation.Id))?.SetValue(evaluation, CredentialEvaluationId.Create(dbo.Id).Value);
+        typeof(CredentialEvaluation).GetProperty(nameof(CredentialEvaluation.PublicId))?.SetValue(evaluation, publicId);
+        typeof(CredentialEvaluation).GetProperty(nameof(CredentialEvaluation.ProviderId))?.SetValue(evaluation, providerId);
+        typeof(CredentialEvaluation).GetProperty(nameof(CredentialEvaluation.LicenseNumber))?.SetValue(evaluation, licenseNumber);
+        typeof(CredentialEvaluation).GetProperty(nameof(CredentialEvaluation.MedicalBoard))?.SetValue(evaluation, medicalBoard);
+        typeof(CredentialEvaluation).GetProperty(nameof(CredentialEvaluation.LicenseExpiryDate))?.SetValue(evaluation, licenseExpiryDate);
+        typeof(CredentialEvaluation).GetProperty(nameof(CredentialEvaluation.IsCompliant))?.SetValue(evaluation, dbo.IsCompliant);
+        typeof(CredentialEvaluation).GetProperty(nameof(CredentialEvaluation.ComplianceNotes))?.SetValue(evaluation, complianceNotes);
+        typeof(CredentialEvaluation).GetProperty(nameof(CredentialEvaluation.EvaluatedAt))?.SetValue(evaluation, evaluatedAt);
+        typeof(CredentialEvaluation).GetProperty(nameof(CredentialEvaluation.Status))?.SetValue(evaluation, status);
+
+        return evaluation;
+    }
+
+    private CredentialEvaluationDbo MapToDbo(CredentialEvaluation evaluation)
+    {
+        return new CredentialEvaluationDbo
+        {
+            Id = evaluation.Id.Value,
+            PublicId = evaluation.PublicId?.ToString(),
+            ProviderId = evaluation.ProviderId.Value,
+            LicenseNumber = evaluation.LicenseNumber.Value,
+            MedicalBoard = evaluation.MedicalBoard.Value,
+            LicenseExpiryDate = evaluation.LicenseExpiryDate.Value,
+            IsCompliant = evaluation.IsCompliant,
+            ComplianceNotes = evaluation.ComplianceNotes.Value,
+            EvaluatedAt = evaluation.EvaluatedAt.ToUnixTimeMilliseconds(),
+            Status = evaluation.Status.Value
+        };
     }
 }

@@ -1,15 +1,12 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
-using TemporalDDD.Domain.SharedKernel;
-using TemporalDDD.Domain.TimesheetProcessing;
-using TemporalDDD.Domain.TimesheetProcessing.ValueObjects;
-using TemporalDDD.Infrastructure.Persistence;
+using TemporalDDD.Infrastructure.TimesheetProcessing;
 
 namespace TemporalDDD.Infrastructure.TimesheetProcessing;
 
-public class TimesheetConfiguration : IEntityTypeConfiguration<Timesheet>
+public class TimesheetConfiguration : IEntityTypeConfiguration<TimesheetDbo>
 {
-    public void Configure(EntityTypeBuilder<Timesheet> builder)
+    public void Configure(EntityTypeBuilder<TimesheetDbo> builder)
     {
         builder.ToTable("Timesheets");
 
@@ -20,97 +17,50 @@ public class TimesheetConfiguration : IEntityTypeConfiguration<Timesheet>
 
         // PublicId - stored as TEXT with Unique Index
         builder.Property(x => x.PublicId)
-            .HasConversion(
-                p => p.ToString(),
-                s => TimesheetPublicId.FromString(s))
             .IsRequired(false);
 
         builder.HasIndex(x => x.PublicId)
             .IsUnique()
             .HasFilter("PublicId IS NOT NULL");
 
-        // ProviderId - FK to ProviderProfiles
-        builder.Property(x => x.ProviderId)
-            .HasConversion(
-                pid => pid.Value,
-                v => ProviderId.Create(v).Value!);
+        // ProviderId - FK to ProviderProfiles (uint)
+        builder.Property(x => x.ProviderId);
 
-        // DateRange Value Object - flattened using ComplexProperty
-        builder.ComplexProperty(x => x.Period, pb =>
-        {
-            pb.Property(p => p.Start)
-                .HasColumnName("PeriodStartUtc")
-                .HasConversion(ValueConverters.DateTimeToUnixMillisecondsConverter);
+        // DateRange Value Object - flattened as primitives
+        builder.Property(x => x.PeriodStartUtc);
+        builder.Property(x => x.PeriodEndUtc);
 
-            pb.Property(p => p.End)
-                .HasColumnName("PeriodEndUtc")
-                .HasConversion(ValueConverters.DateTimeToUnixMillisecondsConverter);
-        });
+        // Hours Value Object - flattened as decimal
+        builder.Property(x => x.TotalHours);
 
-        // Hours Value Object - flattened
-        builder.Property(x => x.TotalHours)
-            .HasConversion(
-                h => h.Value,
-                v => Hours.Create(v));
+        // HourlyRate Value Object - flattened as decimal
+        builder.Property(x => x.HourlyRate);
 
-        // HourlyRate Value Object - flattened
-        builder.Property(x => x.HourlyRate)
-            .HasConversion(
-                hr => hr.Value,
-                v => HourlyRate.Create(v));
+        // Money Value Objects - flattened as primitives
+        builder.Property(x => x.GrossPayAmount)
+            .HasColumnType("TEXT");
+        builder.Property(x => x.GrossPayCurrency)
+            .HasMaxLength(3);
 
-        // Money Value Objects - flattened using ComplexProperty
-        builder.ComplexProperty(x => x.GrossPay, gp =>
-        {
-            gp.Property(p => p.Amount)
-                .HasColumnName("GrossPayAmount")
-                .HasColumnType("TEXT");
+        builder.Property(x => x.TaxAmount)
+            .HasColumnType("TEXT");
+        builder.Property(x => x.TaxCurrency)
+            .HasMaxLength(3);
 
-            gp.Property(p => p.Currency)
-                .HasColumnName("GrossPayCurrency")
-                .HasMaxLength(3);
-        });
-
-        builder.ComplexProperty(x => x.TaxAmount, ta =>
-        {
-            ta.Property(p => p.Amount)
-                .HasColumnName("TaxAmount")
-                .HasColumnType("TEXT");
-
-            ta.Property(p => p.Currency)
-                .HasColumnName("TaxCurrency")
-                .HasMaxLength(3);
-        });
-
-        builder.ComplexProperty(x => x.NetPay, np =>
-        {
-            np.Property(p => p.Amount)
-                .HasColumnName("NetPayAmount")
-                .HasColumnType("TEXT");
-
-            np.Property(p => p.Currency)
-                .HasColumnName("NetPayCurrency")
-                .HasMaxLength(3);
-        });
+        builder.Property(x => x.NetPayAmount)
+            .HasColumnType("TEXT");
+        builder.Property(x => x.NetPayCurrency)
+            .HasMaxLength(3);
 
         // Smart Enum - stored as int
-        builder.Property(x => x.Status)
-            .HasConversion(
-                ts => ts.Value,
-                v => TimesheetStatus.FromValue(v));
+        builder.Property(x => x.Status);
 
         // DateTimeOffset stored as Unix UTC milliseconds
-        builder.Property(x => x.SubmittedAt)
-            .HasConversion(ValueConverters.DateTimeOffsetToUnixMillisecondsConverter);
+        builder.Property(x => x.SubmittedAt);
+        builder.Property(x => x.ProcessedAt);
 
-        builder.Property(x => x.ProcessedAt)
-            .HasConversion(ValueConverters.DateTimeOffsetToUnixMillisecondsConverter);
-
-        // PaymentReference Value Object - flattened
-        builder.Property(x => x.PaymentReference)
-            .HasConversion(
-                pr => pr.Value,
-                s => PaymentReference.Create(s));
+        // PaymentReference Value Object - flattened as string
+        builder.Property(x => x.PaymentReference);
 
         // RejectionReason - plain string
         builder.Property(x => x.RejectionReason)

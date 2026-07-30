@@ -74,7 +74,7 @@ public class ProviderCredentialingController : ControllerBase
 
         // Query database for credential evaluation status
         var evaluation = await _dbContext.CredentialEvaluations
-            .FirstOrDefaultAsync(e => e.ProviderId.Value == providerId);
+            .FirstOrDefaultAsync(e => e.ProviderId == providerId);
 
         if (evaluation == null)
         {
@@ -97,7 +97,7 @@ public class ProviderCredentialingController : ControllerBase
             Step = step,
             IsWaitingForManualReview = isWaitingForManualReview,
             IsCompliant = evaluation.IsCompliant,
-            Notes = evaluation.ComplianceNotes.Value
+            Notes = evaluation.ComplianceNotes
         });
     }
 

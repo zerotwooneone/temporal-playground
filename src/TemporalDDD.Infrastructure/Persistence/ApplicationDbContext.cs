@@ -1,9 +1,8 @@
 using Microsoft.EntityFrameworkCore;
-using TemporalDDD.Domain.PlacementMatching;
-using TemporalDDD.Domain.ProviderCredentialing;
-using TemporalDDD.Domain.TimesheetProcessing;
-using TemporalDDD.Domain.TravelLogistics;
 using TemporalDDD.Infrastructure.PlacementMatching;
+using TemporalDDD.Infrastructure.ProviderCredentialing;
+using TemporalDDD.Infrastructure.TimesheetProcessing;
+using TemporalDDD.Infrastructure.TravelLogistics;
 
 namespace TemporalDDD.Infrastructure.Persistence;
 
@@ -15,12 +14,12 @@ public class ApplicationDbContext : DbContext
     }
 
     public DbSet<AssignmentDbo> Assignments => Set<AssignmentDbo>();
-    public DbSet<CredentialEvaluation> CredentialEvaluations => Set<CredentialEvaluation>();
-    public DbSet<ProviderProfile> ProviderProfiles => Set<ProviderProfile>();
-    public DbSet<Timesheet> Timesheets => Set<Timesheet>();
-    public DbSet<FlightBooking> FlightBookings => Set<FlightBooking>();
-    public DbSet<LodgingBooking> LodgingBookings => Set<LodgingBooking>();
-    public DbSet<Facility> Facilities => Set<Facility>();
+    public DbSet<CredentialEvaluationDbo> CredentialEvaluations => Set<CredentialEvaluationDbo>();
+    public DbSet<ProviderProfileDbo> ProviderProfiles => Set<ProviderProfileDbo>();
+    public DbSet<TimesheetDbo> Timesheets => Set<TimesheetDbo>();
+    public DbSet<FlightBookingDbo> FlightBookings => Set<FlightBookingDbo>();
+    public DbSet<LodgingBookingDbo> LodgingBookings => Set<LodgingBookingDbo>();
+    public DbSet<FacilityDbo> Facilities => Set<FacilityDbo>();
 
     protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
     {

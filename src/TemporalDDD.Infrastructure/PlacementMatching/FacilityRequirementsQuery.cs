@@ -17,20 +17,20 @@ public class FacilityRequirementsQuery : IFacilityRequirementsQuery
 
     public async Task<FacilityRequirementsDto> GetFacilityRequirementsAsync(FacilityId facilityId, CancellationToken cancellationToken = default)
     {
-        var facility = await _dbContext.Facilities
+        var dbo = await _dbContext.Facilities
             .FirstOrDefaultAsync(f => f.Id == facilityId.Value, cancellationToken);
 
-        if (facility == null)
+        if (dbo == null)
         {
             throw new InvalidOperationException($"Facility {facilityId} not found");
         }
 
-        var specialties = facility.RequiredSpecialties
+        var specialties = dbo.RequiredSpecialties
             .Split(',', StringSplitOptions.RemoveEmptyEntries)
             .Select(s => Specialty.Create(s.Trim()))
             .ToList();
 
-        var medicalBoards = facility.AcceptedMedicalBoards
+        var medicalBoards = dbo.AcceptedMedicalBoards
             .Split(',', StringSplitOptions.RemoveEmptyEntries)
             .Select(mb => MedicalBoard.Create(mb.Trim()).Value)
             .ToList();

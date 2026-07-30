@@ -17,17 +17,17 @@ public class FacilityBillingQuery : IFacilityBillingQuery
 
     public async Task<FacilityBillingRateDto> GetFacilityBillingRateAsync(FacilityId facilityId, AssignmentId assignmentId, CancellationToken cancellationToken = default)
     {
-        var facility = await _dbContext.Facilities
+        var dbo = await _dbContext.Facilities
             .FirstOrDefaultAsync(f => f.Id == facilityId.Value, cancellationToken);
 
-        if (facility == null)
+        if (dbo == null)
         {
             throw new InvalidOperationException($"Facility {facilityId} not found");
         }
 
         return new FacilityBillingRateDto(
-            StandardBillRate: Money.Create(facility.StandardBillRate),
-            OvertimeBillRate: Money.Create(facility.OvertimeBillRate)
+            StandardBillRate: Money.Create(dbo.StandardBillRate),
+            OvertimeBillRate: Money.Create(dbo.OvertimeBillRate)
         );
     }
 }

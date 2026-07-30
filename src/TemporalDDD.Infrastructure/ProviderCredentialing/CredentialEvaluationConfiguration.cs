@@ -1,15 +1,12 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
-using TemporalDDD.Domain.ProviderCredentialing;
-using TemporalDDD.Domain.ProviderCredentialing.ValueObjects;
-using TemporalDDD.Domain.SharedKernel;
-using TemporalDDD.Infrastructure.Persistence;
+using TemporalDDD.Infrastructure.ProviderCredentialing;
 
 namespace TemporalDDD.Infrastructure.ProviderCredentialing;
 
-public class CredentialEvaluationConfiguration : IEntityTypeConfiguration<CredentialEvaluation>
+public class CredentialEvaluationConfiguration : IEntityTypeConfiguration<CredentialEvaluationDbo>
 {
-    public void Configure(EntityTypeBuilder<CredentialEvaluation> builder)
+    public void Configure(EntityTypeBuilder<CredentialEvaluationDbo> builder)
     {
         builder.ToTable("CredentialEvaluations");
 
@@ -20,50 +17,25 @@ public class CredentialEvaluationConfiguration : IEntityTypeConfiguration<Creden
 
         // PublicId - stored as TEXT with Unique Index
         builder.Property(x => x.PublicId)
-            .HasConversion(
-                p => p.ToString(),
-                s => CredentialEvaluationPublicId.FromString(s))
             .IsRequired(false);
 
         builder.HasIndex(x => x.PublicId)
             .IsUnique()
             .HasFilter("PublicId IS NOT NULL");
 
-        // ProviderId - FK to ProviderProfiles
-        builder.Property(x => x.ProviderId)
-            .HasConversion(
-                pid => pid.Value,
-                v => ProviderId.Create(v).Value!);
+        // ProviderId - FK to ProviderProfiles (uint)
+        builder.Property(x => x.ProviderId);
 
-        // Value Objects - flattened
-        builder.Property(x => x.LicenseNumber)
-            .HasConversion(
-                ln => ln.Value,
-                s => LicenseNumber.Create(s).Value!);
-
-        builder.Property(x => x.MedicalBoard)
-            .HasConversion(
-                mb => mb.Value,
-                s => MedicalBoard.Create(s).Value!);
-
-        builder.Property(x => x.LicenseExpiryDate)
-            .HasConversion(
-                led => led.Value,
-                dt => LicenseExpiryDate.Create(dt).Value!);
-
-        builder.Property(x => x.ComplianceNotes)
-            .HasConversion(
-                cn => cn.Value,
-                s => ComplianceNotes.Create(s).Value!);
+        // Value Objects - flattened as primitives
+        builder.Property(x => x.LicenseNumber);
+        builder.Property(x => x.MedicalBoard);
+        builder.Property(x => x.LicenseExpiryDate);
+        builder.Property(x => x.ComplianceNotes);
 
         // DateTimeOffset stored as Unix UTC milliseconds
-        builder.Property(x => x.EvaluatedAt)
-            .HasConversion(ValueConverters.DateTimeOffsetToUnixMillisecondsConverter);
+        builder.Property(x => x.EvaluatedAt);
 
         // Smart Enum - stored as int
-        builder.Property(x => x.Status)
-            .HasConversion(
-                es => es.Value,
-                v => EvaluationStatus.FromValue(v));
+        builder.Property(x => x.Status);
     }
 }
