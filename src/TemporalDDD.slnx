@@ -7,5 +7,6 @@
   <Project Path="TemporalDDD.Application/TemporalDDD.Application.csproj" />
   <Project Path="TemporalDDD.Domain/TemporalDDD.Domain.csproj" />
   <Project Path="TemporalDDD.Infrastructure/TemporalDDD.Infrastructure.csproj" />
+  <Project Path="TemporalDDD.UI/TemporalDDD.UI.csproj" />
   <Project Path="TemporalDDD.Worker/TemporalDDD.Worker.csproj" />
 </Solution>
