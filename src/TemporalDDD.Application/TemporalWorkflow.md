@@ -92,6 +92,53 @@ public async Task<IActionResult> StartCredentialing(CredentialingRequest request
 - **Clear Intent**: The explicit `throw new InvalidOperationException` clearly signals to other developers (and to Temporal's retry engine) that this is not a user typo—it is a broken system invariant that requires engineering intervention.
 - **Temporal Serialization**: System.Text.Json serializes C# record types perfectly out of the box with zero configuration or domain pollution.
 
+**Exception: When Domain Type Conversion Provides No Value**
+
+In the majority of cases where the workflow does not perform any business logic with the domain type and only passes the primitive value directly to subsequent activities, you SHOULD NOT create the domain types. Domain type conversion is only valuable when the workflow needs to enforce invariants, perform domain logic, or make decisions based on the domain type's behavior.
+
+**✅ Skip Domain Conversion (Pass-through case):**
+```csharp
+[WorkflowMethod]
+public async Task RunAsync(CredentialingInput input)
+{
+    // No domain conversion needed - just pass primitives to activities
+    await ExecuteActivityAsync(
+        (IProviderCredentialingActivities activities) => 
+            activities.FetchMedicalBoardLicenseAsync(new FetchLicenseInput(input.LicenseNumber, input.MedicalBoard))
+    );
+}
+```
+
+**✅ Use Domain Conversion (Decision-making case):**
+```csharp
+[WorkflowMethod]
+public async Task RunAsync(CredentialingInput input)
+{
+    // Domain conversion needed for workflow-level business logic
+    var providerIdResult = ProviderId.Create(input.ProviderId);
+    if (providerIdResult.IsFailure)
+        throw new InvalidOperationException($"Internal Corruption: Invalid ProviderId. {providerIdResult.Error}");
+    var providerId = providerIdResult.Value;
+
+    // Use domain type for workflow decision
+    if (providerId.Value > 1000)
+    {
+        await ExecuteActivityAsync((a) => a.SendHighPriorityNotification(providerId));
+    }
+    else
+    {
+        await ExecuteActivityAsync((a) => a.SendStandardNotification(providerId));
+    }
+}
+```
+
+**Guideline:** Only convert to domain types in workflows when you need to:
+1. Make workflow-level decisions based on domain invariants
+2. Perform domain logic within the workflow
+3. Enforce business rules at the orchestration layer
+
+If you're only passing primitives through to activities, skip the conversion to avoid unnecessary boilerplate.
+
 ### 2. When to Throw Which Exception
 To ensure proper Temporal workflow behavior, we must completely divorce Domain Validation bugs from Business Rule failures. Here is the strict breakdown based on Temporal's execution model.
 
