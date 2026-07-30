@@ -21,11 +21,11 @@ All domain aggregates use **uint-based strongly-typed IDs** for internal identif
 
 **SharedKernel IDs** (cross-context):
 - `ProviderId` - Provider identifier (used across ProviderCredentialing, PlacementMatching, TimesheetProcessing)
-- `AssignmentId` - Assignment identifier (used in PlacementMatching)
-- `FacilityId` - Facility identifier (used in PlacementMatching)
-- `PositionId` - Position identifier (used in PlacementMatching)
 
 **Context-Specific IDs** (single bounded context):
+- `AssignmentId` - Assignment identifier (PlacementMatching)
+- `FacilityId` - Facility identifier (PlacementMatching)
+- `PositionId` - Position identifier (PlacementMatching)
 - `CredentialEvaluationId` - Credential Evaluation identifier (ProviderCredentialing)
 - `ProviderProfileId` - Provider Profile identifier (ProviderCredentialing)
 - `TimesheetId` - Timesheet identifier (TimesheetProcessing)
@@ -287,21 +287,14 @@ public class Assignment
 TemporalDDD.Domain/
 ├── SharedKernel/              # Cross-cutting value objects and IDs (used across contexts)
 │   ├── ProviderId.cs
-│   ├── AssignmentId.cs
-│   ├── FacilityId.cs
-│   ├── PositionId.cs
-│   ├── AssignmentPublicId.cs
-│   ├── ProviderPublicId.cs
-│   ├── TimesheetPublicId.cs
-│   ├── FlightBookingPublicId.cs
-│   ├── LodgingBookingPublicId.cs
-│   ├── CredentialEvaluationPublicId.cs
 │   ├── Money.cs
 │   ├── DateRange.cs
 │   └── Email.cs
 ├── ProviderCredentialing/     # Provider credentialing domain
 │   ├── CredentialEvaluationId.cs
 │   ├── ProviderProfileId.cs
+│   ├── CredentialEvaluationPublicId.cs
+│   ├── ProviderPublicId.cs
 │   ├── ValueObjects/
 │   │   ├── LicenseNumber.cs
 │   │   ├── MedicalBoard.cs
@@ -312,6 +305,10 @@ TemporalDDD.Domain/
 │   ├── ProviderProfile.cs
 │   └── EvaluationStatus.cs
 ├── PlacementMatching/         # Provider placement domain
+│   ├── AssignmentId.cs
+│   ├── FacilityId.cs
+│   ├── PositionId.cs
+│   ├── AssignmentPublicId.cs
 │   ├── ValueObjects/
 │   │   ├── MatchScore.cs
 │   │   └── AggregateVersion.cs
@@ -319,6 +316,7 @@ TemporalDDD.Domain/
 │   └── AssignmentStatus.cs
 ├── TimesheetProcessing/       # Timesheet processing domain
 │   ├── TimesheetId.cs
+│   ├── TimesheetPublicId.cs
 │   ├── ValueObjects/
 │   │   ├── Hours.cs
 │   │   ├── HourlyRate.cs
@@ -328,6 +326,8 @@ TemporalDDD.Domain/
 ├── TravelLogistics/          # Travel logistics domain
 │   ├── FlightBookingId.cs
 │   ├── LodgingBookingId.cs
+│   ├── FlightBookingPublicId.cs
+│   ├── LodgingBookingPublicId.cs
 │   ├── ValueObjects/
 │   │   ├── FlightNumber.cs
 │   │   ├── AirportCode.cs

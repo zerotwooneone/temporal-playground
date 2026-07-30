@@ -1,4 +1,4 @@
-namespace TemporalDDD.Domain.SharedKernel;
+namespace TemporalDDD.Domain.ProviderCredentialing;
 
 public sealed record ProviderPublicId
 {

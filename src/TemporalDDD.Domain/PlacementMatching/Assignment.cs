@@ -1,5 +1,5 @@
-using TemporalDDD.Domain.PlacementMatching.ValueObjects;
 using TemporalDDD.Domain.SharedKernel;
+using TemporalDDD.Domain.PlacementMatching.ValueObjects;
 
 namespace TemporalDDD.Domain.PlacementMatching;
 

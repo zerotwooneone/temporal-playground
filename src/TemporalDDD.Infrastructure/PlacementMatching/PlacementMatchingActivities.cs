@@ -1,6 +1,7 @@
 using Microsoft.EntityFrameworkCore;
 using Temporalio.Activities;
 using TemporalDDD.Application.PlacementMatching;
+using TemporalDDD.Domain.PlacementMatching;
 using TemporalDDD.Domain.PlacementMatching.ValueObjects;
 using TemporalDDD.Domain.SharedKernel;
 using TemporalDDD.Infrastructure.Persistence;
