@@ -480,7 +480,58 @@ public class AssignmentRepository : IAssignmentRepository
 - Use `Result<T>` pattern when creating domain types from primitives
 - Handle validation failures appropriately (log, throw, or fix data)
 
-### 13. Anti-Patterns to Avoid
+### 13. CRITICAL RULE FOR RESULT HANDLING
+
+When handling a `Result<T>` from a Domain model's `Create` method, you MUST follow these guidelines based on the data source:
+
+**External Input (API/Events):**
+- You MUST check `if (result.IsFailure)` and return early
+- Example: `return BadRequest(result.Error)` for API controllers
+- NEVER throw exceptions for validation failures on user/external input
+- Validation failures from external input are expected and should be handled gracefully
+
+**Database Reads:**
+- If mapping from our own database to a Domain object, and failure implies data corruption
+- Use `.Value ?? throw new InvalidOperationException("specific message")`
+- This provides a meaningful error message if database data is invalid
+- Indicates data corruption that should be addressed at the source
+
+**Unit Tests / Constants:**
+- You may use `.Value!` ONLY if the input is a hardcoded literal
+- Example: `Create("constant").Value!` where the value is guaranteed valid
+- Use sparingly and only when the validation rules are known to pass
+
+**❌ Bad (External Input):**
+```csharp
+// In API controller - throwing exception for user input validation
+var providerId = ProviderId.Create(request.ProviderId).Value!; // Crashes on invalid input
+```
+
+**✅ Good (External Input):**
+```csharp
+// In API controller - proper Result handling
+var providerIdResult = ProviderId.Create(request.ProviderId);
+if (providerIdResult.IsFailure)
+    return BadRequest(new { Error = providerIdResult.Error });
+
+// Now safe to use Value
+var providerId = providerIdResult.Value;
+```
+
+**✅ Good (Database Read):**
+```csharp
+// In repository - defensive programming with meaningful error
+var licenseNumber = LicenseNumber.Create(dbo.LicenseNumber).Value 
+    ?? throw new InvalidOperationException($"Invalid license number in database: {dbo.LicenseNumber}");
+```
+
+**✅ Good (Unit Test / Constant):**
+```csharp
+// In unit test - hardcoded constant guaranteed valid
+var specialty = Specialty.Create("Cardiology").Value!; // Cardiology is a valid specialty
+```
+
+### 14. Anti-Patterns to Avoid
 
 **Do NOT**:
 - Use primitive types for domain concepts (Primitive Obsession)
