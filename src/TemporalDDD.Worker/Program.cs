@@ -7,12 +7,14 @@ using TemporalDDD.Infrastructure.ProviderOnboarding;
 using TemporalDDD.Infrastructure;
 
 var builder = Host.CreateApplicationBuilder(args);
-DatabaseBootstrapper.Initialize(builder.Configuration);
 
 // Add Database
 var localAppData = Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData);
 var dbPath = Path.Combine(localAppData, "TemporalDDD", "temporal_playground.sqlite");
 builder.Services.AddDatabase($"Data Source={dbPath}");
+
+// Add Database Initialization Hosted Service
+builder.Services.AddHostedService<DatabaseInitializationService>();
 
 // Add Testing utilities
 builder.Services.AddTesting();
