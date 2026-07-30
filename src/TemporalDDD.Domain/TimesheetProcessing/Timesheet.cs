@@ -3,7 +3,7 @@ using TemporalDDD.Domain.TimesheetProcessing.ValueObjects;
 
 namespace TemporalDDD.Domain.TimesheetProcessing;
 
-public class Timesheet
+public sealed class Timesheet
 {
     public TimesheetId Id { get; private set; }
     public TimesheetPublicId? PublicId { get; private set; }

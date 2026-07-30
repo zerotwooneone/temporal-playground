@@ -3,7 +3,7 @@ using TemporalDDD.Domain.SharedKernel;
 
 namespace TemporalDDD.Domain.ProviderCredentialing;
 
-public class CredentialEvaluation
+public sealed class CredentialEvaluation
 {
     public CredentialEvaluationId Id { get; private set; }
     public CredentialEvaluationPublicId? PublicId { get; private set; }

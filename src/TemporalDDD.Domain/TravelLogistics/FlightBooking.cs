@@ -3,7 +3,7 @@ using TemporalDDD.Domain.TravelLogistics.ValueObjects;
 
 namespace TemporalDDD.Domain.TravelLogistics;
 
-public class FlightBooking
+public sealed class FlightBooking
 {
     public FlightBookingId Id { get; private set; }
     public FlightBookingPublicId? PublicId { get; private set; }

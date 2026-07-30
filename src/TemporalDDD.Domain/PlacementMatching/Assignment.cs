@@ -3,7 +3,7 @@ using TemporalDDD.Domain.PlacementMatching.ValueObjects;
 
 namespace TemporalDDD.Domain.PlacementMatching;
 
-public class Assignment
+public sealed class Assignment
 {
     public AssignmentId Id { get; private set; }
     public AssignmentPublicId? PublicId { get; private set; }

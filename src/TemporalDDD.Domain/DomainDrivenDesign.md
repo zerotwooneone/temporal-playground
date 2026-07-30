@@ -239,10 +239,17 @@ public sealed record AssignmentStatus
 - Encapsulates business logic in methods (not setters)
 - Version tracking for optimistic concurrency (where applicable)
 - State transitions validated with business rules
+- **Sealed by default** - Aggregates should be declared as `sealed` unless there is an explicit requirement for inheritance
+
+**Sealed Aggregate Rule**:
+- Default to making all aggregate classes `sealed`
+- Only remove `sealed` if there is a documented need for inheritance
+- Sealing prevents unintended inheritance and improves performance
+- Promotes composition over inheritance
 
 **Example - Assignment**:
 ```csharp
-public class Assignment
+public sealed class Assignment
 {
     public AssignmentId Id { get; private set; }
     public AssignmentPublicId? PublicId { get; private set; }

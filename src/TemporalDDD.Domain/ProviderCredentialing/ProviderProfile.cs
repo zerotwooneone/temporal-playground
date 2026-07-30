@@ -4,7 +4,7 @@ using TemporalDDD.Domain.PlacementMatching.ValueObjects;
 
 namespace TemporalDDD.Domain.ProviderCredentialing;
 
-public class ProviderProfile
+public sealed class ProviderProfile
 {
     public ProviderProfileId Id { get; private set; }
     public ProviderPublicId? PublicId { get; private set; }
