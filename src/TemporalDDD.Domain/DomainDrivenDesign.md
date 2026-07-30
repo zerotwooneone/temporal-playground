@@ -380,7 +380,107 @@ builder.Property(x => x.LicenseNumber)
         s => LicenseNumber.Create(s).Value); // Calls validated Create, assumes valid data
 ```
 
-### 12. Anti-Patterns to Avoid
+### 12. Database Objects Use Primitive Types
+
+**Rule**: Database Objects (DBOs) - the entities stored in the database - should use primitive types (uint, string, int, etc.). Repositories and query interfaces are responsible for mapping between primitive types (from database) and DDD value types (for domain).
+
+**Rationale**:
+- Separates persistence concerns from domain modeling
+- Avoids EF Core constructor binding issues with private constructors
+- Simplifies EF Core configuration (no complex value converters needed)
+- Makes the database schema more transparent and queryable
+- Allows the domain layer to evolve independently of persistence
+- Repositories act as the anti-corruption layer between DB and domain
+
+**Architecture**:
+```
+Database (Primitives) → Repository (Mapping) → Domain (DDD Types)
+```
+
+**❌ Bad** (Current approach with HasConversion):
+```csharp
+// Domain aggregate uses DDD types
+public class Assignment
+{
+    public AssignmentId Id { get; private set; }
+    public ProviderId ProviderId { get; private set; }
+    public FacilityId FacilityId { get; private set; }
+}
+
+// EF Core configuration with complex value converters
+builder.Property(x => x.FacilityId)
+    .HasConversion(
+        fid => fid.Value,
+        v => FacilityId.Create(v).Value); // Can fail with private constructors
+```
+
+**✅ Good** (DBO with primitives, Repository mapping):
+```csharp
+// Database Object (separate from domain aggregate)
+public class AssignmentDbo
+{
+    public uint Id { get; set; }
+    public uint ProviderId { get; set; }
+    public uint FacilityId { get; set; }
+    public string PublicId { get; set; }
+    // ... other primitive properties
+}
+
+// Repository handles mapping
+public class AssignmentRepository : IAssignmentRepository
+{
+    public async Task<Assignment?> GetByIdAsync(AssignmentId id)
+    {
+        var dbo = await _context.Assignments.FindAsync(id.Value);
+        if (dbo == null) return null;
+        
+        return MapToDomain(dbo);
+    }
+    
+    private Assignment MapToDomain(AssignmentDbo dbo)
+    {
+        var providerId = ProviderId.Create(dbo.ProviderId).Value;
+        var facilityId = FacilityId.Create(dbo.FacilityId).Value;
+        var positionId = PositionId.Create(dbo.PositionId).Value;
+        var matchScore = MatchScore.Create(dbo.MatchScore).Value;
+        
+        return Assignment.FromDatabase(
+            dbo.Id,
+            dbo.PublicId,
+            providerId,
+            facilityId,
+            positionId,
+            matchScore,
+            dbo.Status,
+            dbo.ProposedAt,
+            dbo.AcceptedAt,
+            dbo.Version);
+    }
+    
+    private AssignmentDbo MapToDbo(Assignment assignment)
+    {
+        return new AssignmentDbo
+        {
+            Id = assignment.Id.Value,
+            ProviderId = assignment.ProviderId.Value,
+            FacilityId = assignment.FacilityId.Value,
+            PositionId = assignment.PositionId.Value,
+            MatchScore = assignment.MatchScore.Value,
+            // ... map other properties
+        };
+    }
+}
+```
+
+**Implementation Notes**:
+- Create separate DBO classes in the Infrastructure layer (not in Domain)
+- DBOs should be simple POCOs with primitive types only
+- Domain aggregates remain unchanged with DDD types
+- Repository methods handle all mapping logic
+- Use `Result<T>` pattern when creating domain types from primitives
+- Handle validation failures appropriately (log, throw, or fix data)
+
+### 13. Anti-Patterns to Avoid
 
 **Do NOT**:
 - Use primitive types for domain concepts (Primitive Obsession)
