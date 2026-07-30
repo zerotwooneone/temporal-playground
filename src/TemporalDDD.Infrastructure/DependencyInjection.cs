@@ -19,11 +19,10 @@ public static class DependencyInjection
 {
     public static IServiceCollection AddDatabase(this IServiceCollection services, string connectionString)
     {
-        // Configure SQLite with WAL mode for better concurrency
-        var connectionStringWithWal = $"{connectionString};Journal Mode=WAL;BusyTimeout=5000;";
+        
         
         services.AddDbContext<ApplicationDbContext>(options =>
-            options.UseSqlite(connectionStringWithWal));
+            options.UseSqlite(connectionString));
 
         // Register repositories
         services.AddScoped<IProviderProfileRepository, ProviderProfileRepository>();
