@@ -279,7 +279,7 @@ var workflowId = $"provider-credentialing-{providerId.Value}-{Guid.NewGuid():N}"
 Use feature-specific task queues to enable independent scaling:
 
 ```csharp
-new WorkflowOptions { TaskQueue = "CREDENTIALING_TASK_QUEUE" }
+new WorkflowOptions { TaskQueue = "ONBOARDING_TASK_QUEUE" }
 ```
 
 ## Testing Considerations
