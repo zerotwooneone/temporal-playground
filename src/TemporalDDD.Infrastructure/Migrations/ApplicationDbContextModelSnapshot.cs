@@ -19,27 +19,30 @@ namespace TemporalDDD.Infrastructure.Migrations
 
             modelBuilder.Entity("TemporalDDD.Infrastructure.PlacementMatching.AssignmentDbo", b =>
                 {
-                    b.Property<uint>("Id")
+                    b.Property<string>("Id")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("INTEGER");
+                        .HasColumnType("TEXT");
 
                     b.Property<long?>("AcceptedAt")
                         .HasColumnType("INTEGER");
 
-                    b.Property<uint>("FacilityId")
-                        .HasColumnType("INTEGER");
+                    b.Property<string>("FacilityId")
+                        .IsRequired()
+                        .HasColumnType("TEXT");
 
                     b.Property<decimal>("MatchScore")
                         .HasColumnType("TEXT");
 
-                    b.Property<uint>("PositionId")
-                        .HasColumnType("INTEGER");
+                    b.Property<string>("PositionId")
+                        .IsRequired()
+                        .HasColumnType("TEXT");
 
                     b.Property<long>("ProposedAt")
                         .HasColumnType("INTEGER");
 
-                    b.Property<uint>("ProviderId")
-                        .HasColumnType("INTEGER");
+                    b.Property<string>("ProviderId")
+                        .IsRequired()
+                        .HasColumnType("TEXT");
 
                     b.Property<string>("PublicId")
                         .HasColumnType("TEXT");
@@ -62,9 +65,9 @@ namespace TemporalDDD.Infrastructure.Migrations
 
             modelBuilder.Entity("TemporalDDD.Infrastructure.PlacementMatching.FacilityDbo", b =>
                 {
-                    b.Property<uint>("Id")
+                    b.Property<string>("Id")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("INTEGER");
+                        .HasColumnType("TEXT");
 
                     b.Property<string>("AcceptedMedicalBoards")
                         .IsRequired()
@@ -91,9 +94,9 @@ namespace TemporalDDD.Infrastructure.Migrations
 
             modelBuilder.Entity("TemporalDDD.Infrastructure.ProviderCredentialing.CredentialEvaluationDbo", b =>
                 {
-                    b.Property<uint>("Id")
+                    b.Property<string>("Id")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("INTEGER");
+                        .HasColumnType("TEXT");
 
                     b.Property<string>("ComplianceNotes")
                         .HasColumnType("TEXT");
@@ -115,8 +118,9 @@ namespace TemporalDDD.Infrastructure.Migrations
                         .IsRequired()
                         .HasColumnType("TEXT");
 
-                    b.Property<uint>("ProviderId")
-                        .HasColumnType("INTEGER");
+                    b.Property<string>("ProviderId")
+                        .IsRequired()
+                        .HasColumnType("TEXT");
 
                     b.Property<string>("PublicId")
                         .HasColumnType("TEXT");
@@ -135,9 +139,9 @@ namespace TemporalDDD.Infrastructure.Migrations
 
             modelBuilder.Entity("TemporalDDD.Infrastructure.ProviderCredentialing.ProviderProfileDbo", b =>
                 {
-                    b.Property<uint>("Id")
+                    b.Property<string>("Id")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("INTEGER");
+                        .HasColumnType("TEXT");
 
                     b.Property<long?>("ActivatedAt")
                         .HasColumnType("INTEGER");
@@ -182,9 +186,9 @@ namespace TemporalDDD.Infrastructure.Migrations
 
             modelBuilder.Entity("TemporalDDD.Infrastructure.TimesheetProcessing.TimesheetDbo", b =>
                 {
-                    b.Property<uint>("Id")
+                    b.Property<string>("Id")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("INTEGER");
+                        .HasColumnType("TEXT");
 
                     b.Property<string>("GrossPayAmount")
                         .IsRequired()
@@ -219,8 +223,9 @@ namespace TemporalDDD.Infrastructure.Migrations
                     b.Property<long?>("ProcessedAt")
                         .HasColumnType("INTEGER");
 
-                    b.Property<uint>("ProviderId")
-                        .HasColumnType("INTEGER");
+                    b.Property<string>("ProviderId")
+                        .IsRequired()
+                        .HasColumnType("TEXT");
 
                     b.Property<string>("PublicId")
                         .HasColumnType("TEXT");
@@ -257,9 +262,9 @@ namespace TemporalDDD.Infrastructure.Migrations
 
             modelBuilder.Entity("TemporalDDD.Infrastructure.TravelLogistics.FlightBookingDbo", b =>
                 {
-                    b.Property<uint>("Id")
+                    b.Property<string>("Id")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("INTEGER");
+                        .HasColumnType("TEXT");
 
                     b.Property<long>("BookedAt")
                         .HasColumnType("INTEGER");
@@ -305,9 +310,9 @@ namespace TemporalDDD.Infrastructure.Migrations
 
             modelBuilder.Entity("TemporalDDD.Infrastructure.TravelLogistics.LodgingBookingDbo", b =>
                 {
-                    b.Property<uint>("Id")
+                    b.Property<string>("Id")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("INTEGER");
+                        .HasColumnType("TEXT");
 
                     b.Property<string>("AddressCity")
                         .IsRequired()

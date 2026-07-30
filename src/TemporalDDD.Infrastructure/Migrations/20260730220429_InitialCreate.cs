@@ -11,20 +11,15 @@ namespace TemporalDDD.Infrastructure.Migrations
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
         {
-            // Configure SQLite for WAL mode at the database level
-            // suppressTransaction: true is required because PRAGMA journal_mode cannot be run inside a transaction
-            migrationBuilder.Sql("PRAGMA journal_mode=WAL;", suppressTransaction: true);
-            
             migrationBuilder.CreateTable(
                 name: "Assignments",
                 columns: table => new
                 {
-                    Id = table.Column<uint>(type: "INTEGER", nullable: false)
-                        .Annotation("Sqlite:Autoincrement", true),
+                    Id = table.Column<string>(type: "TEXT", nullable: false),
                     PublicId = table.Column<string>(type: "TEXT", nullable: true),
-                    ProviderId = table.Column<uint>(type: "INTEGER", nullable: false),
-                    FacilityId = table.Column<uint>(type: "INTEGER", nullable: false),
-                    PositionId = table.Column<uint>(type: "INTEGER", nullable: false),
+                    ProviderId = table.Column<string>(type: "TEXT", nullable: false),
+                    FacilityId = table.Column<string>(type: "TEXT", nullable: false),
+                    PositionId = table.Column<string>(type: "TEXT", nullable: false),
                     MatchScore = table.Column<decimal>(type: "TEXT", nullable: false),
                     Status = table.Column<int>(type: "INTEGER", nullable: false),
                     ProposedAt = table.Column<long>(type: "INTEGER", nullable: false),
@@ -40,10 +35,9 @@ namespace TemporalDDD.Infrastructure.Migrations
                 name: "CredentialEvaluations",
                 columns: table => new
                 {
-                    Id = table.Column<uint>(type: "INTEGER", nullable: false)
-                        .Annotation("Sqlite:Autoincrement", true),
+                    Id = table.Column<string>(type: "TEXT", nullable: false),
                     PublicId = table.Column<string>(type: "TEXT", nullable: true),
-                    ProviderId = table.Column<uint>(type: "INTEGER", nullable: false),
+                    ProviderId = table.Column<string>(type: "TEXT", nullable: false),
                     LicenseNumber = table.Column<string>(type: "TEXT", nullable: false),
                     MedicalBoard = table.Column<string>(type: "TEXT", nullable: false),
                     LicenseExpiryDate = table.Column<DateTimeOffset>(type: "TEXT", nullable: false),
@@ -61,8 +55,7 @@ namespace TemporalDDD.Infrastructure.Migrations
                 name: "Facilities",
                 columns: table => new
                 {
-                    Id = table.Column<uint>(type: "INTEGER", nullable: false)
-                        .Annotation("Sqlite:Autoincrement", true),
+                    Id = table.Column<string>(type: "TEXT", nullable: false),
                     Name = table.Column<string>(type: "TEXT", nullable: false),
                     RequiredSpecialties = table.Column<string>(type: "TEXT", nullable: false),
                     AcceptedMedicalBoards = table.Column<string>(type: "TEXT", nullable: false),
@@ -78,8 +71,7 @@ namespace TemporalDDD.Infrastructure.Migrations
                 name: "FlightBookings",
                 columns: table => new
                 {
-                    Id = table.Column<uint>(type: "INTEGER", nullable: false)
-                        .Annotation("Sqlite:Autoincrement", true),
+                    Id = table.Column<string>(type: "TEXT", nullable: false),
                     PublicId = table.Column<string>(type: "TEXT", nullable: true),
                     FlightNumber = table.Column<string>(type: "TEXT", nullable: false),
                     Origin = table.Column<string>(type: "TEXT", nullable: false),
@@ -99,8 +91,7 @@ namespace TemporalDDD.Infrastructure.Migrations
                 name: "LodgingBookings",
                 columns: table => new
                 {
-                    Id = table.Column<uint>(type: "INTEGER", nullable: false)
-                        .Annotation("Sqlite:Autoincrement", true),
+                    Id = table.Column<string>(type: "TEXT", nullable: false),
                     PublicId = table.Column<string>(type: "TEXT", nullable: true),
                     HotelName = table.Column<string>(type: "TEXT", nullable: false),
                     AddressStreet = table.Column<string>(type: "TEXT", nullable: false),
@@ -123,8 +114,7 @@ namespace TemporalDDD.Infrastructure.Migrations
                 name: "ProviderProfiles",
                 columns: table => new
                 {
-                    Id = table.Column<uint>(type: "INTEGER", nullable: false)
-                        .Annotation("Sqlite:Autoincrement", true),
+                    Id = table.Column<string>(type: "TEXT", nullable: false),
                     PublicId = table.Column<string>(type: "TEXT", nullable: true),
                     FirstName = table.Column<string>(type: "TEXT", nullable: false),
                     LastName = table.Column<string>(type: "TEXT", nullable: false),
@@ -144,10 +134,9 @@ namespace TemporalDDD.Infrastructure.Migrations
                 name: "Timesheets",
                 columns: table => new
                 {
-                    Id = table.Column<uint>(type: "INTEGER", nullable: false)
-                        .Annotation("Sqlite:Autoincrement", true),
+                    Id = table.Column<string>(type: "TEXT", nullable: false),
                     PublicId = table.Column<string>(type: "TEXT", nullable: true),
-                    ProviderId = table.Column<uint>(type: "INTEGER", nullable: false),
+                    ProviderId = table.Column<string>(type: "TEXT", nullable: false),
                     PeriodStartUtc = table.Column<long>(type: "INTEGER", nullable: false),
                     PeriodEndUtc = table.Column<long>(type: "INTEGER", nullable: false),
                     TotalHours = table.Column<decimal>(type: "TEXT", nullable: false),
