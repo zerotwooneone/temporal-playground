@@ -1,7 +1,6 @@
 using Microsoft.AspNetCore.Mvc;
 using Temporalio.Client;
 using TemporalDDD.Application.ProviderOnboarding;
-using TemporalDDD.Domain.ProviderCredentialing;
 using TemporalDDD.Domain.ProviderCredentialing.ValueObjects;
 using TemporalDDD.Domain.SharedKernel;
 

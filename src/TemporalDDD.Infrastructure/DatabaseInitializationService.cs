@@ -1,6 +1,5 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Hosting;
-using System.Threading;
 using Microsoft.Extensions.DependencyInjection;
 using TemporalDDD.Infrastructure.Persistence;
 

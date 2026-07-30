@@ -1,6 +1,5 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
-using TemporalDDD.Infrastructure.TimesheetProcessing;
 
 namespace TemporalDDD.Infrastructure.TimesheetProcessing;
 

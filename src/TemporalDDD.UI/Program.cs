@@ -1,9 +1,5 @@
-using Microsoft.AspNetCore.Components;
-using Microsoft.AspNetCore.Components.Web;
-using TemporalDDD.UI.Data;
 using TemporalDDD.UI.Services;
 using MudBlazor.Services;
-using System.Net.Http;
 
 var builder = WebApplication.CreateBuilder(args);
 

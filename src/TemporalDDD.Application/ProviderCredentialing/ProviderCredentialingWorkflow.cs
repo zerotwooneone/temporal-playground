@@ -1,8 +1,4 @@
 using Temporalio.Workflows;
-using TemporalDDD.Application.ProviderCredentialing;
-using TemporalDDD.Domain.ProviderCredentialing;
-using TemporalDDD.Domain.ProviderCredentialing.ValueObjects;
-using TemporalDDD.Domain.SharedKernel;
 
 namespace TemporalDDD.Application.ProviderCredentialing;
 

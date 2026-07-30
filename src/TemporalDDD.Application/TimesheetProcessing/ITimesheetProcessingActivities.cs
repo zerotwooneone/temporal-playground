@@ -1,7 +1,4 @@
 using Temporalio.Activities;
-using TemporalDDD.Domain.SharedKernel;
-using TemporalDDD.Domain.TimesheetProcessing;
-using TemporalDDD.Domain.TimesheetProcessing.ValueObjects;
 
 namespace TemporalDDD.Application.TimesheetProcessing;
 

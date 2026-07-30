@@ -1,6 +1,3 @@
-using TemporalDDD.Domain.ProviderCredentialing.ValueObjects;
-using TemporalDDD.Domain.SharedKernel;
-
 namespace TemporalDDD.Domain.PlacementMatching;
 
 public sealed class Facility

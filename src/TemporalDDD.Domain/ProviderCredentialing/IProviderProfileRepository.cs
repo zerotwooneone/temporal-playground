@@ -1,5 +1,3 @@
-using TemporalDDD.Domain.SharedKernel;
-
 namespace TemporalDDD.Domain.ProviderCredentialing;
 
 public interface IProviderProfileRepository

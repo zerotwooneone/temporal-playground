@@ -1,7 +1,4 @@
 using Temporalio.Activities;
-using TemporalDDD.Domain.PlacementMatching;
-using TemporalDDD.Domain.PlacementMatching.ValueObjects;
-using TemporalDDD.Domain.SharedKernel;
 
 namespace TemporalDDD.Application.PlacementMatching;
 

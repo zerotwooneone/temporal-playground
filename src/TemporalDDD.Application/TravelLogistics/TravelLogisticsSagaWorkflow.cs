@@ -1,8 +1,4 @@
 using Temporalio.Workflows;
-using TemporalDDD.Application.TravelLogistics;
-using TemporalDDD.Domain.SharedKernel;
-using TemporalDDD.Domain.TravelLogistics;
-using TemporalDDD.Domain.TravelLogistics.ValueObjects;
 
 namespace TemporalDDD.Application.TravelLogistics;
 

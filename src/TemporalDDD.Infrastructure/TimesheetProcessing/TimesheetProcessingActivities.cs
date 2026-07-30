@@ -1,4 +1,3 @@
-using Microsoft.EntityFrameworkCore;
 using Temporalio.Activities;
 using TemporalDDD.Application.TimesheetProcessing;
 using TemporalDDD.Domain.SharedKernel;

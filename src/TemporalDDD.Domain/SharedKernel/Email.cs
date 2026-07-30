@@ -1,5 +1,4 @@
 using System.Text.RegularExpressions;
-using TemporalDDD.Domain.SharedKernel;
 
 namespace TemporalDDD.Domain.SharedKernel;
 

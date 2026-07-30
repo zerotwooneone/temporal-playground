@@ -1,6 +1,4 @@
 using Temporalio.Activities;
-using TemporalDDD.Domain.ProviderCredentialing;
-using TemporalDDD.Domain.ProviderCredentialing.ValueObjects;
 
 namespace TemporalDDD.Application.ProviderOnboarding;
 
