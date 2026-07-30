@@ -9,12 +9,12 @@ public sealed record ProviderId
         Value = value;
     }
 
-    public static ProviderId Create(uint value)
+    public static Result<ProviderId> Create(uint value)
     {
         if (value == 0)
-            throw new ArgumentException("ProviderId cannot be zero", nameof(value));
+            return Result<ProviderId>.Failure("ProviderId cannot be zero");
 
-        return new ProviderId(value);
+        return Result<ProviderId>.Success(new ProviderId(value));
     }
 
     // Factory method for rehydration from database

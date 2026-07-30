@@ -1,4 +1,5 @@
 using System.Text.RegularExpressions;
+using TemporalDDD.Domain.SharedKernel;
 
 namespace TemporalDDD.Domain.ProviderCredentialing.ValueObjects;
 
@@ -13,20 +14,20 @@ public sealed record LicenseNumber
         Value = value;
     }
 
-    public static LicenseNumber Create(string value)
+    public static Result<LicenseNumber> Create(string value)
     {
         if (string.IsNullOrWhiteSpace(value))
-            throw new ArgumentException("License number cannot be null or whitespace", nameof(value));
+            return Result<LicenseNumber>.Failure("License number cannot be null or whitespace");
 
         var trimmed = value.Trim();
 
         if (trimmed.Length < 1 || trimmed.Length > 50)
-            throw new ArgumentException("License number must be between 1 and 50 characters", nameof(value));
+            return Result<LicenseNumber>.Failure("License number must be between 1 and 50 characters");
 
         if (!LicenseNumberRegex.IsMatch(trimmed))
-            throw new ArgumentException("License number must contain only alphanumeric characters and hyphens", nameof(value));
+            return Result<LicenseNumber>.Failure("License number must contain only alphanumeric characters and hyphens");
 
-        return new LicenseNumber(trimmed);
+        return Result<LicenseNumber>.Success(new LicenseNumber(trimmed));
     }
 
     public static implicit operator string(LicenseNumber licenseNumber) => licenseNumber.Value;

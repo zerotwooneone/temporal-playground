@@ -1,3 +1,5 @@
+using TemporalDDD.Domain.SharedKernel;
+
 namespace TemporalDDD.Domain.ProviderCredentialing.ValueObjects;
 
 public sealed record MedicalBoard
@@ -24,20 +26,20 @@ public sealed record MedicalBoard
         Value = value;
     }
 
-    public static MedicalBoard Create(string value)
+    public static Result<MedicalBoard> Create(string value)
     {
         if (string.IsNullOrWhiteSpace(value))
-            throw new ArgumentException("Medical board cannot be null or whitespace", nameof(value));
+            return Result<MedicalBoard>.Failure("Medical board cannot be null or whitespace");
 
         var trimmed = value.Trim();
 
         if (trimmed.Length < 2 || trimmed.Length > 150)
-            throw new ArgumentException("Medical board must be between 2 and 150 characters", nameof(value));
+            return Result<MedicalBoard>.Failure("Medical board must be between 2 and 150 characters");
 
         if (!AllowedBoards.Contains(trimmed))
-            throw new ArgumentException($"Medical board '{trimmed}' is not recognized. Allowed boards: {string.Join(", ", AllowedBoards)}", nameof(value));
+            return Result<MedicalBoard>.Failure($"Medical board '{trimmed}' is not recognized. Allowed boards: {string.Join(", ", AllowedBoards)}");
 
-        return new MedicalBoard(trimmed);
+        return Result<MedicalBoard>.Success(new MedicalBoard(trimmed));
     }
 
     public static implicit operator string(MedicalBoard medicalBoard) => medicalBoard.Value;

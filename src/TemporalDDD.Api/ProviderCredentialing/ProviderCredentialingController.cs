@@ -7,7 +7,7 @@ using TemporalDDD.Domain.ProviderCredentialing.ValueObjects;
 using TemporalDDD.Domain.SharedKernel;
 using TemporalDDD.Infrastructure.Persistence;
 
-namespace TemporalDDD.Api.Controllers;
+namespace TemporalDDD.Api.ProviderCredentialing;
 
 [ApiController]
 [Route("api/[controller]")]
@@ -27,18 +27,31 @@ public class ProviderCredentialingController : ControllerBase
     {
         var workflowId = $"provider-credentialing-{request.ProviderId}-{Guid.NewGuid():N}";
         
-        // Convert primitives to domain types
-        var providerId = ProviderId.Create(request.ProviderId);
-        var licenseNumber = LicenseNumber.Create(request.LicenseNumber);
-        var medicalBoard = MedicalBoard.Create(request.MedicalBoard);
-        var expiryDate = LicenseExpiryDate.Create(request.ExpiryDate);
+        // Convert primitives to domain types using Result<T>
+        var providerIdResult = ProviderId.Create(request.ProviderId);
+        var licenseNumberResult = LicenseNumber.Create(request.LicenseNumber);
+        var medicalBoardResult = MedicalBoard.Create(request.MedicalBoard);
+        var expiryDateResult = LicenseExpiryDate.Create(request.ExpiryDate);
+        
+        // Check for validation failures
+        if (providerIdResult.IsFailure)
+            return BadRequest(new { Error = providerIdResult.Error });
+        
+        if (licenseNumberResult.IsFailure)
+            return BadRequest(new { Error = licenseNumberResult.Error });
+        
+        if (medicalBoardResult.IsFailure)
+            return BadRequest(new { Error = medicalBoardResult.Error });
+        
+        if (expiryDateResult.IsFailure)
+            return BadRequest(new { Error = expiryDateResult.Error });
         
         await _temporalClient.StartWorkflowAsync(
             (ProviderCredentialingWorkflow wf) => wf.RunAsync(
-                providerId,
-                licenseNumber,
-                medicalBoard,
-                expiryDate),
+                providerIdResult.Value,
+                licenseNumberResult.Value,
+                medicalBoardResult.Value,
+                expiryDateResult.Value),
             new WorkflowOptions
             {
                 Id = workflowId,

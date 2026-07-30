@@ -1,3 +1,5 @@
+using TemporalDDD.Domain.SharedKernel;
+
 namespace TemporalDDD.Domain.ProviderCredentialing.ValueObjects;
 
 public sealed record LicenseExpiryDate
@@ -9,12 +11,12 @@ public sealed record LicenseExpiryDate
         Value = value;
     }
 
-    public static LicenseExpiryDate Create(DateTimeOffset value)
+    public static Result<LicenseExpiryDate> Create(DateTimeOffset value)
     {
         if (value <= DateTimeOffset.UtcNow)
-            throw new ArgumentException("License expiry date must be in the future", nameof(value));
+            return Result<LicenseExpiryDate>.Failure("License expiry date must be in the future");
 
-        return new LicenseExpiryDate(value);
+        return Result<LicenseExpiryDate>.Success(new LicenseExpiryDate(value));
     }
 
     public bool IsExpired() => Value <= DateTimeOffset.UtcNow;
