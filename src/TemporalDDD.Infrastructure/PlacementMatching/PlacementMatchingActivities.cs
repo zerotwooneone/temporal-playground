@@ -17,7 +17,7 @@ public class PlacementMatchingActivities : IPlacementMatchingActivities
     }
 
     [Activity]
-    public async Task<MatchScore> CalculateMatchScoreAsync(CalculateMatchScoreInput input)
+    public async Task<decimal> CalculateMatchScoreAsync(CalculateMatchScoreInput input)
     {
         // Convert primitive DTO to Domain types with fail-fast validation
         var providerIdResult = ProviderId.Create(input.ProviderId);
@@ -42,15 +42,13 @@ public class PlacementMatchingActivities : IPlacementMatchingActivities
         // In real implementation, this would use ML model or business rules
         var random = new Random();
         var matchScoreValue = (decimal)(random.Next(60, 100) + (random.NextDouble() * 0.9));
-        var matchScore = MatchScore.Create(matchScoreValue).Value!;
+        Console.WriteLine($"[MatchScore] Calculated score {matchScoreValue:F2} for provider {providerId.Value} at facility {facilityId.Value}");
 
-        Console.WriteLine($"[MatchScore] Calculated score {matchScore.Value:F2} for provider {providerId.Value} at facility {facilityId.Value}");
-
-        return matchScore;
+        return matchScoreValue;
     }
 
     [Activity]
-    public async Task<AssignmentId> ProposeAssignmentAsync(ProposeAssignmentInput input)
+    public async Task<uint> ProposeAssignmentAsync(ProposeAssignmentInput input)
     {
         // Convert primitive DTO to Domain types with fail-fast validation
         var providerIdResult = ProviderId.Create(input.ProviderId);
@@ -65,13 +63,12 @@ public class PlacementMatchingActivities : IPlacementMatchingActivities
         if (positionIdResult.IsFailure)
             throw new InvalidOperationException($"Internal Corruption: Invalid PositionId. {positionIdResult.Error}");
         
-        var matchScoreResult = MatchScore.Create(input.MatchScore);
-        if (matchScoreResult.IsFailure)
-            throw new InvalidOperationException($"Internal Corruption: Invalid MatchScore. {matchScoreResult.Error}");
-
         var providerId = providerIdResult.Value;
         var facilityId = facilityIdResult.Value;
         var positionId = positionIdResult.Value;
+        var matchScoreResult = MatchScore.Create(input.MatchScore);
+        if (matchScoreResult.IsFailure)
+            throw new InvalidOperationException($"Internal Corruption: Invalid MatchScore. {matchScoreResult.Error}");
         var matchScore = matchScoreResult.Value;
 
         // Create domain entity using factory
@@ -79,9 +76,9 @@ public class PlacementMatchingActivities : IPlacementMatchingActivities
 
         await _assignmentRepository.SaveAsync(assignment);
 
-        Console.WriteLine($"[Assignment] Proposed assignment {assignment.Id.Value} for provider {providerId.Value} at facility {facilityId.Value} (Score: {matchScore.Value:F2})");
+        Console.WriteLine($"[Assignment] Proposed assignment {assignment.Id.Value} for provider {providerId.Value} at facility {facilityId.Value} (Score: {input.MatchScore:F2})");
 
-        return assignment.Id;
+        return assignment.Id.Value;
     }
 
     [Activity]

@@ -23,12 +23,12 @@ public record EvaluateComplianceInput(uint ProviderId, string LicenseNumber, str
 public record RequestManualReviewInput(uint EvaluationId);
 public record ActivateProviderProfileInput(uint ProviderProfileId);
 
-// Domain result types
+// Primitive result types
 public record MedicalBoardLicenseInfo(
-    LicenseNumber LicenseNumber,
-    MedicalBoard MedicalBoard,
-    LicenseExpiryDate ExpiryDate,
+    string LicenseNumber,
+    string MedicalBoard,
+    DateTimeOffset ExpiryDate,
     bool IsValid,
-    ProviderId ProviderId,
+    uint ProviderId,
     string? Notes = null
 );

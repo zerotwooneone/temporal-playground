@@ -17,7 +17,7 @@ public class ComplianceActivities : IComplianceActivities
     }
 
     [Activity]
-    public async Task<EvaluationStatus> PerformComplianceCheck(PerformComplianceInput input)
+    public async Task<int> PerformComplianceCheck(PerformComplianceInput input)
     {
         // Convert primitive DTO to Domain types with fail-fast validation
         var licenseNumberResult = LicenseNumber.Create(input.LicenseNumber);
@@ -51,6 +51,6 @@ public class ComplianceActivities : IComplianceActivities
             evaluation.MarkAsNonCompliant("License number format invalid");
         }
         
-        return evaluation.Status;
+        return (int)evaluation.Status;
     }
 }

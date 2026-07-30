@@ -8,9 +8,9 @@ namespace TemporalDDD.Application.TravelLogistics;
 public interface ITravelLogisticsActivities
 {
     [Activity]
-    Task<FlightBookingId> BookFlightAsync(BookFlightInput input);
+    Task<uint> BookFlightAsync(BookFlightInput input);
     [Activity]
-    Task<LodgingBookingId> BookLodgingAsync(BookLodgingInput input);
+    Task<uint> BookLodgingAsync(BookLodgingInput input);
     [Activity]
     Task CancelFlightAsync(CancelFlightInput input);
     [Activity]

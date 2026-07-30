@@ -26,6 +26,11 @@ public class TimesheetProcessingWorkflow
             new ActivityOptions { StartToCloseTimeout = TimeSpan.FromMinutes(5) }
         );
 
+        // Convert primitive payroll result to domain types for business logic
+        var grossPay = Money.Create(payrollResult.GrossPayAmount, payrollResult.GrossPayCurrency).Value!;
+        var taxAmount = Money.Create(payrollResult.TaxAmount, payrollResult.TaxCurrency).Value!;
+        var netPay = Money.Create(payrollResult.NetPayAmount, payrollResult.NetPayCurrency).Value!;
+
         // Step 3: Submit Bank Transfer with Idempotency Key
         // IMPORTANT: Pass Workflow.Info.WorkflowId as idempotency key for payment gateway
         var idempotencyKey = Workflow.Info.WorkflowId;
@@ -38,7 +43,7 @@ public class TimesheetProcessingWorkflow
 
         // Step 4: Generate and Send Invoice to ERP System
         var invoiceNumber = await Workflow.ExecuteActivityAsync(
-            (ITimesheetProcessingActivities activities) => activities.GenerateAndSendInvoiceAsync(new GenerateInvoiceInput(timesheetId.Value, input.FacilityBillRateAmount)),
+            (ITimesheetProcessingActivities activities) => activities.GenerateAndSendInvoiceAsync(new GenerateInvoiceInput(timesheetId.Value, netPay.Amount)),
             new ActivityOptions { StartToCloseTimeout = TimeSpan.FromMinutes(5) }
         );
 

@@ -8,9 +8,9 @@ namespace TemporalDDD.Application.PlacementMatching;
 public interface IPlacementMatchingActivities
 {
     [Activity]
-    Task<MatchScore> CalculateMatchScoreAsync(CalculateMatchScoreInput input);
+    Task<decimal> CalculateMatchScoreAsync(CalculateMatchScoreInput input);
     [Activity]
-    Task<AssignmentId> ProposeAssignmentAsync(ProposeAssignmentInput input);
+    Task<uint> ProposeAssignmentAsync(ProposeAssignmentInput input);
     [Activity]
     Task CommitAssignmentAsync(CommitAssignmentInput input);
     [Activity]

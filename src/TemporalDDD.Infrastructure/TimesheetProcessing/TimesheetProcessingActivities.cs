@@ -78,9 +78,12 @@ public class TimesheetProcessingActivities : ITimesheetProcessingActivities
         Console.WriteLine($"[PayrollCalculation] Gross: {timesheet.GrossPay}, Tax: {timesheet.TaxAmount}, Net: {timesheet.NetPay}");
 
         return new PayrollCalculationResult(
-            GrossPay: timesheet.GrossPay,
-            TaxAmount: timesheet.TaxAmount,
-            NetPay: timesheet.NetPay
+            GrossPayAmount: timesheet.GrossPay.Amount,
+            GrossPayCurrency: timesheet.GrossPay.Currency,
+            TaxAmount: timesheet.TaxAmount.Amount,
+            TaxCurrency: timesheet.TaxAmount.Currency,
+            NetPayAmount: timesheet.NetPay.Amount,
+            NetPayCurrency: timesheet.NetPay.Currency
         );
     }
 

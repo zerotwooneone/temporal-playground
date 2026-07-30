@@ -25,11 +25,11 @@ public class ProviderCredentialingWorkflow
         var evaluationId = await Workflow.ExecuteActivityAsync(
             (IProviderCredentialingActivities activities) => activities.EvaluateAndSaveComplianceAsync(new EvaluateComplianceInput(
                 input.ProviderId,
-                licenseInfo.LicenseNumber.Value,
-                licenseInfo.MedicalBoard.Value,
-                licenseInfo.ExpiryDate.Value,
+                licenseInfo.LicenseNumber,
+                licenseInfo.MedicalBoard,
+                licenseInfo.ExpiryDate,
                 licenseInfo.IsValid,
-                licenseInfo.ProviderId.Value,
+                licenseInfo.ProviderId,
                 licenseInfo.Notes
             )),
             new ActivityOptions { StartToCloseTimeout = TimeSpan.FromMinutes(5) }

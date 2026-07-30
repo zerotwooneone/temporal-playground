@@ -23,9 +23,12 @@ public record CalculatePayrollInput(uint TimesheetId);
 public record SubmitBankTransferInput(uint TimesheetId, string IdempotencyKey);
 public record GenerateInvoiceInput(uint TimesheetId, decimal FacilityBillRate);
 
-// Domain result types
+// Primitive result types
 public record PayrollCalculationResult(
-    Money GrossPay,
-    Money TaxAmount,
-    Money NetPay
+    decimal GrossPayAmount,
+    string GrossPayCurrency,
+    decimal TaxAmount,
+    string TaxCurrency,
+    decimal NetPayAmount,
+    string NetPayCurrency
 );

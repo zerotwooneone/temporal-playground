@@ -12,14 +12,19 @@ public class ProviderOnboardingWorkflow : IProviderOnboardingWorkflow
     public async Task RunAsync(OnboardingInput input)
     {
         // Pass-through: No domain conversion needed - just pass primitives to activities
-        EvaluationStatus status = await Workflow.ExecuteActivityAsync(
+        int statusValue = await Workflow.ExecuteActivityAsync(
             (IComplianceActivities a) => a.PerformComplianceCheck(new PerformComplianceInput(input.LicenseNumber)),
             new() { StartToCloseTimeout = TimeSpan.FromMinutes(5) });
+
+        var statusResult = EvaluationStatus.FromValue(statusValue);
+        if (statusResult.IsFailure)
+            throw new InvalidOperationException($"Internal Corruption: Invalid EvaluationStatus from activity. {statusResult.Error}");
+        var status = statusResult.Value;
 
         if (status == EvaluationStatus.Approved)
         {
             await Workflow.ExecuteActivityAsync(
-                (IProviderActivities a) => a.ActivateProvider(new ActivateProviderInput(input.ProviderId, (int)status)),
+                (IProviderActivities a) => a.ActivateProvider(new ActivateProviderInput(input.ProviderId, statusValue)),
                 new() { StartToCloseTimeout = TimeSpan.FromMinutes(5) });
         }
     }

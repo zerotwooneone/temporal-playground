@@ -9,7 +9,7 @@ namespace TemporalDDD.Application.PlacementMatching;
 [Workflow]
 public class PlacementMatchingWorkflow
 {
-    private AssignmentId? _assignmentId;
+    private uint? _assignmentId;
     private OfferAcceptedSignal? _offerAcceptedSignal;
     private OfferRejectedSignal? _offerRejectedSignal;
     private ProviderMatchedElsewhereSignal? _providerMatchedElsewhereSignal;
@@ -26,7 +26,7 @@ public class PlacementMatchingWorkflow
 
         // Step 2: Propose Assignment
         _assignmentId = await Workflow.ExecuteActivityAsync(
-            (IPlacementMatchingActivities activities) => activities.ProposeAssignmentAsync(new ProposeAssignmentInput(input.ProviderId, input.FacilityId, input.PositionId, matchScore.Value)),
+            (IPlacementMatchingActivities activities) => activities.ProposeAssignmentAsync(new ProposeAssignmentInput(input.ProviderId, input.FacilityId, input.PositionId, matchScore)),
             new ActivityOptions { StartToCloseTimeout = TimeSpan.FromMinutes(5) }
         );
 

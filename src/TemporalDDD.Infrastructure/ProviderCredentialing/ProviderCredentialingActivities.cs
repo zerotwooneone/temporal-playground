@@ -52,11 +52,11 @@ public class ProviderCredentialingActivities : IProviderCredentialingActivities
         var providerIdResult = ProviderId.Create(1);
 
         return new MedicalBoardLicenseInfo(
-            LicenseNumber: licenseNumber,
-            MedicalBoard: medicalBoard,
-            ExpiryDate: expiryDateResult.Value,
+            LicenseNumber: licenseNumber.Value,
+            MedicalBoard: medicalBoard.Value,
+            ExpiryDate: expiryDateResult.Value.Value,
             IsValid: isValid,
-            ProviderId: providerIdResult.Value,
+            ProviderId: providerIdResult.Value.Value,
             Notes: isValid ? "License verified successfully" : "License number format invalid"
         );
     }
@@ -91,25 +91,30 @@ public class ProviderCredentialingActivities : IProviderCredentialingActivities
         var expiryDate = expiryDateResult.Value;
         var providerIdResultValue = providerIdResult2.Value;
 
-        // Reconstruct MedicalBoardLicenseInfo from primitive DTO
+        // Reconstruct MedicalBoardLicenseInfo from primitive DTO (now using primitives)
         var licenseInfo = new MedicalBoardLicenseInfo(
-            LicenseNumber: licenseNumber,
-            MedicalBoard: medicalBoard,
-            ExpiryDate: expiryDate,
+            LicenseNumber: input.LicenseNumber,
+            MedicalBoard: input.MedicalBoard,
+            ExpiryDate: input.ExpiryDate,
             IsValid: input.IsValid,
             ProviderId: providerIdResultValue,
             Notes: input.Notes
         );
 
         // Simulate business rule evaluation
-        var isCompliant = licenseInfo.IsValid && licenseInfo.ExpiryDate.Value > DateTimeOffset.UtcNow.AddMonths(6);
+        var isCompliant = licenseInfo.IsValid && licenseInfo.ExpiryDate > DateTimeOffset.UtcNow.AddMonths(6);
+
+        // Convert primitives back to domain types for entity creation
+        var licenseNumberForEntity = LicenseNumber.Create(licenseInfo.LicenseNumber).Value!;
+        var medicalBoardForEntity = MedicalBoard.Create(licenseInfo.MedicalBoard).Value!;
+        var expiryDateForEntity = LicenseExpiryDate.Create(licenseInfo.ExpiryDate).Value!;
 
         // Create domain entity using factory
         var evaluation = Domain.ProviderCredentialing.CredentialEvaluation.Create(
             providerId: providerId,
-            licenseNumber: licenseInfo.LicenseNumber,
-            medicalBoard: licenseInfo.MedicalBoard,
-            licenseExpiryDate: licenseInfo.ExpiryDate
+            licenseNumber: licenseNumberForEntity,
+            medicalBoard: medicalBoardForEntity,
+            licenseExpiryDate: expiryDateForEntity
         );
 
         if (isCompliant)

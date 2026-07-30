@@ -24,7 +24,7 @@ public class TravelLogisticsActivities : ITravelLogisticsActivities
     }
 
     [Activity]
-    public async Task<FlightBookingId> BookFlightAsync(BookFlightInput input)
+    public async Task<uint> BookFlightAsync(BookFlightInput input)
     {
         // Convert primitive DTO to Domain types with fail-fast validation
         var flightNumberResult = FlightNumber.Create(input.FlightNumber);
@@ -68,11 +68,11 @@ public class TravelLogisticsActivities : ITravelLogisticsActivities
 
         Console.WriteLine($"[FlightBooking] Booked flight {flightNumber.Value} from {origin.Value} to {destination.Value} - ID: {booking.Id.Value}");
         
-        return booking.Id;
+        return booking.Id.Value;
     }
 
     [Activity]
-    public async Task<LodgingBookingId> BookLodgingAsync(BookLodgingInput input)
+    public async Task<uint> BookLodgingAsync(BookLodgingInput input)
     {
         // Convert primitive DTO to Domain types with fail-fast validation
         var hotelNameResult = HotelName.Create(input.HotelName);
@@ -111,7 +111,7 @@ public class TravelLogisticsActivities : ITravelLogisticsActivities
 
         Console.WriteLine($"[LodgingBooking] Booked hotel {hotelName.Value} at {address.ToString()} - ID: {booking.Id.Value}");
         
-        return booking.Id;
+        return booking.Id.Value;
     }
 
     [Activity]
