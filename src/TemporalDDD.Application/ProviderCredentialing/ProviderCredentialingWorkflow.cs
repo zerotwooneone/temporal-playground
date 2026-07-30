@@ -12,8 +12,29 @@ public class ProviderCredentialingWorkflow
     private ManualReviewCompletedSignal? _manualReviewSignal;
 
     [WorkflowRun]
-    public async Task RunAsync(ProviderId providerId, LicenseNumber licenseNumber, MedicalBoard medicalBoard, LicenseExpiryDate licenseExpiryDate)
+    public async Task RunAsync(CredentialingInput input)
     {
+        // Elevate to Domain types with catastrophic assertions
+        var providerIdResult = ProviderId.Create(input.ProviderId);
+        if (providerIdResult.IsFailure)
+            throw new InvalidOperationException($"Internal Corruption: Invalid ProviderId. {providerIdResult.Error}");
+
+        var licenseNumberResult = LicenseNumber.Create(input.LicenseNumber);
+        if (licenseNumberResult.IsFailure)
+            throw new InvalidOperationException($"Internal Corruption: Invalid LicenseNumber. {licenseNumberResult.Error}");
+
+        var medicalBoardResult = MedicalBoard.Create(input.MedicalBoard);
+        if (medicalBoardResult.IsFailure)
+            throw new InvalidOperationException($"Internal Corruption: Invalid MedicalBoard. {medicalBoardResult.Error}");
+
+        var licenseExpiryDateResult = LicenseExpiryDate.Create(input.ExpiryDate);
+        if (licenseExpiryDateResult.IsFailure)
+            throw new InvalidOperationException($"Internal Corruption: Invalid LicenseExpiryDate. {licenseExpiryDateResult.Error}");
+
+        var providerId = providerIdResult.Value;
+        var licenseNumber = licenseNumberResult.Value;
+        var medicalBoard = medicalBoardResult.Value;
+        var licenseExpiryDate = licenseExpiryDateResult.Value;
         // Step 1: Fetch Medical Board License (External API Read)
         var licenseInfo = await Workflow.ExecuteActivityAsync(
             (IProviderCredentialingActivities activities) => activities.FetchMedicalBoardLicenseAsync(licenseNumber, medicalBoard),

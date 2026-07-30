@@ -15,8 +15,24 @@ public class PlacementMatchingWorkflow
     private ProviderMatchedElsewhereSignal? _providerMatchedElsewhereSignal;
 
     [WorkflowRun]
-    public async Task RunAsync(ProviderId providerId, FacilityId facilityId, PositionId positionId)
+    public async Task RunAsync(PlacementMatchingInput input)
     {
+        // Elevate to Domain types with catastrophic assertions
+        var providerIdResult = ProviderId.Create(input.ProviderId);
+        if (providerIdResult.IsFailure)
+            throw new InvalidOperationException($"Internal Corruption: Invalid ProviderId. {providerIdResult.Error}");
+
+        var facilityIdResult = FacilityId.Create(input.FacilityId);
+        if (facilityIdResult.IsFailure)
+            throw new InvalidOperationException($"Internal Corruption: Invalid FacilityId. {facilityIdResult.Error}");
+
+        var positionIdResult = PositionId.Create(input.PositionId);
+        if (positionIdResult.IsFailure)
+            throw new InvalidOperationException($"Internal Corruption: Invalid PositionId. {positionIdResult.Error}");
+
+        var providerId = providerIdResult.Value;
+        var facilityId = facilityIdResult.Value;
+        var positionId = positionIdResult.Value;
         // Step 1: Calculate Match Score
         var matchScore = await Workflow.ExecuteActivityAsync(
             (IPlacementMatchingActivities activities) => activities.CalculateMatchScoreAsync(providerId, facilityId, positionId),

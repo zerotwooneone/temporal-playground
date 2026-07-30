@@ -23,19 +23,22 @@ public class OnboardingController : ControllerBase
     {
         var workflowId = $"provider-onboarding-{request.ProviderId}";
         
-        // Convert primitives to domain types using Result<T>
+        // Validate at the edge (Fail fast with HTTP 400 - No exceptions thrown)
         var providerIdResult = ProviderId.Create(request.ProviderId);
+        if (providerIdResult.IsFailure) return BadRequest(providerIdResult.Error);
+
         var licenseNumberResult = LicenseNumber.Create(request.LicenseNumber);
-        
-        // Check for validation failures
-        if (providerIdResult.IsFailure)
-            return BadRequest(new { Error = providerIdResult.Error });
-        
-        if (licenseNumberResult.IsFailure)
-            return BadRequest(new { Error = licenseNumberResult.Error });
-        
+        if (licenseNumberResult.IsFailure) return BadRequest(licenseNumberResult.Error);
+
+        // Map the validated domain values into the Primitive DTO
+        var workflowInput = new OnboardingInput(
+            providerIdResult.Value.Value,
+            licenseNumberResult.Value.Value
+        );
+
+        // Pass the single JSON-friendly object to Temporal
         await _temporalClient.ExecuteWorkflowAsync(
-            (IProviderOnboardingWorkflow wf) => wf.RunAsync(providerIdResult.Value, licenseNumberResult.Value),
+            (IProviderOnboardingWorkflow wf) => wf.RunAsync(workflowInput),
             new WorkflowOptions
             {
                 Id = workflowId,

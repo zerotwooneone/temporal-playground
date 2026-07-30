@@ -13,23 +13,67 @@ public class TravelLogisticsSagaWorkflow
     private LodgingBookingId? _lodgingBookingId;
 
     [WorkflowRun]
-    public async Task RunAsync(
-        Email travelerEmail,
-        FlightNumber flightNumber, 
-        AirportCode origin, 
-        AirportCode destination, 
-        FlightDepartureTime departureTime, 
-        Money flightCost,
-        HotelName hotelName,
-        Address address,
-        DateRange stayPeriod,
-        Money lodgingCost)
+    public async Task RunAsync(TravelLogisticsInput input)
     {
+        // Elevate to Domain types with catastrophic assertions
+        var travelerEmailResult = Email.Create(input.TravelerEmail);
+        if (travelerEmailResult.IsFailure)
+            throw new InvalidOperationException($"Internal Corruption: Invalid Email. {travelerEmailResult.Error}");
+
+        var flightNumberResult = FlightNumber.Create(input.FlightNumber);
+        if (flightNumberResult.IsFailure)
+            throw new InvalidOperationException($"Internal Corruption: Invalid FlightNumber. {flightNumberResult.Error}");
+
+        var originResult = AirportCode.Create(input.OriginAirportCode);
+        if (originResult.IsFailure)
+            throw new InvalidOperationException($"Internal Corruption: Invalid OriginAirportCode. {originResult.Error}");
+
+        var destinationResult = AirportCode.Create(input.DestinationAirportCode);
+        if (destinationResult.IsFailure)
+            throw new InvalidOperationException($"Internal Corruption: Invalid DestinationAirportCode. {destinationResult.Error}");
+
+        var departureTime = DateTimeOffset.FromUnixTimeMilliseconds(input.DepartureTimeUtc);
+        var departureTimeResult = FlightDepartureTime.Create(departureTime);
+        if (departureTimeResult.IsFailure)
+            throw new InvalidOperationException($"Internal Corruption: Invalid FlightDepartureTime. {departureTimeResult.Error}");
+
+        var flightCostResult = Money.Create(input.FlightCostAmount, input.FlightCostCurrency);
+        if (flightCostResult.IsFailure)
+            throw new InvalidOperationException($"Internal Corruption: Invalid FlightCost. {flightCostResult.Error}");
+
+        var hotelNameResult = HotelName.Create(input.HotelName);
+        if (hotelNameResult.IsFailure)
+            throw new InvalidOperationException($"Internal Corruption: Invalid HotelName. {hotelNameResult.Error}");
+
+        var addressResult = Address.Create(input.AddressStreet, input.AddressCity, input.AddressState, input.AddressZipCode);
+        if (addressResult.IsFailure)
+            throw new InvalidOperationException($"Internal Corruption: Invalid Address. {addressResult.Error}");
+
+        var stayPeriodStart = DateTimeOffset.FromUnixTimeMilliseconds(input.StayPeriodStartUtc);
+        var stayPeriodEnd = DateTimeOffset.FromUnixTimeMilliseconds(input.StayPeriodEndUtc);
+        var stayPeriodResult = DateRange.Create(stayPeriodStart, stayPeriodEnd);
+        if (stayPeriodResult.IsFailure)
+            throw new InvalidOperationException($"Internal Corruption: Invalid DateRange. {stayPeriodResult.Error}");
+
+        var lodgingCostResult = Money.Create(input.LodgingCostAmount, input.LodgingCostCurrency);
+        if (lodgingCostResult.IsFailure)
+            throw new InvalidOperationException($"Internal Corruption: Invalid LodgingCost. {lodgingCostResult.Error}");
+
+        var travelerEmail = travelerEmailResult.Value;
+        var flightNumber = flightNumberResult.Value;
+        var origin = originResult.Value;
+        var destination = destinationResult.Value;
+        var departureTimeValue = departureTimeResult.Value;
+        var flightCost = flightCostResult.Value;
+        var hotelName = hotelNameResult.Value;
+        var address = addressResult.Value;
+        var stayPeriod = stayPeriodResult.Value;
+        var lodgingCost = lodgingCostResult.Value;
         try
         {
             // Step 1: Book Flight (External API)
             _flightBookingId = await Workflow.ExecuteActivityAsync(
-                (ITravelLogisticsActivities activities) => activities.BookFlightAsync(flightNumber, origin, destination, departureTime, flightCost),
+                (ITravelLogisticsActivities activities) => activities.BookFlightAsync(flightNumber, origin, destination, departureTimeValue, flightCost),
                 new ActivityOptions { StartToCloseTimeout = TimeSpan.FromMinutes(5) }
             );
 
@@ -40,7 +84,7 @@ public class TravelLogisticsSagaWorkflow
             );
 
             // Step 3: Notify Traveler with confirmation
-            var confirmationMessage = $"Your travel is booked! Flight: {flightNumber.Value} on {departureTime.Value:yyyy-MM-dd}, Hotel: {hotelName.Value} from {stayPeriod.Start:yyyy-MM-dd} to {stayPeriod.End:yyyy-MM-dd}";
+            var confirmationMessage = $"Your travel is booked! Flight: {flightNumber.Value} on {departureTime:yyyy-MM-dd}, Hotel: {hotelName.Value} from {stayPeriod.Start:yyyy-MM-dd} to {stayPeriod.End:yyyy-MM-dd}";
             await Workflow.ExecuteActivityAsync(
                 (ITravelLogisticsActivities activities) => activities.NotifyTravelerAsync(travelerEmail, confirmationMessage, isCancellation: false),
                 new ActivityOptions { StartToCloseTimeout = TimeSpan.FromMinutes(5) }

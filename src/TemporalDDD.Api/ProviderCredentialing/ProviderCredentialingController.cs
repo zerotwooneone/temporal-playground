@@ -27,31 +27,30 @@ public class ProviderCredentialingController : ControllerBase
     {
         var workflowId = $"provider-credentialing-{request.ProviderId}-{Guid.NewGuid():N}";
         
-        // Convert primitives to domain types using Result<T>
+        // Validate at the edge (Fail fast with HTTP 400 - No exceptions thrown)
         var providerIdResult = ProviderId.Create(request.ProviderId);
+        if (providerIdResult.IsFailure) return BadRequest(providerIdResult.Error);
+
         var licenseNumberResult = LicenseNumber.Create(request.LicenseNumber);
+        if (licenseNumberResult.IsFailure) return BadRequest(licenseNumberResult.Error);
+
         var medicalBoardResult = MedicalBoard.Create(request.MedicalBoard);
+        if (medicalBoardResult.IsFailure) return BadRequest(medicalBoardResult.Error);
+
         var expiryDateResult = LicenseExpiryDate.Create(request.ExpiryDate);
-        
-        // Check for validation failures
-        if (providerIdResult.IsFailure)
-            return BadRequest(new { Error = providerIdResult.Error });
-        
-        if (licenseNumberResult.IsFailure)
-            return BadRequest(new { Error = licenseNumberResult.Error });
-        
-        if (medicalBoardResult.IsFailure)
-            return BadRequest(new { Error = medicalBoardResult.Error });
-        
-        if (expiryDateResult.IsFailure)
-            return BadRequest(new { Error = expiryDateResult.Error });
-        
+        if (expiryDateResult.IsFailure) return BadRequest(expiryDateResult.Error);
+
+        // Map the validated domain values into the Primitive DTO
+        var workflowInput = new CredentialingInput(
+            providerIdResult.Value.Value,
+            licenseNumberResult.Value.Value,
+            request.MedicalBoard,
+            request.ExpiryDate
+        );
+
+        // Pass the single JSON-friendly object to Temporal
         await _temporalClient.StartWorkflowAsync(
-            (ProviderCredentialingWorkflow wf) => wf.RunAsync(
-                providerIdResult.Value,
-                licenseNumberResult.Value,
-                medicalBoardResult.Value,
-                expiryDateResult.Value),
+            (ProviderCredentialingWorkflow wf) => wf.RunAsync(workflowInput),
             new WorkflowOptions
             {
                 Id = workflowId,
