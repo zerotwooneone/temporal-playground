@@ -5,7 +5,7 @@ using TemporalDDD.Domain.TimesheetProcessing;
 using TemporalDDD.Domain.TimesheetProcessing.ValueObjects;
 using TemporalDDD.Infrastructure.Persistence;
 
-namespace TemporalDDD.Infrastructure.Persistence.Configurations;
+namespace TemporalDDD.Infrastructure.TimesheetProcessing;
 
 public class TimesheetConfiguration : IEntityTypeConfiguration<Timesheet>
 {

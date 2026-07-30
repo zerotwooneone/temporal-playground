@@ -2,7 +2,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 using TemporalDDD.Infrastructure.PlacementMatching;
 
-namespace TemporalDDD.Infrastructure.Persistence.Configurations;
+namespace TemporalDDD.Infrastructure.PlacementMatching;
 
 public class AssignmentConfiguration : IEntityTypeConfiguration<AssignmentDbo>
 {

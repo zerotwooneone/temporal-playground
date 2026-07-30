@@ -5,13 +5,13 @@ using TemporalDDD.Domain.TravelLogistics;
 using TemporalDDD.Domain.TravelLogistics.ValueObjects;
 using TemporalDDD.Infrastructure.Persistence;
 
-namespace TemporalDDD.Infrastructure.Persistence.Configurations;
+namespace TemporalDDD.Infrastructure.TravelLogistics;
 
-public class FlightBookingConfiguration : IEntityTypeConfiguration<FlightBooking>
+public class LodgingBookingConfiguration : IEntityTypeConfiguration<LodgingBooking>
 {
-    public void Configure(EntityTypeBuilder<FlightBooking> builder)
+    public void Configure(EntityTypeBuilder<LodgingBooking> builder)
     {
-        builder.ToTable("FlightBookings");
+        builder.ToTable("LodgingBookings");
 
         // Primary Key - auto-incrementing uint stored as INTEGER
         builder.HasKey(x => x.Id);
@@ -22,7 +22,7 @@ public class FlightBookingConfiguration : IEntityTypeConfiguration<FlightBooking
         builder.Property(x => x.PublicId)
             .HasConversion(
                 p => p.ToString(),
-                s => FlightBookingPublicId.FromString(s))
+                s => LodgingBookingPublicId.FromString(s))
             .IsRequired(false);
 
         builder.HasIndex(x => x.PublicId)
@@ -30,26 +30,38 @@ public class FlightBookingConfiguration : IEntityTypeConfiguration<FlightBooking
             .HasFilter("PublicId IS NOT NULL");
 
         // Value Objects - flattened
-        builder.Property(x => x.FlightNumber)
+        builder.Property(x => x.HotelName)
             .HasConversion(
-                fn => fn.Value,
-                s => FlightNumber.Create(s));
+                hn => hn.Value,
+                s => HotelName.Create(s));
 
-        builder.Property(x => x.Origin)
-            .HasConversion(
-                oc => oc.Value,
-                s => AirportCode.Create(s));
+        // Address Value Object - flattened using ComplexProperty
+        builder.ComplexProperty(x => x.Address, a =>
+        {
+            a.Property(p => p.Street)
+                .HasColumnName("AddressStreet");
 
-        builder.Property(x => x.Destination)
-            .HasConversion(
-                dc => dc.Value,
-                s => AirportCode.Create(s));
+            a.Property(p => p.City)
+                .HasColumnName("AddressCity");
 
-        // FlightDepartureTime Value Object - flattened
-        builder.Property(x => x.DepartureTime)
-            .HasConversion(
-                fdt => fdt.Value,
-                dt => FlightDepartureTime.Create(dt));
+            a.Property(p => p.State)
+                .HasColumnName("AddressState");
+
+            a.Property(p => p.ZipCode)
+                .HasColumnName("AddressZipCode");
+        });
+
+        // DateRange Value Object - flattened using ComplexProperty
+        builder.ComplexProperty(x => x.StayPeriod, sp =>
+        {
+            sp.Property(p => p.Start)
+                .HasColumnName("StayPeriodStartUtc")
+                .HasConversion(ValueConverters.DateTimeToUnixMillisecondsConverter);
+
+            sp.Property(p => p.End)
+                .HasColumnName("StayPeriodEndUtc")
+                .HasConversion(ValueConverters.DateTimeToUnixMillisecondsConverter);
+        });
 
         // Money Value Object - flattened using ComplexProperty
         builder.ComplexProperty(x => x.Cost, c =>

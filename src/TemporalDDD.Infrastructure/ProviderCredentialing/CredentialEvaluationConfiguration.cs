@@ -5,7 +5,7 @@ using TemporalDDD.Domain.ProviderCredentialing.ValueObjects;
 using TemporalDDD.Domain.SharedKernel;
 using TemporalDDD.Infrastructure.Persistence;
 
-namespace TemporalDDD.Infrastructure.Persistence.Configurations;
+namespace TemporalDDD.Infrastructure.ProviderCredentialing;
 
 public class CredentialEvaluationConfiguration : IEntityTypeConfiguration<CredentialEvaluation>
 {
