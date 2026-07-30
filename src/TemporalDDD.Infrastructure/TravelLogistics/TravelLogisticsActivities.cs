@@ -30,7 +30,7 @@ public class TravelLogisticsActivities : ITravelLogisticsActivities
             .WithLatency(TimeSpan.FromMilliseconds(100), TimeSpan.FromMilliseconds(100))
             .WithFailureRate(0.10, System.Net.HttpStatusCode.InternalServerError);
 
-        var response = await _chaosHttpClient.PostAsJsonAsync($"/api/flights/book", new { FlightNumber = flightNumber.Value, Origin = origin.Value, Destination = destination.Value, DepartureTime = departureTime.Value, Cost = cost.Amount });
+        var response = await _chaosHttpClient.PostAsJsonAsync("https://airline-api.example.com/api/bookings", new { FlightNumber = flightNumber.Value, Origin = origin.Value, Destination = destination.Value, DepartureTime = departureTime.Value, Cost = cost.Amount });
 
         // Create domain entity using factory
         var booking = Domain.TravelLogistics.FlightBooking.Create(flightNumber, origin, destination, departureTime, cost);
@@ -50,7 +50,7 @@ public class TravelLogisticsActivities : ITravelLogisticsActivities
             .WithLatency(TimeSpan.FromMilliseconds(100), TimeSpan.FromMilliseconds(100))
             .WithFailureRate(0.10, System.Net.HttpStatusCode.InternalServerError);
 
-        var response = await _chaosHttpClient.PostAsJsonAsync($"/api/hotels/book", new { HotelName = hotelName.Value, Address = address.ToString(), CheckInDate = stayPeriod.Start, CheckOutDate = stayPeriod.End, Cost = cost.Amount });
+        var response = await _chaosHttpClient.PostAsJsonAsync("https://hotel-booking.example.com/api/reservations", new { HotelName = hotelName.Value, Address = address.ToString(), CheckInDate = stayPeriod.Start, CheckOutDate = stayPeriod.End, Cost = cost.Amount });
 
         // Create domain entity using factory
         var booking = Domain.TravelLogistics.LodgingBooking.Create(hotelName, address, stayPeriod, cost);
@@ -80,7 +80,7 @@ public class TravelLogisticsActivities : ITravelLogisticsActivities
             .WithLatency(TimeSpan.FromMilliseconds(100), TimeSpan.FromMilliseconds(100))
             .WithFailureRate(0.10, System.Net.HttpStatusCode.InternalServerError);
 
-        await _chaosHttpClient.PostAsJsonAsync($"/api/flights/cancel/{flightBookingId.Value}", new { });
+        await _chaosHttpClient.PostAsJsonAsync($"https://airline-api.example.com/api/bookings/{flightBookingId.Value}/cancel", new { });
 
         Console.WriteLine($"[FlightCancellation] Cancelled flight booking {flightBookingId.Value}");
     }
@@ -102,7 +102,7 @@ public class TravelLogisticsActivities : ITravelLogisticsActivities
             .WithLatency(TimeSpan.FromMilliseconds(100), TimeSpan.FromMilliseconds(100))
             .WithFailureRate(0.10, System.Net.HttpStatusCode.InternalServerError);
 
-        await _chaosHttpClient.PostAsJsonAsync($"/api/hotels/cancel/{lodgingBookingId.Value}", new { });
+        await _chaosHttpClient.PostAsJsonAsync($"https://hotel-booking.example.com/api/reservations/{lodgingBookingId.Value}/cancel", new { });
 
         Console.WriteLine($"[LodgingCancellation] Cancelled lodging booking {lodgingBookingId.Value}");
     }
@@ -115,7 +115,7 @@ public class TravelLogisticsActivities : ITravelLogisticsActivities
             .WithFailureRate(0.10, System.Net.HttpStatusCode.InternalServerError);
 
         var notificationType = isCancellation ? "cancellation" : "confirmation";
-        await _chaosHttpClient.PostAsJsonAsync($"/api/notifications/{notificationType}", new { Email = travelerEmail.Value, Message = message });
+        await _chaosHttpClient.PostAsJsonAsync($"https://notifications.example.com/api/{notificationType}", new { Email = travelerEmail.Value, Message = message });
 
         var notificationTypeDisplay = isCancellation ? "CANCELLATION" : "CONFIRMATION";
         Console.WriteLine($"[TravelerNotification] {notificationTypeDisplay} sent to {travelerEmail.Value}: {message}");

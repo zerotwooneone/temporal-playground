@@ -77,7 +77,7 @@ public class TimesheetProcessingActivities : ITimesheetProcessingActivities
             .WithLatency(TimeSpan.FromMilliseconds(100), TimeSpan.FromMilliseconds(100))
             .WithFailureRate(0.10, System.Net.HttpStatusCode.InternalServerError);
 
-        var response = await _chaosHttpClient.PostAsJsonAsync($"/api/payments/transfer", new { TimesheetId = timesheetId.Value, IdempotencyKey = idempotencyKey });
+        var response = await _chaosHttpClient.PostAsJsonAsync("https://payment-gateway.example.com/api/transfer", new { TimesheetId = timesheetId.Value, IdempotencyKey = idempotencyKey });
 
         // The idempotencyKey ensures that duplicate requests don't result in duplicate payments
         var paymentReference = $"PAY-{DateTime.UtcNow:yyyyMMddHHmmss}-{idempotencyKey.Substring(0, 8)}";
@@ -105,7 +105,7 @@ public class TimesheetProcessingActivities : ITimesheetProcessingActivities
             .WithLatency(TimeSpan.FromMilliseconds(100), TimeSpan.FromMilliseconds(100))
             .WithFailureRate(0.10, System.Net.HttpStatusCode.InternalServerError);
 
-        var response = await _chaosHttpClient.PostAsJsonAsync($"/api/erp/invoices", new { TimesheetId = timesheetId.Value, FacilityBillRate = facilityBillRate.Amount });
+        var response = await _chaosHttpClient.PostAsJsonAsync("https://erp-system.example.com/api/invoices", new { TimesheetId = timesheetId.Value, FacilityBillRate = facilityBillRate.Amount });
 
         var invoiceNumber = $"INV-{DateTime.UtcNow:yyyyMMdd}-{Guid.NewGuid().ToString().Substring(0, 8).ToUpper()}";
 

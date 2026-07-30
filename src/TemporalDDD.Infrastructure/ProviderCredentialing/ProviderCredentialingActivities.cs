@@ -31,7 +31,7 @@ public class ProviderCredentialingActivities : IProviderCredentialingActivities
             .WithLatency(TimeSpan.FromMilliseconds(100), TimeSpan.FromMilliseconds(100))
             .WithFailureRate(0.10, System.Net.HttpStatusCode.InternalServerError);
 
-        var response = await _chaosHttpClient.GetAsync($"/api/medical-board/{medicalBoard.Value}/license/{licenseNumber.Value}");
+        var response = await _chaosHttpClient.GetAsync($"https://external-medical-board.example.com/api/{medicalBoard.Value}/license/{licenseNumber.Value}");
 
         // Simulated response - in real implementation, this would call actual medical board API
         var isValid = licenseNumber.Value.Length >= 8;
@@ -83,7 +83,7 @@ public class ProviderCredentialingActivities : IProviderCredentialingActivities
             .WithLatency(TimeSpan.FromMilliseconds(100), TimeSpan.FromMilliseconds(100))
             .WithFailureRate(0.10, System.Net.HttpStatusCode.InternalServerError);
 
-        await _chaosHttpClient.PostAsJsonAsync($"/api/notifications/manual-review/{evaluationId.Value}", new { });
+        await _chaosHttpClient.PostAsJsonAsync($"https://notifications.example.com/api/manual-review/{evaluationId.Value}", new { });
 
         Console.WriteLine($"[ManualReview] Request sent for evaluation {evaluationId.Value}");
     }

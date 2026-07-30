@@ -24,7 +24,7 @@ public class ComplianceActivities : IComplianceActivities
             .WithLatency(TimeSpan.FromMilliseconds(100), TimeSpan.FromMilliseconds(100))
             .WithFailureRate(0.10, System.Net.HttpStatusCode.InternalServerError);
 
-        var response = await _chaosHttpClient.GetAsync($"/api/medical-board/{licenseNumber.Value}");
+        var response = await _chaosHttpClient.GetAsync($"https://external-medical-board.example.com/api/license/{licenseNumber.Value}");
 
         var providerIdVo = ProviderId.Create(1).Value!; // Simulated provider ID
         var medicalBoardVo = MedicalBoard.Create("Default").Value!;
