@@ -15,7 +15,6 @@ public class ProviderActivities : IProviderActivities
         _providerProfileRepository = providerProfileRepository;
     }
 
-    [Activity]
     public async Task ActivateProvider(ProviderId providerId, EvaluationStatus status)
     {
         var providerProfileId = ProviderProfileId.Create(providerId.Value).Value!;

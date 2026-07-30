@@ -7,9 +7,13 @@ namespace TemporalDDD.Application.TimesheetProcessing;
 
 public interface ITimesheetProcessingActivities
 {
+    [Activity]
     Task ValidateTimesheetRulesAsync(TimesheetId timesheetId);
+    [Activity]
     Task<PayrollCalculationResult> CalculatePayrollAndTaxesAsync(TimesheetId timesheetId);
+    [Activity]
     Task<string> SubmitBankTransferAsync(TimesheetId timesheetId, string idempotencyKey);
+    [Activity]
     Task<string> GenerateAndSendInvoiceAsync(TimesheetId timesheetId, Money facilityBillRate);
 }
 

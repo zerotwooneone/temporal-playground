@@ -7,9 +7,13 @@ namespace TemporalDDD.Application.ProviderCredentialing;
 
 public interface IProviderCredentialingActivities
 {
+    [Activity]
     Task<MedicalBoardLicenseInfo> FetchMedicalBoardLicenseAsync(LicenseNumber licenseNumber, MedicalBoard medicalBoard);
+    [Activity]
     Task<CredentialEvaluationId> EvaluateAndSaveComplianceAsync(ProviderId providerId, MedicalBoardLicenseInfo licenseInfo);
+    [Activity]
     Task RequestManualReviewAsync(CredentialEvaluationId evaluationId);
+    [Activity]
     Task ActivateProviderProfileAsync(ProviderProfileId providerId);
 }
 

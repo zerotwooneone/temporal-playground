@@ -16,7 +16,6 @@ public class PlacementMatchingActivities : IPlacementMatchingActivities
         _assignmentRepository = assignmentRepository;
     }
 
-    [Activity]
     public async Task<MatchScore> CalculateMatchScoreAsync(ProviderId providerId, FacilityId facilityId, PositionId positionId)
     {
         // Simulate match score calculation algorithm
@@ -32,7 +31,6 @@ public class PlacementMatchingActivities : IPlacementMatchingActivities
         return matchScore;
     }
 
-    [Activity]
     public async Task<AssignmentId> ProposeAssignmentAsync(ProviderId providerId, FacilityId facilityId, PositionId positionId, MatchScore matchScore)
     {
         // Create domain entity using factory
@@ -45,7 +43,6 @@ public class PlacementMatchingActivities : IPlacementMatchingActivities
         return assignment.Id;
     }
 
-    [Activity]
     public async Task CommitAssignmentAsync(AssignmentId assignmentId, AggregateVersion expectedVersion)
     {
         var assignment = await _assignmentRepository.GetByIdAsync(assignmentId);
@@ -63,7 +60,6 @@ public class PlacementMatchingActivities : IPlacementMatchingActivities
         Console.WriteLine($"[Assignment] Committed assignment {assignmentId.Value} with version check {expectedVersion.Value}");
     }
 
-    [Activity]
     public async Task RevokeOfferAsync(AssignmentId assignmentId)
     {
         var assignment = await _assignmentRepository.GetByIdAsync(assignmentId);

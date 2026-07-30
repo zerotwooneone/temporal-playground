@@ -19,7 +19,6 @@ public class TimesheetProcessingActivities : ITimesheetProcessingActivities
         _chaosHttpClient = chaosHttpClient;
     }
 
-    [Activity]
     public async Task ValidateTimesheetRulesAsync(TimesheetId timesheetId)
     {
         var timesheet = await _timesheetRepository.GetByIdAsync(timesheetId);
@@ -48,7 +47,6 @@ public class TimesheetProcessingActivities : ITimesheetProcessingActivities
         Console.WriteLine($"[TimesheetValidation] Timesheet {timesheetId.Value} validated successfully");
     }
 
-    [Activity]
     public async Task<PayrollCalculationResult> CalculatePayrollAndTaxesAsync(TimesheetId timesheetId)
     {
         var timesheet = await _timesheetRepository.GetByIdAsync(timesheetId);
@@ -72,7 +70,6 @@ public class TimesheetProcessingActivities : ITimesheetProcessingActivities
         );
     }
 
-    [Activity]
     public async Task<string> SubmitBankTransferAsync(TimesheetId timesheetId, string idempotencyKey)
     {
         // Simulate external API call to payment gateway with chaos (100ms latency, 10% failure rate)
@@ -91,7 +88,6 @@ public class TimesheetProcessingActivities : ITimesheetProcessingActivities
         return paymentReference;
     }
 
-    [Activity]
     public async Task<string> GenerateAndSendInvoiceAsync(TimesheetId timesheetId, Money facilityBillRate)
     {
         var timesheet = await _timesheetRepository.GetByIdAsync(timesheetId);
