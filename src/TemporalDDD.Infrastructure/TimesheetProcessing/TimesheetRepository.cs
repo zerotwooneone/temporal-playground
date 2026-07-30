@@ -48,15 +48,15 @@ public class TimesheetRepository : ITimesheetRepository
 
     private Timesheet MapToDomain(TimesheetDbo dbo)
     {
-        var providerId = ProviderId.Create(dbo.ProviderId).Value;
+        var providerId = ProviderId.Create(dbo.ProviderId).Value ?? throw new InvalidOperationException($"Invalid provider ID in database: {dbo.ProviderId}");
         var periodStart = DateTimeOffset.FromUnixTimeMilliseconds(dbo.PeriodStartUtc);
         var periodEnd = DateTimeOffset.FromUnixTimeMilliseconds(dbo.PeriodEndUtc);
-        var period = DateRange.Create(periodStart, periodEnd);
-        var totalHours = Hours.Create(dbo.TotalHours).Value;
-        var hourlyRate = HourlyRate.Create(dbo.HourlyRate).Value;
-        var grossPay = Money.Create(decimal.Parse(dbo.GrossPayAmount), dbo.GrossPayCurrency);
-        var taxAmount = Money.Create(decimal.Parse(dbo.TaxAmount), dbo.TaxCurrency);
-        var netPay = Money.Create(decimal.Parse(dbo.NetPayAmount), dbo.NetPayCurrency);
+        var period = DateRange.Create(periodStart, periodEnd).Value ?? throw new InvalidOperationException($"Invalid date range in database: {periodStart} to {periodEnd}");
+        var totalHours = Hours.Create(dbo.TotalHours).Value ?? throw new InvalidOperationException($"Invalid total hours in database: {dbo.TotalHours}");
+        var hourlyRate = HourlyRate.Create(dbo.HourlyRate).Value ?? throw new InvalidOperationException($"Invalid hourly rate in database: {dbo.HourlyRate}");
+        var grossPay = Money.Create(decimal.Parse(dbo.GrossPayAmount), dbo.GrossPayCurrency).Value ?? throw new InvalidOperationException($"Invalid gross pay in database: {dbo.GrossPayAmount} {dbo.GrossPayCurrency}");
+        var taxAmount = Money.Create(decimal.Parse(dbo.TaxAmount), dbo.TaxCurrency).Value ?? throw new InvalidOperationException($"Invalid tax amount in database: {dbo.TaxAmount} {dbo.TaxCurrency}");
+        var netPay = Money.Create(decimal.Parse(dbo.NetPayAmount), dbo.NetPayCurrency).Value ?? throw new InvalidOperationException($"Invalid net pay in database: {dbo.NetPayAmount} {dbo.NetPayCurrency}");
         var status = TimesheetStatus.FromValue(dbo.Status);
         var submittedAt = DateTimeOffset.FromUnixTimeMilliseconds(dbo.SubmittedAt);
         var processedAt = dbo.ProcessedAt.HasValue ? DateTimeOffset.FromUnixTimeMilliseconds(dbo.ProcessedAt.Value) : (DateTimeOffset?)null;
@@ -64,7 +64,7 @@ public class TimesheetRepository : ITimesheetRepository
         PaymentReference? paymentReference = null;
         if (!string.IsNullOrEmpty(dbo.PaymentReference))
         {
-            paymentReference = PaymentReference.Create(dbo.PaymentReference);
+            paymentReference = PaymentReference.Create(dbo.PaymentReference).Value ?? throw new InvalidOperationException($"Invalid payment reference in database: {dbo.PaymentReference}");
         }
 
         TimesheetPublicId? publicId = null;
@@ -79,7 +79,7 @@ public class TimesheetRepository : ITimesheetRepository
             nonPublic: true)!;
         
         // Set properties via reflection (infrastructure concern)
-        typeof(Timesheet).GetProperty(nameof(Timesheet.Id))?.SetValue(timesheet, TimesheetId.Create(dbo.Id).Value);
+        typeof(Timesheet).GetProperty(nameof(Timesheet.Id))?.SetValue(timesheet, TimesheetId.Create(dbo.Id).Value ?? throw new InvalidOperationException($"Invalid timesheet ID in database: {dbo.Id}"));
         typeof(Timesheet).GetProperty(nameof(Timesheet.PublicId))?.SetValue(timesheet, publicId);
         typeof(Timesheet).GetProperty(nameof(Timesheet.ProviderId))?.SetValue(timesheet, providerId);
         typeof(Timesheet).GetProperty(nameof(Timesheet.Period))?.SetValue(timesheet, period);

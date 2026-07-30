@@ -48,11 +48,11 @@ public class CredentialEvaluationRepository : ICredentialEvaluationRepository
 
     private CredentialEvaluation MapToDomain(CredentialEvaluationDbo dbo)
     {
-        var providerId = ProviderId.Create(dbo.ProviderId).Value;
-        var licenseNumber = LicenseNumber.Create(dbo.LicenseNumber).Value;
-        var medicalBoard = MedicalBoard.Create(dbo.MedicalBoard).Value;
-        var licenseExpiryDate = LicenseExpiryDate.Create(dbo.LicenseExpiryDate).Value;
-        var complianceNotes = ComplianceNotes.Create(dbo.ComplianceNotes).Value;
+        var providerId = ProviderId.Create(dbo.ProviderId).Value ?? throw new InvalidOperationException($"Invalid provider ID in database: {dbo.ProviderId}");
+        var licenseNumber = LicenseNumber.Create(dbo.LicenseNumber).Value ?? throw new InvalidOperationException($"Invalid license number in database: {dbo.LicenseNumber}");
+        var medicalBoard = MedicalBoard.Create(dbo.MedicalBoard).Value ?? throw new InvalidOperationException($"Invalid medical board in database: {dbo.MedicalBoard}");
+        var licenseExpiryDate = LicenseExpiryDate.Create(dbo.LicenseExpiryDate).Value ?? throw new InvalidOperationException($"Invalid license expiry date in database: {dbo.LicenseExpiryDate}");
+        var complianceNotes = ComplianceNotes.Create(dbo.ComplianceNotes).Value ?? throw new InvalidOperationException($"Invalid compliance notes in database: {dbo.ComplianceNotes}");
         var status = EvaluationStatus.FromValue(dbo.Status);
         var evaluatedAt = DateTimeOffset.FromUnixTimeMilliseconds(dbo.EvaluatedAt);
 
@@ -68,7 +68,7 @@ public class CredentialEvaluationRepository : ICredentialEvaluationRepository
             nonPublic: true)!;
         
         // Set properties via reflection (infrastructure concern)
-        typeof(CredentialEvaluation).GetProperty(nameof(CredentialEvaluation.Id))?.SetValue(evaluation, CredentialEvaluationId.Create(dbo.Id).Value);
+        typeof(CredentialEvaluation).GetProperty(nameof(CredentialEvaluation.Id))?.SetValue(evaluation, CredentialEvaluationId.Create(dbo.Id).Value ?? throw new InvalidOperationException($"Invalid credential evaluation ID in database: {dbo.Id}"));
         typeof(CredentialEvaluation).GetProperty(nameof(CredentialEvaluation.PublicId))?.SetValue(evaluation, publicId);
         typeof(CredentialEvaluation).GetProperty(nameof(CredentialEvaluation.ProviderId))?.SetValue(evaluation, providerId);
         typeof(CredentialEvaluation).GetProperty(nameof(CredentialEvaluation.LicenseNumber))?.SetValue(evaluation, licenseNumber);

@@ -1,4 +1,5 @@
 using System.Text.RegularExpressions;
+using TemporalDDD.Domain.SharedKernel;
 
 namespace TemporalDDD.Domain.TimesheetProcessing.ValueObjects;
 
@@ -13,20 +14,20 @@ public sealed record PaymentReference
         Value = value;
     }
 
-    public static PaymentReference Create(string value)
+    public static Result<PaymentReference> Create(string value)
     {
         if (string.IsNullOrWhiteSpace(value))
-            throw new ArgumentException("Payment reference cannot be null or whitespace", nameof(value));
+            return Result<PaymentReference>.Failure("Payment reference cannot be null or whitespace");
 
         var trimmed = value.Trim().ToUpperInvariant();
 
         if (trimmed.Length < 4 || trimmed.Length > 100)
-            throw new ArgumentException("Payment reference must be between 4 and 100 characters", nameof(value));
+            return Result<PaymentReference>.Failure("Payment reference must be between 4 and 100 characters");
 
         if (!PaymentReferenceRegex.IsMatch(trimmed))
-            throw new ArgumentException("Payment reference must contain only alphanumeric characters and hyphens", nameof(value));
+            return Result<PaymentReference>.Failure("Payment reference must contain only alphanumeric characters and hyphens");
 
-        return new PaymentReference(trimmed);
+        return Result<PaymentReference>.Success(new PaymentReference(trimmed));
     }
 
     public static implicit operator string(PaymentReference paymentReference) => paymentReference.Value;

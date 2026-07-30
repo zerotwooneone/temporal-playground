@@ -1,3 +1,5 @@
+using TemporalDDD.Domain.SharedKernel;
+
 namespace TemporalDDD.Domain.SharedKernel;
 
 public sealed record DateRange
@@ -11,12 +13,12 @@ public sealed record DateRange
         End = end;
     }
 
-    public static DateRange Create(DateTimeOffset start, DateTimeOffset end)
+    public static Result<DateRange> Create(DateTimeOffset start, DateTimeOffset end)
     {
         if (end < start)
-            throw new ArgumentException("End date must be greater than or equal to start date", nameof(end));
+            return Result<DateRange>.Failure("End date must be greater than or equal to start date");
 
-        return new DateRange(start, end);
+        return Result<DateRange>.Success(new DateRange(start, end));
     }
 
     public TimeSpan Duration => End - Start;

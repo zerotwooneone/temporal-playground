@@ -1,3 +1,5 @@
+using TemporalDDD.Domain.SharedKernel;
+
 namespace TemporalDDD.Domain.TravelLogistics;
 
 public sealed record FlightBookingId
@@ -6,11 +8,11 @@ public sealed record FlightBookingId
 
     private FlightBookingId(uint value) => Value = value;
 
-    public static FlightBookingId Create(uint value)
+    public static Result<FlightBookingId> Create(uint value)
     {
         if (value == 0)
-            throw new ArgumentException("FlightBookingId cannot be zero", nameof(value));
-        return new FlightBookingId(value);
+            return Result<FlightBookingId>.Failure("FlightBookingId cannot be zero");
+        return Result<FlightBookingId>.Success(new FlightBookingId(value));
     }
 
     public static implicit operator uint(FlightBookingId id) => id.Value;

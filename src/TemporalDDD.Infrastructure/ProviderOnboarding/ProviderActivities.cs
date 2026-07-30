@@ -18,15 +18,15 @@ public class ProviderActivities : IProviderActivities
     [Activity]
     public async Task ActivateProvider(ProviderId providerId, EvaluationStatus status)
     {
-        var providerProfileId = ProviderProfileId.Create(providerId.Value);
+        var providerProfileId = ProviderProfileId.Create(providerId.Value).Value!;
         var providerProfile = await _providerProfileRepository.GetByIdAsync(providerProfileId);
         
         if (providerProfile == null)
         {
             // Create new provider profile if it doesn't exist
-            var firstNameVo = PersonName.Create("John");
-            var lastNameVo = PersonName.Create("Doe");
-            var emailVo = Email.Create("john.doe@example.com");
+            var firstNameVo = PersonName.Create("John").Value!;
+            var lastNameVo = PersonName.Create("Doe").Value!;
+            var emailVo = Email.Create("john.doe@example.com").Value!;
             var specialtyVo = Specialty.Cardiology;
             
             providerProfile = ProviderProfile.Create(firstNameVo, lastNameVo, emailVo, specialtyVo);

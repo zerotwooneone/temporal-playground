@@ -26,14 +26,14 @@ public class TimesheetProcessingActivities : ITimesheetProcessingActivities
         if (timesheet == null)
         {
             // Create value objects for new timesheet using Result<T>
-            var period = DateRange.Create(DateTime.UtcNow.AddDays(-30), DateTime.UtcNow);
-            var totalHours = Hours.Create(160);
-            var hourlyRate = HourlyRate.Create(50);
-            var providerIdResult = ProviderId.Create(1); // Simulated provider ID
+            var period = DateRange.Create(DateTime.UtcNow.AddDays(-30), DateTime.UtcNow).Value!;
+            var totalHours = Hours.Create(160).Value!;
+            var hourlyRate = HourlyRate.Create(50).Value!;
+            var providerIdResult = ProviderId.Create(1).Value!; // Simulated provider ID
 
             // Create domain entity for validation using factory
             timesheet = Domain.TimesheetProcessing.Timesheet.Create(
-                providerId: providerIdResult.Value,
+                providerId: providerIdResult,
                 period: period,
                 totalHours: totalHours,
                 hourlyRate: hourlyRate

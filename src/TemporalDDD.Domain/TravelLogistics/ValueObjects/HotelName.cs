@@ -1,4 +1,5 @@
 using System.Text.RegularExpressions;
+using TemporalDDD.Domain.SharedKernel;
 
 namespace TemporalDDD.Domain.TravelLogistics.ValueObjects;
 
@@ -13,20 +14,20 @@ public sealed record HotelName
         Value = value;
     }
 
-    public static HotelName Create(string value)
+    public static Result<HotelName> Create(string value)
     {
         if (string.IsNullOrWhiteSpace(value))
-            throw new ArgumentException("Hotel name cannot be null or whitespace", nameof(value));
+            return Result<HotelName>.Failure("Hotel name cannot be null or whitespace");
 
         var trimmed = value.Trim();
 
         if (trimmed.Length < 2 || trimmed.Length > 255)
-            throw new ArgumentException("Hotel name must be between 2 and 255 characters", nameof(value));
+            return Result<HotelName>.Failure("Hotel name must be between 2 and 255 characters");
 
         if (!HotelNameRegex.IsMatch(trimmed))
-            throw new ArgumentException("Hotel name must contain only letters, numbers, spaces, hyphens, and apostrophes", nameof(value));
+            return Result<HotelName>.Failure("Hotel name must contain only letters, numbers, spaces, hyphens, and apostrophes");
 
-        return new HotelName(trimmed);
+        return Result<HotelName>.Success(new HotelName(trimmed));
     }
 
     public static implicit operator string(HotelName hotelName) => hotelName.Value;

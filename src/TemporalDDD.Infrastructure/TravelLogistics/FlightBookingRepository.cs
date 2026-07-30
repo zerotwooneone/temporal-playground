@@ -48,11 +48,11 @@ public class FlightBookingRepository : IFlightBookingRepository
 
     private FlightBooking MapToDomain(FlightBookingDbo dbo)
     {
-        var flightNumber = FlightNumber.Create(dbo.FlightNumber).Value;
-        var origin = AirportCode.Create(dbo.Origin).Value;
-        var destination = AirportCode.Create(dbo.Destination).Value;
-        var departureTime = FlightDepartureTime.Create(DateTimeOffset.FromUnixTimeMilliseconds(dbo.DepartureTime)).Value;
-        var cost = Money.Create(decimal.Parse(dbo.CostAmount), dbo.CostCurrency);
+        var flightNumber = FlightNumber.Create(dbo.FlightNumber).Value ?? throw new InvalidOperationException($"Invalid flight number in database: {dbo.FlightNumber}");
+        var origin = AirportCode.Create(dbo.Origin).Value ?? throw new InvalidOperationException($"Invalid origin airport code in database: {dbo.Origin}");
+        var destination = AirportCode.Create(dbo.Destination).Value ?? throw new InvalidOperationException($"Invalid destination airport code in database: {dbo.Destination}");
+        var departureTime = FlightDepartureTime.Create(DateTimeOffset.FromUnixTimeMilliseconds(dbo.DepartureTime)).Value ?? throw new InvalidOperationException($"Invalid departure time in database: {dbo.DepartureTime}");
+        var cost = Money.Create(decimal.Parse(dbo.CostAmount), dbo.CostCurrency).Value ?? throw new InvalidOperationException($"Invalid cost in database: {dbo.CostAmount} {dbo.CostCurrency}");
         var status = BookingStatus.FromValue(dbo.Status);
         var bookedAt = DateTimeOffset.FromUnixTimeMilliseconds(dbo.BookedAt);
 
@@ -68,7 +68,7 @@ public class FlightBookingRepository : IFlightBookingRepository
             nonPublic: true)!;
         
         // Set properties via reflection (infrastructure concern)
-        typeof(FlightBooking).GetProperty(nameof(FlightBooking.Id))?.SetValue(booking, FlightBookingId.Create(dbo.Id).Value);
+        typeof(FlightBooking).GetProperty(nameof(FlightBooking.Id))?.SetValue(booking, FlightBookingId.Create(dbo.Id).Value ?? throw new InvalidOperationException($"Invalid flight booking ID in database: {dbo.Id}"));
         typeof(FlightBooking).GetProperty(nameof(FlightBooking.PublicId))?.SetValue(booking, publicId);
         typeof(FlightBooking).GetProperty(nameof(FlightBooking.FlightNumber))?.SetValue(booking, flightNumber);
         typeof(FlightBooking).GetProperty(nameof(FlightBooking.Origin))?.SetValue(booking, origin);

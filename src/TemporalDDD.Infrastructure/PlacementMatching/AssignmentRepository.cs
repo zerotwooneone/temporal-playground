@@ -48,14 +48,14 @@ public class AssignmentRepository : IAssignmentRepository
 
     private Assignment MapToDomain(AssignmentDbo dbo)
     {
-        var providerId = ProviderId.Create(dbo.ProviderId).Value;
-        var facilityId = FacilityId.Create(dbo.FacilityId).Value;
-        var positionId = PositionId.Create(dbo.PositionId).Value;
-        var matchScore = MatchScore.Create(dbo.MatchScore).Value;
+        var providerId = ProviderId.Create(dbo.ProviderId).Value ?? throw new InvalidOperationException($"Invalid provider ID in database: {dbo.ProviderId}");
+        var facilityId = FacilityId.Create(dbo.FacilityId).Value ?? throw new InvalidOperationException($"Invalid facility ID in database: {dbo.FacilityId}");
+        var positionId = PositionId.Create(dbo.PositionId).Value ?? throw new InvalidOperationException($"Invalid position ID in database: {dbo.PositionId}");
+        var matchScore = MatchScore.Create(dbo.MatchScore).Value ?? throw new InvalidOperationException($"Invalid match score in database: {dbo.MatchScore}");
         var status = AssignmentStatus.FromValue(dbo.Status);
         var proposedAt = DateTimeOffset.FromUnixTimeMilliseconds(dbo.ProposedAt);
         var acceptedAt = dbo.AcceptedAt.HasValue ? DateTimeOffset.FromUnixTimeMilliseconds(dbo.AcceptedAt.Value) : (DateTimeOffset?)null;
-        var version = AggregateVersion.Create(dbo.Version);
+        var version = AggregateVersion.Create(dbo.Version).Value ?? throw new InvalidOperationException($"Invalid version in database: {dbo.Version}");
 
         AssignmentPublicId? publicId = null;
         if (!string.IsNullOrEmpty(dbo.PublicId))
@@ -69,7 +69,7 @@ public class AssignmentRepository : IAssignmentRepository
             nonPublic: true)!;
         
         // Set properties via reflection (infrastructure concern)
-        typeof(Assignment).GetProperty(nameof(Assignment.Id))?.SetValue(assignment, AssignmentId.Create(dbo.Id).Value);
+        typeof(Assignment).GetProperty(nameof(Assignment.Id))?.SetValue(assignment, AssignmentId.Create(dbo.Id).Value ?? throw new InvalidOperationException($"Invalid assignment ID in database: {dbo.Id}"));
         typeof(Assignment).GetProperty(nameof(Assignment.PublicId))?.SetValue(assignment, publicId);
         typeof(Assignment).GetProperty(nameof(Assignment.ProviderId))?.SetValue(assignment, providerId);
         typeof(Assignment).GetProperty(nameof(Assignment.FacilityId))?.SetValue(assignment, facilityId);

@@ -26,8 +26,8 @@ public class FacilityBillingQuery : IFacilityBillingQuery
         }
 
         return new FacilityBillingRateDto(
-            StandardBillRate: Money.Create(dbo.StandardBillRate),
-            OvertimeBillRate: Money.Create(dbo.OvertimeBillRate)
+            StandardBillRate: Money.Create(dbo.StandardBillRate).Value ?? throw new InvalidOperationException("Failed to create standard bill rate"),
+            OvertimeBillRate: Money.Create(dbo.OvertimeBillRate).Value ?? throw new InvalidOperationException("Failed to create overtime bill rate")
         );
     }
 }

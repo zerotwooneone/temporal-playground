@@ -1,4 +1,5 @@
 using System.Text.RegularExpressions;
+using TemporalDDD.Domain.SharedKernel;
 
 namespace TemporalDDD.Domain.TravelLogistics.ValueObjects;
 
@@ -13,17 +14,17 @@ public sealed record FlightNumber
         Value = value;
     }
 
-    public static FlightNumber Create(string value)
+    public static Result<FlightNumber> Create(string value)
     {
         if (string.IsNullOrWhiteSpace(value))
-            throw new ArgumentException("Flight number cannot be null or whitespace", nameof(value));
+            return Result<FlightNumber>.Failure("Flight number cannot be null or whitespace");
 
         var trimmed = value.Trim().ToUpperInvariant();
 
         if (!FlightNumberRegex.IsMatch(trimmed))
-            throw new ArgumentException("Flight number must be in IATA format: 2 uppercase letters followed by 1-4 digits (e.g., UA1234)", nameof(value));
+            return Result<FlightNumber>.Failure("Flight number must be in IATA format: 2 uppercase letters followed by 1-4 digits (e.g., UA1234)");
 
-        return new FlightNumber(trimmed);
+        return Result<FlightNumber>.Success(new FlightNumber(trimmed));
     }
 
     public static implicit operator string(FlightNumber flightNumber) => flightNumber.Value;

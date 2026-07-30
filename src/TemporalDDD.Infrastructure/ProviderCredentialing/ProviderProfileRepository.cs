@@ -49,11 +49,11 @@ public class ProviderProfileRepository : IProviderProfileRepository
 
     private ProviderProfile MapToDomain(ProviderProfileDbo dbo)
     {
-        var firstName = PersonName.Create(dbo.FirstName).Value;
-        var lastName = PersonName.Create(dbo.LastName).Value;
-        var email = Email.Create(dbo.Email).Value;
-        var specialty = Specialty.Create(dbo.Specialty).Value;
-        var version = AggregateVersion.Create(dbo.Version).Value;
+        var firstName = PersonName.Create(dbo.FirstName).Value ?? throw new InvalidOperationException($"Invalid first name in database: {dbo.FirstName}");
+        var lastName = PersonName.Create(dbo.LastName).Value ?? throw new InvalidOperationException($"Invalid last name in database: {dbo.LastName}");
+        var email = Email.Create(dbo.Email).Value ?? throw new InvalidOperationException($"Invalid email in database: {dbo.Email}");
+        var specialty = Specialty.Create(dbo.Specialty).Value ?? throw new InvalidOperationException($"Invalid specialty in database: {dbo.Specialty}");
+        var version = AggregateVersion.Create(dbo.Version).Value ?? throw new InvalidOperationException($"Invalid version in database: {dbo.Version}");
         var createdAt = DateTimeOffset.FromUnixTimeMilliseconds(dbo.CreatedAt);
         var activatedAt = dbo.ActivatedAt.HasValue ? DateTimeOffset.FromUnixTimeMilliseconds(dbo.ActivatedAt.Value) : (DateTimeOffset?)null;
 
@@ -69,7 +69,7 @@ public class ProviderProfileRepository : IProviderProfileRepository
             nonPublic: true)!;
         
         // Set properties via reflection (infrastructure concern)
-        typeof(ProviderProfile).GetProperty(nameof(ProviderProfile.Id))?.SetValue(profile, ProviderProfileId.Create(dbo.Id).Value);
+        typeof(ProviderProfile).GetProperty(nameof(ProviderProfile.Id))?.SetValue(profile, ProviderProfileId.Create(dbo.Id).Value ?? throw new InvalidOperationException($"Invalid provider profile ID in database: {dbo.Id}"));
         typeof(ProviderProfile).GetProperty(nameof(ProviderProfile.PublicId))?.SetValue(profile, publicId);
         typeof(ProviderProfile).GetProperty(nameof(ProviderProfile.FirstName))?.SetValue(profile, firstName);
         typeof(ProviderProfile).GetProperty(nameof(ProviderProfile.LastName))?.SetValue(profile, lastName);

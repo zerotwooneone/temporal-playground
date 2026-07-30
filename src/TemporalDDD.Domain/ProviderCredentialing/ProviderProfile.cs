@@ -24,7 +24,7 @@ public sealed class ProviderProfile
     {
         return new ProviderProfile
         {
-            Id = ProviderProfileId.Create(0), // Temporary, will be set by DB
+            Id = ProviderProfileId.Create(0).Value!, // Temporary, will be set by DB
             PublicId = ProviderPublicId.New(),
             FirstName = firstName,
             LastName = lastName,

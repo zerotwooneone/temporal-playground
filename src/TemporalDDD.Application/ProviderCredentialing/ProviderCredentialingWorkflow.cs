@@ -44,7 +44,7 @@ public class ProviderCredentialingWorkflow
         }
 
         // Step 5: Activate Provider Profile (DB Write)
-        var providerProfileId = ProviderProfileId.Create(providerId.Value);
+        var providerProfileId = ProviderProfileId.Create(providerId.Value).Value!;
         await Workflow.ExecuteActivityAsync(
             (IProviderCredentialingActivities activities) => activities.ActivateProviderProfileAsync(providerProfileId),
             new ActivityOptions { StartToCloseTimeout = TimeSpan.FromMinutes(5) }

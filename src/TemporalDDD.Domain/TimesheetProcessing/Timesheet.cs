@@ -27,7 +27,7 @@ public sealed class Timesheet
     {
         return new Timesheet
         {
-            Id = TimesheetId.Create(0), // Temporary, will be set by DB
+            Id = TimesheetId.Create(0).Value!, // Temporary, will be set by DB
             PublicId = TimesheetPublicId.New(),
             ProviderId = providerId,
             Period = period,
@@ -82,13 +82,13 @@ public sealed class Timesheet
     {
         // Standard pay for first 40 hours
         var standardHours = TotalHours.Value > 40.0m ? 40.0m : TotalHours.Value;
-        var standardPay = Money.Create(standardHours * HourlyRate.Value, "USD");
+        var standardPay = Money.Create(standardHours * HourlyRate.Value, "USD").Value ?? throw new InvalidOperationException("Failed to calculate standard pay");
 
         // Overtime pay for hours over 40
         if (TotalHours.Value > 40.0m)
         {
             var overtimeHours = TotalHours.Value - 40.0m;
-            var overtimePay = Money.Create(overtimeHours * HourlyRate.Value * overtimeMultiplier, "USD");
+            var overtimePay = Money.Create(overtimeHours * HourlyRate.Value * overtimeMultiplier, "USD").Value ?? throw new InvalidOperationException("Failed to calculate overtime pay");
             return standardPay + overtimePay;
         }
 
@@ -101,7 +101,7 @@ public sealed class Timesheet
             throw new ArgumentException("Tax rate must be between 0 and 1", nameof(taxRate));
 
         var taxAmount = GrossPay.Amount * taxRate;
-        TaxAmount = Money.Create(taxAmount, GrossPay.Currency);
+        TaxAmount = Money.Create(taxAmount, GrossPay.Currency).Value ?? throw new InvalidOperationException("Failed to calculate tax amount");
         NetPay = GrossPay - TaxAmount;
     }
 

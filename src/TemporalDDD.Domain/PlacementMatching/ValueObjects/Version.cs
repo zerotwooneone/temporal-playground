@@ -1,3 +1,5 @@
+using TemporalDDD.Domain.SharedKernel;
+
 namespace TemporalDDD.Domain.PlacementMatching.ValueObjects;
 
 public sealed record AggregateVersion
@@ -9,12 +11,12 @@ public sealed record AggregateVersion
         Value = value;
     }
 
-    public static AggregateVersion Create(int value)
+    public static Result<AggregateVersion> Create(int value)
     {
         if (value < 0)
-            throw new ArgumentException("Version cannot be negative", nameof(value));
+            return Result<AggregateVersion>.Failure("Version cannot be negative");
 
-        return new AggregateVersion(value);
+        return Result<AggregateVersion>.Success(new AggregateVersion(value));
     }
 
     public static AggregateVersion Initial() => new(1);

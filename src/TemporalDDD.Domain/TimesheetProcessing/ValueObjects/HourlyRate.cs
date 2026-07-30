@@ -11,15 +11,15 @@ public sealed record HourlyRate
         Value = value;
     }
 
-    public static HourlyRate Create(decimal value)
+    public static Result<HourlyRate> Create(decimal value)
     {
         if (value <= 0.0m)
-            throw new ArgumentException("Hourly rate must be greater than zero", nameof(value));
+            return Result<HourlyRate>.Failure("Hourly rate must be greater than zero");
 
-        return new HourlyRate(value);
+        return Result<HourlyRate>.Success(new HourlyRate(value));
     }
 
-    public Money CalculatePay(Hours hours) => Money.Create(hours.Value * Value);
+    public Money CalculatePay(Hours hours) => Money.Create(hours.Value * Value).Value!;
 
     public static implicit operator decimal(HourlyRate hourlyRate) => hourlyRate.Value;
 

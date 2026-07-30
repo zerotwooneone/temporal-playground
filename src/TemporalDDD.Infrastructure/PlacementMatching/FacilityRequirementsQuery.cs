@@ -27,12 +27,12 @@ public class FacilityRequirementsQuery : IFacilityRequirementsQuery
 
         var specialties = dbo.RequiredSpecialties
             .Split(',', StringSplitOptions.RemoveEmptyEntries)
-            .Select(s => Specialty.Create(s.Trim()))
+            .Select(s => Specialty.Create(s.Trim()).Value ?? throw new InvalidOperationException($"Invalid specialty: {s.Trim()}"))
             .ToList();
 
         var medicalBoards = dbo.AcceptedMedicalBoards
             .Split(',', StringSplitOptions.RemoveEmptyEntries)
-            .Select(mb => MedicalBoard.Create(mb.Trim()).Value)
+            .Select(mb => MedicalBoard.Create(mb.Trim()).Value ?? throw new InvalidOperationException($"Invalid medical board: {mb.Trim()}"))
             .ToList();
 
         return new FacilityRequirementsDto(

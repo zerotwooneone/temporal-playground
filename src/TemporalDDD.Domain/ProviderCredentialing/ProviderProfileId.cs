@@ -1,3 +1,5 @@
+using TemporalDDD.Domain.SharedKernel;
+
 namespace TemporalDDD.Domain.ProviderCredentialing;
 
 public sealed record ProviderProfileId
@@ -6,11 +8,11 @@ public sealed record ProviderProfileId
 
     private ProviderProfileId(uint value) => Value = value;
 
-    public static ProviderProfileId Create(uint value)
+    public static Result<ProviderProfileId> Create(uint value)
     {
         if (value == 0)
-            throw new ArgumentException("ProviderProfileId cannot be zero", nameof(value));
-        return new ProviderProfileId(value);
+            return Result<ProviderProfileId>.Failure("ProviderProfileId cannot be zero");
+        return Result<ProviderProfileId>.Success(new ProviderProfileId(value));
     }
 
     public static implicit operator uint(ProviderProfileId id) => id.Value;

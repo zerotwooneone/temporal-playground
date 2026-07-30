@@ -1,3 +1,5 @@
+using TemporalDDD.Domain.SharedKernel;
+
 namespace TemporalDDD.Domain.ProviderCredentialing.ValueObjects;
 
 public sealed record Specialty
@@ -31,10 +33,10 @@ public sealed record Specialty
         Psychiatry, Radiology, Surgery, Urology
     };
 
-    public static Specialty Create(string value)
+    public static Result<Specialty> Create(string value)
     {
         if (string.IsNullOrWhiteSpace(value))
-            throw new ArgumentException("Specialty cannot be null or whitespace", nameof(value));
+            return Result<Specialty>.Failure("Specialty cannot be null or whitespace");
 
         var trimmed = value.Trim();
 
@@ -42,9 +44,9 @@ public sealed record Specialty
             s.Value.Equals(trimmed, StringComparison.OrdinalIgnoreCase));
 
         if (specialty == null)
-            throw new ArgumentException($"Specialty '{trimmed}' is not recognized. Valid specialties: {string.Join(", ", AllSpecialties.Select(s => s.Value))}", nameof(value));
+            return Result<Specialty>.Failure($"Specialty '{trimmed}' is not recognized. Valid specialties: {string.Join(", ", AllSpecialties.Select(s => s.Value))}");
 
-        return specialty;
+        return Result<Specialty>.Success(specialty);
     }
 
     public static implicit operator string(Specialty specialty) => specialty.Value;

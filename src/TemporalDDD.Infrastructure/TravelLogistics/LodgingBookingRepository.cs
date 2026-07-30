@@ -48,12 +48,12 @@ public class LodgingBookingRepository : ILodgingBookingRepository
 
     private LodgingBooking MapToDomain(LodgingBookingDbo dbo)
     {
-        var hotelName = HotelName.Create(dbo.HotelName).Value;
-        var address = Address.Create(dbo.AddressStreet, dbo.AddressCity, dbo.AddressState, dbo.AddressZipCode);
+        var hotelName = HotelName.Create(dbo.HotelName).Value ?? throw new InvalidOperationException($"Invalid hotel name in database: {dbo.HotelName}");
+        var address = Address.Create(dbo.AddressStreet, dbo.AddressCity, dbo.AddressState, dbo.AddressZipCode).Value ?? throw new InvalidOperationException($"Invalid address in database: {dbo.AddressStreet}, {dbo.AddressCity}, {dbo.AddressState}, {dbo.AddressZipCode}");
         var stayPeriodStart = DateTimeOffset.FromUnixTimeMilliseconds(dbo.StayPeriodStartUtc);
         var stayPeriodEnd = DateTimeOffset.FromUnixTimeMilliseconds(dbo.StayPeriodEndUtc);
-        var stayPeriod = DateRange.Create(stayPeriodStart, stayPeriodEnd);
-        var cost = Money.Create(decimal.Parse(dbo.CostAmount), dbo.CostCurrency);
+        var stayPeriod = DateRange.Create(stayPeriodStart, stayPeriodEnd).Value ?? throw new InvalidOperationException($"Invalid stay period in database: {stayPeriodStart} to {stayPeriodEnd}");
+        var cost = Money.Create(decimal.Parse(dbo.CostAmount), dbo.CostCurrency).Value ?? throw new InvalidOperationException($"Invalid cost in database: {dbo.CostAmount} {dbo.CostCurrency}");
         var status = BookingStatus.FromValue(dbo.Status);
         var bookedAt = DateTimeOffset.FromUnixTimeMilliseconds(dbo.BookedAt);
 
@@ -69,7 +69,7 @@ public class LodgingBookingRepository : ILodgingBookingRepository
             nonPublic: true)!;
         
         // Set properties via reflection (infrastructure concern)
-        typeof(LodgingBooking).GetProperty(nameof(LodgingBooking.Id))?.SetValue(booking, LodgingBookingId.Create(dbo.Id).Value);
+        typeof(LodgingBooking).GetProperty(nameof(LodgingBooking.Id))?.SetValue(booking, LodgingBookingId.Create(dbo.Id).Value ?? throw new InvalidOperationException($"Invalid lodging booking ID in database: {dbo.Id}"));
         typeof(LodgingBooking).GetProperty(nameof(LodgingBooking.PublicId))?.SetValue(booking, publicId);
         typeof(LodgingBooking).GetProperty(nameof(LodgingBooking.HotelName))?.SetValue(booking, hotelName);
         typeof(LodgingBooking).GetProperty(nameof(LodgingBooking.Address))?.SetValue(booking, address);

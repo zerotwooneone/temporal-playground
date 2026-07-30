@@ -1,4 +1,5 @@
 using System.Text.RegularExpressions;
+using TemporalDDD.Domain.SharedKernel;
 
 namespace TemporalDDD.Domain.SharedKernel;
 
@@ -16,21 +17,21 @@ public sealed record Email
         Value = value;
     }
 
-    public static Email Create(string value)
+    public static Result<Email> Create(string value)
     {
         if (string.IsNullOrWhiteSpace(value))
-            throw new ArgumentException("Email cannot be null or whitespace", nameof(value));
+            return Result<Email>.Failure("Email cannot be null or whitespace");
 
         var trimmed = value.Trim();
         var normalized = trimmed.ToLowerInvariant();
 
         if (normalized.Length > 255)
-            throw new ArgumentException("Email cannot exceed 255 characters", nameof(value));
+            return Result<Email>.Failure("Email cannot exceed 255 characters");
 
         if (!EmailRegex.IsMatch(normalized))
-            throw new ArgumentException("Email format is invalid", nameof(value));
+            return Result<Email>.Failure("Email format is invalid");
 
-        return new Email(normalized);
+        return Result<Email>.Success(new Email(normalized));
     }
 
     public static implicit operator string(Email email) => email.Value;

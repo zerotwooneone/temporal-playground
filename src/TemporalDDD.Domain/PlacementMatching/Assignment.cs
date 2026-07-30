@@ -23,7 +23,7 @@ public sealed class Assignment
     {
         return new Assignment
         {
-            Id = AssignmentId.Create(1),
+            Id = AssignmentId.Create(1).Value!,
             PublicId = AssignmentPublicId.New(),
             ProviderId = providerId,
             FacilityId = facilityId,

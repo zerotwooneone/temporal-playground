@@ -1,3 +1,5 @@
+using TemporalDDD.Domain.SharedKernel;
+
 namespace TemporalDDD.Domain.TravelLogistics.ValueObjects;
 
 public sealed record Address
@@ -15,33 +17,33 @@ public sealed record Address
         ZipCode = zipCode;
     }
 
-    public static Address Create(string street, string city, string state, string zipCode)
+    public static Result<Address> Create(string street, string city, string state, string zipCode)
     {
         if (string.IsNullOrWhiteSpace(street))
-            throw new ArgumentException("Street cannot be null or whitespace", nameof(street));
+            return Result<Address>.Failure("Street cannot be null or whitespace");
 
         if (street.Trim().Length > 255)
-            throw new ArgumentException("Street cannot exceed 255 characters", nameof(street));
+            return Result<Address>.Failure("Street cannot exceed 255 characters");
 
         if (string.IsNullOrWhiteSpace(city))
-            throw new ArgumentException("City cannot be null or whitespace", nameof(city));
+            return Result<Address>.Failure("City cannot be null or whitespace");
 
         if (city.Trim().Length > 255)
-            throw new ArgumentException("City cannot exceed 255 characters", nameof(city));
+            return Result<Address>.Failure("City cannot exceed 255 characters");
 
         if (string.IsNullOrWhiteSpace(state))
-            throw new ArgumentException("State cannot be null or whitespace", nameof(state));
+            return Result<Address>.Failure("State cannot be null or whitespace");
 
         if (state.Trim().Length > 50)
-            throw new ArgumentException("State cannot exceed 50 characters", nameof(state));
+            return Result<Address>.Failure("State cannot exceed 50 characters");
 
         if (string.IsNullOrWhiteSpace(zipCode))
-            throw new ArgumentException("Zip code cannot be null or whitespace", nameof(zipCode));
+            return Result<Address>.Failure("Zip code cannot be null or whitespace");
 
         if (zipCode.Trim().Length > 50)
-            throw new ArgumentException("Zip code cannot exceed 50 characters", nameof(zipCode));
+            return Result<Address>.Failure("Zip code cannot exceed 50 characters");
 
-        return new Address(street.Trim(), city.Trim(), state.Trim(), zipCode.Trim());
+        return Result<Address>.Success(new Address(street.Trim(), city.Trim(), state.Trim(), zipCode.Trim()));
     }
 
     public override string ToString() => $"{Street}, {City}, {State} {ZipCode}";

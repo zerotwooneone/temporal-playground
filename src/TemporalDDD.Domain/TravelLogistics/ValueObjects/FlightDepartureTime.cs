@@ -1,3 +1,5 @@
+using TemporalDDD.Domain.SharedKernel;
+
 namespace TemporalDDD.Domain.TravelLogistics.ValueObjects;
 
 public sealed record FlightDepartureTime
@@ -9,12 +11,12 @@ public sealed record FlightDepartureTime
         Value = value;
     }
 
-    public static FlightDepartureTime Create(DateTimeOffset value)
+    public static Result<FlightDepartureTime> Create(DateTimeOffset value)
     {
         if (value.Offset != TimeSpan.Zero)
-            throw new ArgumentException("Flight departure time must be in UTC", nameof(value));
+            return Result<FlightDepartureTime>.Failure("Flight departure time must be in UTC");
 
-        return new FlightDepartureTime(value);
+        return Result<FlightDepartureTime>.Success(new FlightDepartureTime(value));
     }
 
     public static FlightDepartureTime CreateUtcNow() => new(DateTimeOffset.UtcNow);

@@ -1,3 +1,5 @@
+using TemporalDDD.Domain.SharedKernel;
+
 namespace TemporalDDD.Domain.ProviderCredentialing;
 
 public sealed record CredentialEvaluationId
@@ -6,11 +8,11 @@ public sealed record CredentialEvaluationId
 
     private CredentialEvaluationId(uint value) => Value = value;
 
-    public static CredentialEvaluationId Create(uint value)
+    public static Result<CredentialEvaluationId> Create(uint value)
     {
         if (value == 0)
-            throw new ArgumentException("CredentialEvaluationId cannot be zero", nameof(value));
-        return new CredentialEvaluationId(value);
+            return Result<CredentialEvaluationId>.Failure("CredentialEvaluationId cannot be zero");
+        return Result<CredentialEvaluationId>.Success(new CredentialEvaluationId(value));
     }
 
     public static implicit operator uint(CredentialEvaluationId id) => id.Value;

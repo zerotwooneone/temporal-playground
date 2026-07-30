@@ -1,3 +1,5 @@
+using TemporalDDD.Domain.SharedKernel;
+
 namespace TemporalDDD.Domain.SharedKernel;
 
 public sealed record Money
@@ -11,18 +13,18 @@ public sealed record Money
         Currency = currency;
     }
 
-    public static Money Create(decimal amount, string currency = "USD")
+    public static Result<Money> Create(decimal amount, string currency = "USD")
     {
         if (amount < 0)
-            throw new ArgumentException("Money amount cannot be negative", nameof(amount));
+            return Result<Money>.Failure("Money amount cannot be negative");
 
         if (string.IsNullOrWhiteSpace(currency))
-            throw new ArgumentException("Currency cannot be null or whitespace", nameof(currency));
+            return Result<Money>.Failure("Currency cannot be null or whitespace");
 
         if (currency.Length != 3)
-            throw new ArgumentException("Currency must be a 3-letter ISO code", nameof(currency));
+            return Result<Money>.Failure("Currency must be a 3-letter ISO code");
 
-        return new Money(amount, currency.ToUpperInvariant());
+        return Result<Money>.Success(new Money(amount, currency.ToUpperInvariant()));
     }
 
     public static Money Zero(string currency = "USD") => new(0, currency.ToUpperInvariant());

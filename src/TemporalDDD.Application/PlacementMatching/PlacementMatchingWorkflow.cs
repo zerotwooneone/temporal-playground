@@ -41,7 +41,7 @@ public class PlacementMatchingWorkflow
         {
             // Step 4a: Commit Assignment with OCC (Optimistic Concurrency Control)
             await Workflow.ExecuteActivityAsync(
-                (IPlacementMatchingActivities activities) => activities.CommitAssignmentAsync(_assignmentId, AggregateVersion.Create(1)),
+                (IPlacementMatchingActivities activities) => activities.CommitAssignmentAsync(_assignmentId, AggregateVersion.Create(1).Value!),
                 new ActivityOptions { StartToCloseTimeout = TimeSpan.FromMinutes(5) }
             );
         }

@@ -26,7 +26,7 @@ public sealed class FlightBooking
 
         return new FlightBooking
         {
-            Id = FlightBookingId.Create(0), // Temporary, will be set by DB
+            Id = FlightBookingId.Create(0).Value!, // Temporary, will be set by DB
             PublicId = FlightBookingPublicId.New(),
             FlightNumber = flightNumber,
             Origin = origin,
@@ -70,7 +70,7 @@ public sealed class FlightBooking
 
         // 50% refund if cancelled within 14 days but more than 24 hours before departure
         if (timeUntilDeparture.TotalDays > 1)
-            return Money.Create(Cost.Amount * 0.5m, Cost.Currency);
+            return Money.Create(Cost.Amount * 0.5m, Cost.Currency).Value ?? throw new InvalidOperationException("Failed to calculate refund amount");
 
         // 0% refund if cancelled within 24 hours of departure
         return Money.Zero(Cost.Currency);

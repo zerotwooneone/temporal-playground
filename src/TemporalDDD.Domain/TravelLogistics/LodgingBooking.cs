@@ -25,7 +25,7 @@ public sealed class LodgingBooking
 
         return new LodgingBooking
         {
-            Id = LodgingBookingId.Create(0), // Temporary, will be set by DB
+            Id = LodgingBookingId.Create(0).Value!, // Temporary, will be set by DB
             PublicId = LodgingBookingPublicId.New(),
             HotelName = hotelName,
             Address = address,
@@ -69,6 +69,6 @@ public sealed class LodgingBooking
         if (totalNights == 0)
             totalNights = 1; // Minimum 1 night
 
-        return Money.Create(Cost.Amount * totalNights, Cost.Currency);
+        return Money.Create(Cost.Amount * totalNights, Cost.Currency).Value ?? throw new InvalidOperationException("Failed to calculate total cost");
     }
 }

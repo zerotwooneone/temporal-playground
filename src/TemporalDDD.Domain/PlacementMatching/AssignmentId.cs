@@ -1,3 +1,5 @@
+using TemporalDDD.Domain.SharedKernel;
+
 namespace TemporalDDD.Domain.PlacementMatching;
 
 public sealed record AssignmentId
@@ -9,15 +11,13 @@ public sealed record AssignmentId
         Value = value;
     }
 
-    public static AssignmentId Create(uint value)
+    public static Result<AssignmentId> Create(uint value)
     {
         if (value == 0)
-            throw new ArgumentException("AssignmentId cannot be zero", nameof(value));
+            return Result<AssignmentId>.Failure("AssignmentId cannot be zero");
 
-        return new AssignmentId(value);
+        return Result<AssignmentId>.Success(new AssignmentId(value));
     }
-
-    
 
     public static implicit operator uint(AssignmentId id) => id.Value;
 

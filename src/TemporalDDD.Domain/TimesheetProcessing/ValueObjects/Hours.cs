@@ -1,3 +1,5 @@
+using TemporalDDD.Domain.SharedKernel;
+
 namespace TemporalDDD.Domain.TimesheetProcessing.ValueObjects;
 
 public sealed record Hours
@@ -9,12 +11,12 @@ public sealed record Hours
         Value = value;
     }
 
-    public static Hours Create(decimal value)
+    public static Result<Hours> Create(decimal value)
     {
         if (value < 0.0m || value > 160.0m)
-            throw new ArgumentException("Hours must be between 0.0 and 160.0", nameof(value));
+            return Result<Hours>.Failure("Hours must be between 0.0 and 160.0");
 
-        return new Hours(value);
+        return Result<Hours>.Success(new Hours(value));
     }
 
     public static Hours Zero() => new(0.0m);

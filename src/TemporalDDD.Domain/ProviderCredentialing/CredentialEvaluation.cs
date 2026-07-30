@@ -23,7 +23,7 @@ public sealed class CredentialEvaluation
     {
         return new CredentialEvaluation
         {
-            Id = CredentialEvaluationId.Create(0), // Temporary, will be set by DB
+            Id = CredentialEvaluationId.Create(0).Value!, // Temporary, will be set by DB
             PublicId = CredentialEvaluationPublicId.New(),
             ProviderId = providerId,
             LicenseNumber = licenseNumber,

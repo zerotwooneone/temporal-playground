@@ -1,3 +1,5 @@
+using TemporalDDD.Domain.SharedKernel;
+
 namespace TemporalDDD.Domain.TimesheetProcessing;
 
 public sealed record TimesheetId
@@ -6,11 +8,11 @@ public sealed record TimesheetId
 
     private TimesheetId(uint value) => Value = value;
 
-    public static TimesheetId Create(uint value)
+    public static Result<TimesheetId> Create(uint value)
     {
         if (value == 0)
-            throw new ArgumentException("TimesheetId cannot be zero", nameof(value));
-        return new TimesheetId(value);
+            return Result<TimesheetId>.Failure("TimesheetId cannot be zero");
+        return Result<TimesheetId>.Success(new TimesheetId(value));
     }
 
     public static implicit operator uint(TimesheetId id) => id.Value;
