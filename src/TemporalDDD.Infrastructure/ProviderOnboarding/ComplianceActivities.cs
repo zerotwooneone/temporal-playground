@@ -16,6 +16,7 @@ public class ComplianceActivities : IComplianceActivities
         _chaosHttpClient = chaosHttpClient;
     }
 
+    [Activity]
     public async Task<EvaluationStatus> PerformComplianceCheck(LicenseNumber licenseNumber)
     {
         // Simulate external API call with chaos (100ms latency, 10% failure rate)
