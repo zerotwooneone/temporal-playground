@@ -19,6 +19,7 @@ public class ApplicationDbContext : DbContext
     public DbSet<Timesheet> Timesheets => Set<Timesheet>();
     public DbSet<FlightBooking> FlightBookings => Set<FlightBooking>();
     public DbSet<LodgingBooking> LodgingBookings => Set<LodgingBooking>();
+    public DbSet<Facility> Facilities => Set<Facility>();
 
     protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
     {
