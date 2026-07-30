@@ -39,6 +39,14 @@ public class DatabaseInitializationService : IHostedService
                 using var scope = _serviceProvider.CreateScope();
                 var dbContext = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
                 
+                // Ensure the database directory exists
+                var localAppData = Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData);
+                var dbDirectory = Path.Combine(localAppData, "TemporalDDD");
+                if (!Directory.Exists(dbDirectory))
+                {
+                    Directory.CreateDirectory(dbDirectory);
+                }
+                
                 await dbContext.Database.MigrateAsync(cancellationToken);
             }
             finally
