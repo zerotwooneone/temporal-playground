@@ -11,25 +11,15 @@ public class ProviderOnboardingWorkflow : IProviderOnboardingWorkflow
     [WorkflowRun]
     public async Task RunAsync(OnboardingInput input)
     {
-        // Elevate to Domain types with catastrophic assertions
-        var providerIdResult = ProviderId.Create(input.ProviderId);
-        if (providerIdResult.IsFailure)
-            throw new InvalidOperationException($"Internal Corruption: Invalid ProviderId. {providerIdResult.Error}");
-
-        var licenseNumberResult = LicenseNumber.Create(input.LicenseNumber);
-        if (licenseNumberResult.IsFailure)
-            throw new InvalidOperationException($"Internal Corruption: Invalid LicenseNumber. {licenseNumberResult.Error}");
-
-        var providerId = providerIdResult.Value;
-        var licenseNumber = licenseNumberResult.Value;
+        // Pass-through: No domain conversion needed - just pass primitives to activities
         EvaluationStatus status = await Workflow.ExecuteActivityAsync(
-            (IComplianceActivities a) => a.PerformComplianceCheck(new PerformComplianceInput(licenseNumber.Value)),
+            (IComplianceActivities a) => a.PerformComplianceCheck(new PerformComplianceInput(input.LicenseNumber)),
             new() { StartToCloseTimeout = TimeSpan.FromMinutes(5) });
 
         if (status == EvaluationStatus.Approved)
         {
             await Workflow.ExecuteActivityAsync(
-                (IProviderActivities a) => a.ActivateProvider(new ActivateProviderInput(providerId.Value, (int)status)),
+                (IProviderActivities a) => a.ActivateProvider(new ActivateProviderInput(input.ProviderId, (int)status)),
                 new() { StartToCloseTimeout = TimeSpan.FromMinutes(5) });
         }
     }

@@ -14,37 +14,17 @@ public class ProviderCredentialingWorkflow
     [WorkflowRun]
     public async Task RunAsync(CredentialingInput input)
     {
-        // Elevate to Domain types with catastrophic assertions
-        var providerIdResult = ProviderId.Create(input.ProviderId);
-        if (providerIdResult.IsFailure)
-            throw new InvalidOperationException($"Internal Corruption: Invalid ProviderId. {providerIdResult.Error}");
-
-        var licenseNumberResult = LicenseNumber.Create(input.LicenseNumber);
-        if (licenseNumberResult.IsFailure)
-            throw new InvalidOperationException($"Internal Corruption: Invalid LicenseNumber. {licenseNumberResult.Error}");
-
-        var medicalBoardResult = MedicalBoard.Create(input.MedicalBoard);
-        if (medicalBoardResult.IsFailure)
-            throw new InvalidOperationException($"Internal Corruption: Invalid MedicalBoard. {medicalBoardResult.Error}");
-
-        var licenseExpiryDateResult = LicenseExpiryDate.Create(input.ExpiryDate);
-        if (licenseExpiryDateResult.IsFailure)
-            throw new InvalidOperationException($"Internal Corruption: Invalid LicenseExpiryDate. {licenseExpiryDateResult.Error}");
-
-        var providerId = providerIdResult.Value;
-        var licenseNumber = licenseNumberResult.Value;
-        var medicalBoard = medicalBoardResult.Value;
-        var licenseExpiryDate = licenseExpiryDateResult.Value;
+        // Pass-through: No domain conversion needed - just pass primitives to activities
         // Step 1: Fetch Medical Board License (External API Read)
         var licenseInfo = await Workflow.ExecuteActivityAsync(
-            (IProviderCredentialingActivities activities) => activities.FetchMedicalBoardLicenseAsync(new FetchLicenseInput(licenseNumber.Value, medicalBoard.Value)),
+            (IProviderCredentialingActivities activities) => activities.FetchMedicalBoardLicenseAsync(new FetchLicenseInput(input.LicenseNumber, input.MedicalBoard)),
             new ActivityOptions { StartToCloseTimeout = TimeSpan.FromMinutes(5) }
         );
 
         // Step 2: Evaluate and Save Compliance (DB Write)
         var evaluationId = await Workflow.ExecuteActivityAsync(
             (IProviderCredentialingActivities activities) => activities.EvaluateAndSaveComplianceAsync(new EvaluateComplianceInput(
-                providerId.Value,
+                input.ProviderId,
                 licenseInfo.LicenseNumber.Value,
                 licenseInfo.MedicalBoard.Value,
                 licenseInfo.ExpiryDate.Value,
@@ -73,9 +53,8 @@ public class ProviderCredentialingWorkflow
         }
 
         // Step 5: Activate Provider Profile (DB Write)
-        var providerProfileId = ProviderProfileId.Create(providerId.Value).Value!;
         await Workflow.ExecuteActivityAsync(
-            (IProviderCredentialingActivities activities) => activities.ActivateProviderProfileAsync(new ActivateProviderProfileInput(providerProfileId.Value)),
+            (IProviderCredentialingActivities activities) => activities.ActivateProviderProfileAsync(new ActivateProviderProfileInput(input.ProviderId)),
             new ActivityOptions { StartToCloseTimeout = TimeSpan.FromMinutes(5) }
         );
     }

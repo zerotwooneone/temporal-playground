@@ -17,31 +17,16 @@ public class PlacementMatchingWorkflow
     [WorkflowRun]
     public async Task RunAsync(PlacementMatchingInput input)
     {
-        // Elevate to Domain types with catastrophic assertions
-        var providerIdResult = ProviderId.Create(input.ProviderId);
-        if (providerIdResult.IsFailure)
-            throw new InvalidOperationException($"Internal Corruption: Invalid ProviderId. {providerIdResult.Error}");
-
-        var facilityIdResult = FacilityId.Create(input.FacilityId);
-        if (facilityIdResult.IsFailure)
-            throw new InvalidOperationException($"Internal Corruption: Invalid FacilityId. {facilityIdResult.Error}");
-
-        var positionIdResult = PositionId.Create(input.PositionId);
-        if (positionIdResult.IsFailure)
-            throw new InvalidOperationException($"Internal Corruption: Invalid PositionId. {positionIdResult.Error}");
-
-        var providerId = providerIdResult.Value;
-        var facilityId = facilityIdResult.Value;
-        var positionId = positionIdResult.Value;
+        // Pass-through: No domain conversion needed - just pass primitives to activities
         // Step 1: Calculate Match Score
         var matchScore = await Workflow.ExecuteActivityAsync(
-            (IPlacementMatchingActivities activities) => activities.CalculateMatchScoreAsync(new CalculateMatchScoreInput(providerId.Value, facilityId.Value, positionId.Value)),
+            (IPlacementMatchingActivities activities) => activities.CalculateMatchScoreAsync(new CalculateMatchScoreInput(input.ProviderId, input.FacilityId, input.PositionId)),
             new ActivityOptions { StartToCloseTimeout = TimeSpan.FromMinutes(5) }
         );
 
         // Step 2: Propose Assignment
         _assignmentId = await Workflow.ExecuteActivityAsync(
-            (IPlacementMatchingActivities activities) => activities.ProposeAssignmentAsync(new ProposeAssignmentInput(providerId.Value, facilityId.Value, positionId.Value, matchScore.Value)),
+            (IPlacementMatchingActivities activities) => activities.ProposeAssignmentAsync(new ProposeAssignmentInput(input.ProviderId, input.FacilityId, input.PositionId, matchScore.Value)),
             new ActivityOptions { StartToCloseTimeout = TimeSpan.FromMinutes(5) }
         );
 

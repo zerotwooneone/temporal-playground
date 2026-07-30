@@ -9,7 +9,7 @@ public record TravelLogisticsInput(
     string FlightNumber,
     string OriginAirportCode,
     string DestinationAirportCode,
-    long DepartureTimeUtc,
+    DateTimeOffset DepartureTimeUtc,
     decimal FlightCostAmount,
     string FlightCostCurrency,
     string HotelName,
@@ -17,8 +17,8 @@ public record TravelLogisticsInput(
     string AddressCity,
     string AddressState,
     string AddressZipCode,
-    long StayPeriodStartUtc,
-    long StayPeriodEndUtc,
+    DateTimeOffset StayPeriodStartUtc,
+    DateTimeOffset StayPeriodEndUtc,
     decimal LodgingCostAmount,
     string LodgingCostCurrency
 );
