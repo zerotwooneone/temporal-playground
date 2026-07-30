@@ -274,7 +274,7 @@ public async Task<MedicalBoardLicenseInfo> FetchMedicalBoardLicenseAsync(string 
 
 ## [Activity] Attribute Placement
 
-**Important**: If you are using an interface to call your activity in the workflow, the `[Activity]` attribute MUST be on the interface, not just the implementation class.
+**Important**: Activities must have the `[Activity]` attribute on BOTH the interface AND the implementation class.
 
 **❌ Bad:**
 ```csharp
@@ -284,7 +284,7 @@ public interface IProviderCredentialingActivities
     Task<MedicalBoardLicenseInfo> FetchMedicalBoardLicenseAsync(LicenseNumber licenseNumber, MedicalBoard medicalBoard);
 }
 
-// Implementation - has [Activity] attribute (incorrect placement)
+// Implementation - has [Activity] attribute (incomplete)
 public class ProviderCredentialingActivities : IProviderCredentialingActivities
 {
     [Activity]
@@ -297,16 +297,17 @@ public class ProviderCredentialingActivities : IProviderCredentialingActivities
 
 **✅ Good:**
 ```csharp
-// Interface - has [Activity] attribute (correct placement)
+// Interface - has [Activity] attribute
 public interface IProviderCredentialingActivities
 {
     [Activity]
     Task<MedicalBoardLicenseInfo> FetchMedicalBoardLicenseAsync(LicenseNumber licenseNumber, MedicalBoard medicalBoard);
 }
 
-// Implementation - no [Activity] attribute needed
+// Implementation - also has [Activity] attribute
 public class ProviderCredentialingActivities : IProviderCredentialingActivities
 {
+    [Activity]
     public async Task<MedicalBoardLicenseInfo> FetchMedicalBoardLicenseAsync(LicenseNumber licenseNumber, MedicalBoard medicalBoard)
     {
         // ...
@@ -314,7 +315,7 @@ public class ProviderCredentialingActivities : IProviderCredentialingActivities
 }
 ```
 
-**Rationale**: Temporal uses the interface to discover activity methods when workflows call activities via interfaces. The `[Activity]` attribute on the interface method ensures proper registration and discovery.
+**Rationale**: Temporal requires the `[Activity]` attribute on both the interface (for workflow discovery) and the implementation (for worker registration). This ensures proper activity discovery and registration regardless of how the activity is invoked.
 
 ## Activity Registration
 
