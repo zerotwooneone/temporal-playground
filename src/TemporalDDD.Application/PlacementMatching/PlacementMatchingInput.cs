@@ -5,7 +5,7 @@ namespace TemporalDDD.Application.PlacementMatching;
 /// All fields are primitive types to ensure clean JSON serialization with Temporal.
 /// </summary>
 public record PlacementMatchingInput(
-    uint ProviderId,
-    uint FacilityId,
-    uint PositionId
+    string ProviderId,
+    string FacilityId,
+    string PositionId
 );

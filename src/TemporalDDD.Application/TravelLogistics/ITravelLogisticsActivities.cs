@@ -5,9 +5,9 @@ namespace TemporalDDD.Application.TravelLogistics;
 public interface ITravelLogisticsActivities
 {
     [Activity]
-    Task<uint> BookFlightAsync(BookFlightInput input);
+    Task<string> BookFlightAsync(BookFlightInput input);
     [Activity]
-    Task<uint> BookLodgingAsync(BookLodgingInput input);
+    Task<string> BookLodgingAsync(BookLodgingInput input);
     [Activity]
     Task CancelFlightAsync(CancelFlightInput input);
     [Activity]
@@ -19,6 +19,6 @@ public interface ITravelLogisticsActivities
 // Primitive DTOs for activity parameters
 public record BookFlightInput(string FlightNumber, string Origin, string Destination, DateTimeOffset DepartureTime, decimal Cost);
 public record BookLodgingInput(string HotelName, string Street, string City, string State, string ZipCode, DateTimeOffset CheckInDate, DateTimeOffset CheckOutDate, decimal Cost);
-public record CancelFlightInput(uint FlightBookingId);
-public record CancelLodgingInput(uint LodgingBookingId);
+public record CancelFlightInput(string FlightBookingId);
+public record CancelLodgingInput(string LodgingBookingId);
 public record NotifyTravelerInput(string TravelerEmail, string Message, bool IsCancellation);

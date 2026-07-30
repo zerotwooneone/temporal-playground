@@ -5,7 +5,7 @@ namespace TemporalDDD.Application.TimesheetProcessing;
 /// All fields are primitive types to ensure clean JSON serialization with Temporal.
 /// </summary>
 public record TimesheetProcessingInput(
-    uint ProviderId,
+    string ProviderId,
     long PeriodStartUtc,
     long PeriodEndUtc,
     decimal TotalHours,

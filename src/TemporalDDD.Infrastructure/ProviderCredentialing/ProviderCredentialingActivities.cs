@@ -47,20 +47,20 @@ public class ProviderCredentialingActivities : IProviderCredentialingActivities
         // Simulated response - in real implementation, this would call actual medical board API
         var isValid = licenseNumber.Value.Length >= 8;
         var expiryDateResult = LicenseExpiryDate.Create(DateTimeOffset.UtcNow.AddYears(2));
-        var providerIdResult = ProviderId.Create(1);
+        var providerIdResult = ProviderId.New();
 
         return new MedicalBoardLicenseInfo(
             LicenseNumber: licenseNumber.Value,
             MedicalBoard: medicalBoard.Value,
             ExpiryDate: expiryDateResult.Value.Value,
             IsValid: isValid,
-            ProviderId: providerIdResult.Value.Value,
+            ProviderId: providerIdResult.ToString(),
             Notes: isValid ? "License verified successfully" : "License number format invalid"
         );
     }
 
     [Activity]
-    public async Task<CredentialEvaluationId> EvaluateAndSaveComplianceAsync(EvaluateComplianceInput input)
+    public async Task<string> EvaluateAndSaveComplianceAsync(EvaluateComplianceInput input)
     {
         // Convert primitive DTO to Domain types with fail-fast validation
         var providerIdResult = ProviderId.Create(input.ProviderId);
@@ -95,7 +95,7 @@ public class ProviderCredentialingActivities : IProviderCredentialingActivities
             MedicalBoard: input.MedicalBoard,
             ExpiryDate: input.ExpiryDate,
             IsValid: input.IsValid,
-            ProviderId: providerIdResultValue,
+            ProviderId: providerIdResultValue.ToString(),
             Notes: input.Notes
         );
 
@@ -127,7 +127,7 @@ public class ProviderCredentialingActivities : IProviderCredentialingActivities
         // Save to database using repository
         await _credentialEvaluationRepository.SaveAsync(evaluation);
 
-        return evaluation.Id;
+        return evaluation.Id.ToString();
     }
 
     [Activity]
@@ -140,14 +140,13 @@ public class ProviderCredentialingActivities : IProviderCredentialingActivities
 
         var evaluationId = evaluationIdResult.Value;
 
-        // Simulate external notification (e.g., email, webhook) with chaos
-        _chaosHttpClient
+        
+        await _chaosHttpClient
             .WithLatency(TimeSpan.FromMilliseconds(100), TimeSpan.FromMilliseconds(100))
-            .WithFailureRate(0.10, System.Net.HttpStatusCode.InternalServerError);
+            .WithFailureRate(0.10, System.Net.HttpStatusCode.InternalServerError)
+            .PostAsJsonAsync($"https://notifications.example.com/api/manual-review/{evaluationId}", new { });
 
-        await _chaosHttpClient.PostAsJsonAsync($"https://notifications.example.com/api/manual-review/{evaluationId.Value}", new { });
-
-        Console.WriteLine($"[ManualReview] Request sent for evaluation {evaluationId.Value}");
+        Console.WriteLine($"[ManualReview] Request sent for evaluation {evaluationId}");
     }
 
     [Activity]

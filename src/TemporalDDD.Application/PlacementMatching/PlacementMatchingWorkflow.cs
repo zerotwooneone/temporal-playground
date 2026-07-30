@@ -5,7 +5,7 @@ namespace TemporalDDD.Application.PlacementMatching;
 [Workflow]
 public class PlacementMatchingWorkflow
 {
-    private uint? _assignmentId;
+    private string? _assignmentId;
     private OfferAcceptedSignal? _offerAcceptedSignal;
     private OfferRejectedSignal? _offerRejectedSignal;
     private ProviderMatchedElsewhereSignal? _providerMatchedElsewhereSignal;
@@ -38,7 +38,7 @@ public class PlacementMatchingWorkflow
         {
             // Step 4a: Commit Assignment with OCC (Optimistic Concurrency Control)
             await Workflow.ExecuteActivityAsync(
-                (IPlacementMatchingActivities activities) => activities.CommitAssignmentAsync(new CommitAssignmentInput(_assignmentId.Value, 1)),
+                (IPlacementMatchingActivities activities) => activities.CommitAssignmentAsync(new CommitAssignmentInput(_assignmentId!, 1)),
                 new ActivityOptions { StartToCloseTimeout = TimeSpan.FromMinutes(5) }
             );
         }
@@ -46,7 +46,7 @@ public class PlacementMatchingWorkflow
         {
             // Step 4b: Revoke Offer
             await Workflow.ExecuteActivityAsync(
-                (IPlacementMatchingActivities activities) => activities.RevokeOfferAsync(new RevokeOfferInput(_assignmentId.Value)),
+                (IPlacementMatchingActivities activities) => activities.RevokeOfferAsync(new RevokeOfferInput(_assignmentId!)),
                 new ActivityOptions { StartToCloseTimeout = TimeSpan.FromMinutes(5) }
             );
         }

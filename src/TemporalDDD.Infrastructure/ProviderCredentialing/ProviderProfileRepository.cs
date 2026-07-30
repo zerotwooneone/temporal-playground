@@ -19,7 +19,7 @@ public class ProviderProfileRepository : IProviderProfileRepository
     public async Task<ProviderProfile?> GetByIdAsync(ProviderProfileId id, CancellationToken cancellationToken = default)
     {
         var dbo = await _dbContext.ProviderProfiles
-            .FirstOrDefaultAsync(p => p.Id == id.Value, cancellationToken);
+            .FirstOrDefaultAsync(p => p.Id == id.Value.ToString(), cancellationToken);
         
         if (dbo == null) return null;
         
@@ -28,10 +28,10 @@ public class ProviderProfileRepository : IProviderProfileRepository
 
     public async Task SaveAsync(ProviderProfile aggregate, CancellationToken cancellationToken = default)
     {
-        var existing = await _dbContext.ProviderProfiles
-            .FirstOrDefaultAsync(p => p.Id == aggregate.Id.Value, cancellationToken);
-
         var dbo = MapToDbo(aggregate);
+        var id = aggregate.Id.Value;
+        var existing = await _dbContext.ProviderProfiles
+            .FirstOrDefaultAsync(p => p.Id == id.ToString(), cancellationToken);
 
         if (existing == null)
         {
@@ -63,9 +63,11 @@ public class ProviderProfileRepository : IProviderProfileRepository
             publicId = ProviderPublicId.FromString(dbo.PublicId);
         }
 
+        var id = ProviderProfileId.Create(dbo.Id).Value ?? throw new InvalidOperationException($"Invalid provider profile ID in database: {dbo.Id}");
+
         // Use internal constructor for rehydration (infrastructure concern)
         return new ProviderProfile(
-            id: ProviderProfileId.Create(dbo.Id).Value ?? throw new InvalidOperationException($"Invalid provider profile ID in database: {dbo.Id}"),
+            id: id,
             publicId: publicId,
             firstName: firstName,
             lastName: lastName,
@@ -82,7 +84,7 @@ public class ProviderProfileRepository : IProviderProfileRepository
     {
         return new ProviderProfileDbo
         {
-            Id = profile.Id.Value,
+            Id = profile.Id.Value.ToString(),
             PublicId = profile.PublicId?.ToString(),
             FirstName = profile.FirstName.Value,
             LastName = profile.LastName.Value,

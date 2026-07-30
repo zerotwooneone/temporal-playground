@@ -29,7 +29,7 @@ public sealed class LodgingBooking
         BookedAt = bookedAt;
     }
 
-    // Factory for creating new booking (ID will be set by database)
+    // Factory for creating new booking (ID is client-generated)
     public static LodgingBooking Create(HotelName hotelName, Address address, DateRange stayPeriod, Money cost)
     {
         // Cross-validation: Stay period cannot exceed 90 days (Long-Term Stay limit)
@@ -38,7 +38,7 @@ public sealed class LodgingBooking
 
         return new LodgingBooking
         {
-            Id = LodgingBookingId.Create(0).Value!, // Temporary, will be set by DB
+            Id = LodgingBookingId.New(),
             PublicId = LodgingBookingPublicId.New(),
             HotelName = hotelName,
             Address = address,

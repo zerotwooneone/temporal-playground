@@ -18,7 +18,7 @@ public class TimesheetRepository : ITimesheetRepository
     public async Task<Timesheet?> GetByIdAsync(TimesheetId id, CancellationToken cancellationToken = default)
     {
         var dbo = await _dbContext.Timesheets
-            .FirstOrDefaultAsync(t => t.Id == id.Value, cancellationToken);
+            .FirstOrDefaultAsync(t => t.Id == id.Value.ToString(), cancellationToken);
         
         if (dbo == null) return null;
         
@@ -27,10 +27,10 @@ public class TimesheetRepository : ITimesheetRepository
 
     public async Task SaveAsync(Timesheet aggregate, CancellationToken cancellationToken = default)
     {
-        var existing = await _dbContext.Timesheets
-            .FirstOrDefaultAsync(t => t.Id == aggregate.Id.Value, cancellationToken);
-
         var dbo = MapToDbo(aggregate);
+        var id = aggregate.Id.Value;
+        var existing = await _dbContext.Timesheets
+            .FirstOrDefaultAsync(t => t.Id == id.ToString(), cancellationToken);
 
         if (existing == null)
         {
@@ -73,9 +73,11 @@ public class TimesheetRepository : ITimesheetRepository
             publicId = TimesheetPublicId.FromString(dbo.PublicId);
         }
 
+        var id = TimesheetId.Create(dbo.Id).Value ?? throw new InvalidOperationException($"Invalid timesheet ID in database: {dbo.Id}");
+
         // Use internal constructor for rehydration (infrastructure concern)
         return new Timesheet(
-            id: TimesheetId.Create(dbo.Id).Value ?? throw new InvalidOperationException($"Invalid timesheet ID in database: {dbo.Id}"),
+            id: id,
             publicId: publicId,
             providerId: providerId,
             period: period,
@@ -96,9 +98,9 @@ public class TimesheetRepository : ITimesheetRepository
     {
         return new TimesheetDbo
         {
-            Id = timesheet.Id.Value,
+            Id = timesheet.Id.Value.ToString(),
             PublicId = timesheet.PublicId?.ToString(),
-            ProviderId = timesheet.ProviderId.Value,
+            ProviderId = timesheet.ProviderId.ToString(),
             PeriodStartUtc = timesheet.Period.Start.ToUnixTimeMilliseconds(),
             PeriodEndUtc = timesheet.Period.End.ToUnixTimeMilliseconds(),
             TotalHours = timesheet.TotalHours.Value,

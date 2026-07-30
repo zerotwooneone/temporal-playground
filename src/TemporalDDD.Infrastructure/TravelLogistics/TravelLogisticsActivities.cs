@@ -24,7 +24,7 @@ public class TravelLogisticsActivities : ITravelLogisticsActivities
     }
 
     [Activity]
-    public async Task<uint> BookFlightAsync(BookFlightInput input)
+    public async Task<string> BookFlightAsync(BookFlightInput input)
     {
         // Convert primitive DTO to Domain types with fail-fast validation
         var flightNumberResult = FlightNumber.Create(input.FlightNumber);
@@ -65,13 +65,13 @@ public class TravelLogisticsActivities : ITravelLogisticsActivities
 
         await _flightBookingRepository.SaveAsync(booking);
 
-        Console.WriteLine($"[FlightBooking] Booked flight {flightNumber.Value} from {origin.Value} to {destination.Value} - ID: {booking.Id.Value}");
+        Console.WriteLine($"[FlightBooking] Booked flight {flightNumber.Value} from {origin.Value} to {destination.Value} - ID: {booking.Id}");
         
-        return booking.Id.Value;
+        return booking.Id.ToString();
     }
 
     [Activity]
-    public async Task<uint> BookLodgingAsync(BookLodgingInput input)
+    public async Task<string> BookLodgingAsync(BookLodgingInput input)
     {
         // Convert primitive DTO to Domain types with fail-fast validation
         var hotelNameResult = HotelName.Create(input.HotelName);
@@ -107,9 +107,9 @@ public class TravelLogisticsActivities : ITravelLogisticsActivities
 
         await _lodgingBookingRepository.SaveAsync(booking);
 
-        Console.WriteLine($"[LodgingBooking] Booked hotel {hotelName.Value} at {address.ToString()} - ID: {booking.Id.Value}");
+        Console.WriteLine($"[LodgingBooking] Booked hotel {hotelName.Value} at {address.ToString()} - ID: {booking.Id}");
         
-        return booking.Id.Value;
+        return booking.Id.ToString();
     }
 
     [Activity]
@@ -125,7 +125,7 @@ public class TravelLogisticsActivities : ITravelLogisticsActivities
 
         if (booking == null)
         {
-            throw new InvalidOperationException($"Flight booking {flightBookingId.Value} not found");
+            throw new InvalidOperationException($"Flight booking {flightBookingId} not found");
         }
 
         booking.MarkAsCancelled();
@@ -136,9 +136,9 @@ public class TravelLogisticsActivities : ITravelLogisticsActivities
             .WithLatency(TimeSpan.FromMilliseconds(100), TimeSpan.FromMilliseconds(100))
             .WithFailureRate(0.10, System.Net.HttpStatusCode.InternalServerError);
 
-        await _chaosHttpClient.PostAsJsonAsync($"https://airline-api.example.com/api/bookings/{flightBookingId.Value}/cancel", new { });
+        await _chaosHttpClient.PostAsJsonAsync($"https://airline-api.example.com/api/bookings/{flightBookingId}/cancel", new { });
 
-        Console.WriteLine($"[FlightCancellation] Cancelled flight booking {flightBookingId.Value}");
+        Console.WriteLine($"[FlightCancellation] Cancelled flight booking {flightBookingId}");
     }
 
     [Activity]
@@ -154,7 +154,7 @@ public class TravelLogisticsActivities : ITravelLogisticsActivities
 
         if (booking == null)
         {
-            throw new InvalidOperationException($"Lodging booking {lodgingBookingId.Value} not found");
+            throw new InvalidOperationException($"Lodging booking {lodgingBookingId} not found");
         }
 
         booking.MarkAsCancelled();
@@ -165,9 +165,9 @@ public class TravelLogisticsActivities : ITravelLogisticsActivities
             .WithLatency(TimeSpan.FromMilliseconds(100), TimeSpan.FromMilliseconds(100))
             .WithFailureRate(0.10, System.Net.HttpStatusCode.InternalServerError);
 
-        await _chaosHttpClient.PostAsJsonAsync($"https://hotel-booking.example.com/api/reservations/{lodgingBookingId.Value}/cancel", new { });
+        await _chaosHttpClient.PostAsJsonAsync($"https://hotel-booking.example.com/api/reservations/{lodgingBookingId}/cancel", new { });
 
-        Console.WriteLine($"[LodgingCancellation] Cancelled lodging booking {lodgingBookingId.Value}");
+        Console.WriteLine($"[LodgingCancellation] Cancelled lodging booking {lodgingBookingId}");
     }
 
     [Activity]

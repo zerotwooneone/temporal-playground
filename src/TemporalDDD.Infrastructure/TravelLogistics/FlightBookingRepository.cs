@@ -18,7 +18,7 @@ public class FlightBookingRepository : IFlightBookingRepository
     public async Task<FlightBooking?> GetByIdAsync(FlightBookingId id, CancellationToken cancellationToken = default)
     {
         var dbo = await _dbContext.FlightBookings
-            .FirstOrDefaultAsync(f => f.Id == id.Value, cancellationToken);
+            .FirstOrDefaultAsync(f => f.Id == id.Value.ToString(), cancellationToken);
         
         if (dbo == null) return null;
         
@@ -27,10 +27,10 @@ public class FlightBookingRepository : IFlightBookingRepository
 
     public async Task SaveAsync(FlightBooking aggregate, CancellationToken cancellationToken = default)
     {
-        var existing = await _dbContext.FlightBookings
-            .FirstOrDefaultAsync(f => f.Id == aggregate.Id.Value, cancellationToken);
-
         var dbo = MapToDbo(aggregate);
+        var id = aggregate.Id.Value;
+        var existing = await _dbContext.FlightBookings
+            .FirstOrDefaultAsync(f => f.Id == id.ToString(), cancellationToken);
 
         if (existing == null)
         {
@@ -62,9 +62,11 @@ public class FlightBookingRepository : IFlightBookingRepository
             publicId = FlightBookingPublicId.FromString(dbo.PublicId);
         }
 
+        var id = FlightBookingId.Create(dbo.Id).Value ?? throw new InvalidOperationException($"Invalid flight booking ID in database: {dbo.Id}");
+
         // Use internal constructor for rehydration (infrastructure concern)
         return new FlightBooking(
-            id: FlightBookingId.Create(dbo.Id).Value ?? throw new InvalidOperationException($"Invalid flight booking ID in database: {dbo.Id}"),
+            id: id,
             publicId: publicId,
             flightNumber: flightNumber,
             origin: origin,
@@ -80,7 +82,7 @@ public class FlightBookingRepository : IFlightBookingRepository
     {
         return new FlightBookingDbo
         {
-            Id = booking.Id.Value,
+            Id = booking.Id.Value.ToString(),
             PublicId = booking.PublicId?.ToString(),
             FlightNumber = booking.FlightNumber.Value,
             Origin = booking.Origin.Value,

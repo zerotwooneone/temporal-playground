@@ -15,7 +15,7 @@ public sealed class Facility
     {
         return new Facility
         {
-            Id = FacilityId.Create(1).Value!,
+            Id = FacilityId.New(),
             Name = name,
             RequiredSpecialties = requiredSpecialties,
             AcceptedMedicalBoards = acceptedMedicalBoards,

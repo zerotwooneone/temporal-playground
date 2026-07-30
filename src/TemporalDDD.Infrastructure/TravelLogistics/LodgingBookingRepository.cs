@@ -18,7 +18,7 @@ public class LodgingBookingRepository : ILodgingBookingRepository
     public async Task<LodgingBooking?> GetByIdAsync(LodgingBookingId id, CancellationToken cancellationToken = default)
     {
         var dbo = await _dbContext.LodgingBookings
-            .FirstOrDefaultAsync(l => l.Id == id.Value, cancellationToken);
+            .FirstOrDefaultAsync(l => l.Id == id.Value.ToString(), cancellationToken);
         
         if (dbo == null) return null;
         
@@ -27,10 +27,10 @@ public class LodgingBookingRepository : ILodgingBookingRepository
 
     public async Task SaveAsync(LodgingBooking aggregate, CancellationToken cancellationToken = default)
     {
-        var existing = await _dbContext.LodgingBookings
-            .FirstOrDefaultAsync(l => l.Id == aggregate.Id.Value, cancellationToken);
-
         var dbo = MapToDbo(aggregate);
+        var id = aggregate.Id.Value;
+        var existing = await _dbContext.LodgingBookings
+            .FirstOrDefaultAsync(l => l.Id == id.ToString(), cancellationToken);
 
         if (existing == null)
         {
@@ -63,9 +63,11 @@ public class LodgingBookingRepository : ILodgingBookingRepository
             publicId = LodgingBookingPublicId.FromString(dbo.PublicId);
         }
 
+        var id = LodgingBookingId.Create(dbo.Id).Value ?? throw new InvalidOperationException($"Invalid lodging booking ID in database: {dbo.Id}");
+
         // Use internal constructor for rehydration (infrastructure concern)
         return new LodgingBooking(
-            id: LodgingBookingId.Create(dbo.Id).Value ?? throw new InvalidOperationException($"Invalid lodging booking ID in database: {dbo.Id}"),
+            id: id,
             publicId: publicId,
             hotelName: hotelName,
             address: address,
@@ -80,7 +82,7 @@ public class LodgingBookingRepository : ILodgingBookingRepository
     {
         return new LodgingBookingDbo
         {
-            Id = booking.Id.Value,
+            Id = booking.Id.Value.ToString(),
             PublicId = booking.PublicId?.ToString(),
             HotelName = booking.HotelName.Value,
             AddressStreet = booking.Address.Street,

@@ -4,17 +4,28 @@ namespace TemporalDDD.Domain.TimesheetProcessing;
 
 public sealed record TimesheetId
 {
-    public uint Value { get; }
+    private const string Abbreviation = "TSH";
+    public Guid Value { get; }
 
-    private TimesheetId(uint value) => Value = value;
+    private TimesheetId(Guid value) => Value = value;
 
-    public static Result<TimesheetId> Create(uint value)
+    public static Result<TimesheetId> Create(string value)
     {
-        if (value == 0)
-            return Result<TimesheetId>.Failure("TimesheetId cannot be zero");
-        return Result<TimesheetId>.Success(new TimesheetId(value));
+        if (string.IsNullOrEmpty(value))
+            return Result<TimesheetId>.Failure("Timesheet ID cannot be null or empty");
+
+        var expectedPrefix = $"{Abbreviation}Id";
+        if (!value.StartsWith(expectedPrefix))
+            return Result<TimesheetId>.Failure($"Timesheet ID must start with '{expectedPrefix}'");
+
+        var guidString = value.Substring(expectedPrefix.Length);
+        if (!Guid.TryParse(guidString, out var guid))
+            return Result<TimesheetId>.Failure("Invalid GUID format in Timesheet ID");
+
+        return Result<TimesheetId>.Success(new TimesheetId(guid));
     }
 
-    public static implicit operator uint(TimesheetId id) => id.Value;
-    public override string ToString() => Value.ToString();
+    public static TimesheetId New() => new TimesheetId(Guid.CreateVersion7());
+
+    public override string ToString() => $"{Abbreviation}Id{Value}";
 }

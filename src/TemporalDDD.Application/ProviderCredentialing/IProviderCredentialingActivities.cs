@@ -8,7 +8,7 @@ public interface IProviderCredentialingActivities
     [Activity]
     Task<MedicalBoardLicenseInfo> FetchMedicalBoardLicenseAsync(FetchLicenseInput input);
     [Activity]
-    Task<CredentialEvaluationId> EvaluateAndSaveComplianceAsync(EvaluateComplianceInput input);
+    Task<string> EvaluateAndSaveComplianceAsync(EvaluateComplianceInput input);
     [Activity]
     Task RequestManualReviewAsync(RequestManualReviewInput input);
     [Activity]
@@ -17,9 +17,9 @@ public interface IProviderCredentialingActivities
 
 // Primitive DTOs for activity parameters
 public record FetchLicenseInput(string LicenseNumber, string MedicalBoard);
-public record EvaluateComplianceInput(uint ProviderId, string LicenseNumber, string MedicalBoard, DateTimeOffset ExpiryDate, bool IsValid, uint ProviderIdResult, string? Notes = null);
-public record RequestManualReviewInput(uint EvaluationId);
-public record ActivateProviderProfileInput(uint ProviderProfileId);
+public record EvaluateComplianceInput(string ProviderId, string LicenseNumber, string MedicalBoard, DateTimeOffset ExpiryDate, bool IsValid, string ProviderIdResult, string? Notes = null);
+public record RequestManualReviewInput(string EvaluationId);
+public record ActivateProviderProfileInput(string ProviderProfileId);
 
 // Primitive result types
 public record MedicalBoardLicenseInfo(
@@ -27,6 +27,6 @@ public record MedicalBoardLicenseInfo(
     string MedicalBoard,
     DateTimeOffset ExpiryDate,
     bool IsValid,
-    uint ProviderId,
+    string ProviderId,
     string? Notes = null
 );

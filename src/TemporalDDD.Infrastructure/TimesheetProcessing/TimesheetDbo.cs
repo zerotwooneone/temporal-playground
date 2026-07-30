@@ -2,9 +2,9 @@ namespace TemporalDDD.Infrastructure.TimesheetProcessing;
 
 public class TimesheetDbo
 {
-    public uint Id { get; set; }
+    public string Id { get; set; }
     public string? PublicId { get; set; }
-    public uint ProviderId { get; set; }
+    public string ProviderId { get; set; }
     public long PeriodStartUtc { get; set; } // Unix milliseconds
     public long PeriodEndUtc { get; set; } // Unix milliseconds
     public decimal TotalHours { get; set; }

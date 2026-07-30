@@ -2,7 +2,7 @@ namespace TemporalDDD.Infrastructure.TravelLogistics;
 
 public class FlightBookingDbo
 {
-    public uint Id { get; set; }
+    public string Id { get; set; }
     public string? PublicId { get; set; }
     public string FlightNumber { get; set; }
     public string Origin { get; set; }

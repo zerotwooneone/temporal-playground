@@ -9,4 +9,4 @@ public interface IProviderActivities
 }
 
 // Primitive DTOs for activity parameters
-public record ActivateProviderInput(uint ProviderId, int Status);
+public record ActivateProviderInput(string ProviderId, int Status);

@@ -4,23 +4,31 @@ namespace TemporalDDD.Domain.PlacementMatching;
 
 public sealed record PositionId
 {
-    public uint Value { get; }
+    private const string Abbreviation = "POS";
+    public Guid Value { get; }
 
-    private PositionId(uint value)
+    private PositionId(Guid value)
     {
         Value = value;
     }
 
-    public static Result<PositionId> Create(uint value)
+    public static Result<PositionId> Create(string value)
     {
-        if (value == 0)
-            return Result<PositionId>.Failure("PositionId cannot be zero");
+        if (string.IsNullOrEmpty(value))
+            return Result<PositionId>.Failure("Position ID cannot be null or empty");
 
-        return Result<PositionId>.Success(new PositionId(value));
+        var expectedPrefix = $"{Abbreviation}Id";
+        if (!value.StartsWith(expectedPrefix))
+            return Result<PositionId>.Failure($"Position ID must start with '{expectedPrefix}'");
+
+        var guidString = value.Substring(expectedPrefix.Length);
+        if (!Guid.TryParse(guidString, out var guid))
+            return Result<PositionId>.Failure("Invalid GUID format in Position ID");
+
+        return Result<PositionId>.Success(new PositionId(guid));
     }
 
-    
-    public static implicit operator uint(PositionId id) => id.Value;
+    public static PositionId New() => new PositionId(Guid.CreateVersion7());
 
-    public override string ToString() => Value.ToString();
+    public override string ToString() => $"{Abbreviation}Id{Value}";
 }

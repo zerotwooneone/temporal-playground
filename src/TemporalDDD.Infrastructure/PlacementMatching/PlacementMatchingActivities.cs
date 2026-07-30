@@ -47,7 +47,7 @@ public class PlacementMatchingActivities : IPlacementMatchingActivities
     }
 
     [Activity]
-    public async Task<uint> ProposeAssignmentAsync(ProposeAssignmentInput input)
+    public async Task<string> ProposeAssignmentAsync(ProposeAssignmentInput input)
     {
         // Convert primitive DTO to Domain types with fail-fast validation
         var providerIdResult = ProviderId.Create(input.ProviderId);
@@ -75,9 +75,9 @@ public class PlacementMatchingActivities : IPlacementMatchingActivities
 
         await _assignmentRepository.SaveAsync(assignment);
 
-        Console.WriteLine($"[Assignment] Proposed assignment {assignment.Id.Value} for provider {providerId.Value} at facility {facilityId.Value} (Score: {input.MatchScore:F2})");
+        Console.WriteLine($"[Assignment] Proposed assignment {assignment.Id} for provider {providerId.Value} at facility {facilityId.Value} (Score: {input.MatchScore:F2})");
 
-        return assignment.Id.Value;
+        return assignment.Id.ToString();
     }
 
     [Activity]
@@ -99,7 +99,7 @@ public class PlacementMatchingActivities : IPlacementMatchingActivities
 
         if (assignment == null)
         {
-            throw new InvalidOperationException($"Assignment {assignmentId.Value} not found");
+            throw new InvalidOperationException($"Assignment {assignmentId} not found");
         }
 
         // Check version for OCC and accept the assignment
@@ -107,7 +107,7 @@ public class PlacementMatchingActivities : IPlacementMatchingActivities
 
         await _assignmentRepository.SaveAsync(assignment);
 
-        Console.WriteLine($"[Assignment] Committed assignment {assignmentId.Value} with version check {expectedVersion.Value}");
+        Console.WriteLine($"[Assignment] Committed assignment {assignmentId} with version check {expectedVersion.Value}");
     }
 
     [Activity]
@@ -124,13 +124,13 @@ public class PlacementMatchingActivities : IPlacementMatchingActivities
 
         if (assignment == null)
         {
-            throw new InvalidOperationException($"Assignment {assignmentId.Value} not found");
+            throw new InvalidOperationException($"Assignment {assignmentId} not found");
         }
 
         assignment.Revoke();
 
         await _assignmentRepository.SaveAsync(assignment);
 
-        Console.WriteLine($"[Assignment] Revoked offer {assignmentId.Value}");
+        Console.WriteLine($"[Assignment] Revoked offer {assignmentId}");
     }
 }

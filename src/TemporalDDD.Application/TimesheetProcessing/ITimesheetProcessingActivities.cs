@@ -15,10 +15,10 @@ public interface ITimesheetProcessingActivities
 }
 
 // Primitive DTOs for activity parameters
-public record ValidateTimesheetInput(uint TimesheetId);
-public record CalculatePayrollInput(uint TimesheetId);
-public record SubmitBankTransferInput(uint TimesheetId, string IdempotencyKey);
-public record GenerateInvoiceInput(uint TimesheetId, decimal FacilityBillRate);
+public record ValidateTimesheetInput(string TimesheetId);
+public record CalculatePayrollInput(string TimesheetId);
+public record SubmitBankTransferInput(string TimesheetId, string IdempotencyKey);
+public record GenerateInvoiceInput(string TimesheetId, decimal FacilityBillRate);
 
 // Primitive result types
 public record PayrollCalculationResult(

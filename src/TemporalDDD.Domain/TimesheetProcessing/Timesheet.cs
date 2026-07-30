@@ -41,12 +41,12 @@ public sealed class Timesheet
         RejectionReason = rejectionReason;
     }
 
-    // Factory for creating new timesheet (ID will be set by database)
+    // Factory for creating new timesheet (ID is client-generated)
     public static Timesheet Create(ProviderId providerId, DateRange period, Hours totalHours, HourlyRate hourlyRate)
     {
         return new Timesheet
         {
-            Id = TimesheetId.Create(0).Value!, // Temporary, will be set by DB
+            Id = TimesheetId.New(),
             PublicId = TimesheetPublicId.New(),
             ProviderId = providerId,
             Period = period,

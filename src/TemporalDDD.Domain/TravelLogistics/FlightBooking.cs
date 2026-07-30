@@ -31,7 +31,7 @@ public sealed class FlightBooking
         BookedAt = bookedAt;
     }
 
-    // Factory for creating new booking (ID will be set by database)
+    // Factory for creating new booking (ID is client-generated)
     public static FlightBooking Create(FlightNumber flightNumber, AirportCode origin, AirportCode destination, FlightDepartureTime departureTime, Money cost)
     {
         // Cross-validation: Origin and Destination must be different
@@ -40,7 +40,7 @@ public sealed class FlightBooking
 
         return new FlightBooking
         {
-            Id = FlightBookingId.Create(0).Value!, // Temporary, will be set by DB
+            Id = FlightBookingId.New(),
             PublicId = FlightBookingPublicId.New(),
             FlightNumber = flightNumber,
             Origin = origin,

@@ -35,7 +35,7 @@ public class TimesheetProcessingActivities : ITimesheetProcessingActivities
             var period = DateRange.Create(DateTime.UtcNow.AddDays(-30), DateTime.UtcNow).Value!;
             var totalHours = Hours.Create(160).Value!;
             var hourlyRate = HourlyRate.Create(50).Value!;
-            var providerIdResult = ProviderId.Create(1).Value!; // Simulated provider ID
+            var providerIdResult = ProviderId.New(); // Simulated provider ID
 
             // Create domain entity for validation using factory
             timesheet = Domain.TimesheetProcessing.Timesheet.Create(
@@ -50,7 +50,7 @@ public class TimesheetProcessingActivities : ITimesheetProcessingActivities
         timesheet.Validate();
         await _timesheetRepository.SaveAsync(timesheet);
 
-        Console.WriteLine($"[TimesheetValidation] Timesheet {timesheetId.Value} validated successfully");
+        Console.WriteLine($"[TimesheetValidation] Timesheet {timesheetId} validated successfully");
     }
 
     [Activity]
@@ -66,7 +66,7 @@ public class TimesheetProcessingActivities : ITimesheetProcessingActivities
 
         if (timesheet == null)
         {
-            throw new InvalidOperationException($"Timesheet {timesheetId.Value} not found");
+            throw new InvalidOperationException($"Timesheet {timesheetId} not found");
         }
 
         // Calculate payroll with tax rate (e.g., 25%)
@@ -100,12 +100,12 @@ public class TimesheetProcessingActivities : ITimesheetProcessingActivities
         var response = await _chaosHttpClient
             .WithLatency(TimeSpan.FromMilliseconds(100), TimeSpan.FromMilliseconds(100))
             .WithFailureRate(0.10, System.Net.HttpStatusCode.InternalServerError)
-            .PostAsJsonAsync("https://payment-gateway.example.com/api/transfer", new { TimesheetId = timesheetId.Value, IdempotencyKey = input.IdempotencyKey });
+            .PostAsJsonAsync("https://payment-gateway.example.com/api/transfer", new { TimesheetId = timesheetId, IdempotencyKey = input.IdempotencyKey });
 
         // The idempotencyKey ensures that duplicate requests don't result in duplicate payments
         var paymentReference = $"PAY-{DateTime.UtcNow:yyyyMMddHHmmss}-{input.IdempotencyKey.Substring(0, 8)}";
 
-        Console.WriteLine($"[BankTransfer] Submitted transfer for timesheet {timesheetId.Value} with idempotency key: {input.IdempotencyKey}");
+        Console.WriteLine($"[BankTransfer] Submitted transfer for timesheet {timesheetId} with idempotency key: {input.IdempotencyKey}");
         Console.WriteLine($"[BankTransfer] Payment reference: {paymentReference}");
 
         return paymentReference;
@@ -130,7 +130,7 @@ public class TimesheetProcessingActivities : ITimesheetProcessingActivities
 
         if (timesheet == null)
         {
-            throw new InvalidOperationException($"Timesheet {timesheetId.Value} not found");
+            throw new InvalidOperationException($"Timesheet {timesheetId} not found");
         }
 
         // Calculate facility bill (typically higher than provider pay rate)
@@ -140,11 +140,11 @@ public class TimesheetProcessingActivities : ITimesheetProcessingActivities
         var response = await _chaosHttpClient
             .WithLatency(TimeSpan.FromMilliseconds(100), TimeSpan.FromMilliseconds(100))
             .WithFailureRate(0.10, System.Net.HttpStatusCode.InternalServerError)
-            .PostAsJsonAsync("https://erp-system.example.com/api/invoices", new { TimesheetId = timesheetId.Value, FacilityBillRate = facilityBillRate.Amount });
+            .PostAsJsonAsync("https://erp-system.example.com/api/invoices", new { TimesheetId = timesheetId, FacilityBillRate = facilityBillRate.Amount });
 
         var invoiceNumber = $"INV-{DateTime.UtcNow:yyyyMMdd}-{Guid.NewGuid().ToString().Substring(0, 8).ToUpper()}";
 
-        Console.WriteLine($"[InvoiceGeneration] Generated invoice {invoiceNumber} for timesheet {timesheetId.Value}");
+        Console.WriteLine($"[InvoiceGeneration] Generated invoice {invoiceNumber} for timesheet {timesheetId}");
         Console.WriteLine($"[InvoiceGeneration] Facility bill amount: {facilityBillAmount} (Rate: {facilityBillRate}/hr)");
 
         return invoiceNumber;

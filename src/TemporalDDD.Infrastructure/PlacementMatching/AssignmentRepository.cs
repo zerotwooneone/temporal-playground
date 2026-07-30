@@ -18,7 +18,7 @@ public class AssignmentRepository : IAssignmentRepository
     public async Task<Assignment?> GetByIdAsync(AssignmentId id, CancellationToken cancellationToken = default)
     {
         var dbo = await _dbContext.Assignments
-            .FirstOrDefaultAsync(a => a.Id == id.Value, cancellationToken);
+            .FirstOrDefaultAsync(a => a.Id == id.Value.ToString(), cancellationToken);
         
         if (dbo == null) return null;
         
@@ -27,10 +27,10 @@ public class AssignmentRepository : IAssignmentRepository
 
     public async Task SaveAsync(Assignment aggregate, CancellationToken cancellationToken = default)
     {
-        var existing = await _dbContext.Assignments
-            .FirstOrDefaultAsync(a => a.Id == aggregate.Id.Value, cancellationToken);
-
         var dbo = MapToDbo(aggregate);
+        var id = aggregate.Id.Value;
+        var existing = await _dbContext.Assignments
+            .FirstOrDefaultAsync(a => a.Id == id.ToString(), cancellationToken);
 
         if (existing == null)
         {
@@ -63,9 +63,11 @@ public class AssignmentRepository : IAssignmentRepository
             publicId = AssignmentPublicId.FromString(dbo.PublicId);
         }
 
+        var id = AssignmentId.Create(dbo.Id).Value ?? throw new InvalidOperationException($"Invalid assignment ID in database: {dbo.Id}");
+
         // Use internal constructor for rehydration (infrastructure concern)
         return new Assignment(
-            id: AssignmentId.Create(dbo.Id).Value ?? throw new InvalidOperationException($"Invalid assignment ID in database: {dbo.Id}"),
+            id: id,
             publicId: publicId,
             providerId: providerId,
             facilityId: facilityId,
@@ -82,11 +84,11 @@ public class AssignmentRepository : IAssignmentRepository
     {
         return new AssignmentDbo
         {
-            Id = assignment.Id.Value,
+            Id = assignment.Id.Value.ToString(),
             PublicId = assignment.PublicId?.ToString(),
-            ProviderId = assignment.ProviderId.Value,
-            FacilityId = assignment.FacilityId.Value,
-            PositionId = assignment.PositionId.Value,
+            ProviderId = assignment.ProviderId.ToString(),
+            FacilityId = assignment.FacilityId.ToString(),
+            PositionId = assignment.PositionId.ToString(),
             MatchScore = assignment.MatchScore.Value,
             Status = assignment.Status.Value,
             ProposedAt = assignment.ProposedAt.ToUnixTimeMilliseconds(),

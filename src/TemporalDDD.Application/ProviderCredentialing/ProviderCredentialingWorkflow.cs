@@ -35,7 +35,7 @@ public class ProviderCredentialingWorkflow
         if (!licenseInfo.IsValid)
         {
             await Workflow.ExecuteActivityAsync(
-                (IProviderCredentialingActivities activities) => activities.RequestManualReviewAsync(new RequestManualReviewInput(evaluationId.Value)),
+                (IProviderCredentialingActivities activities) => activities.RequestManualReviewAsync(new RequestManualReviewInput(evaluationId)),
                 new ActivityOptions { StartToCloseTimeout = TimeSpan.FromMinutes(5) }
             );
 

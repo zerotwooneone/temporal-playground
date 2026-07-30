@@ -18,7 +18,7 @@ public class CredentialEvaluationRepository : ICredentialEvaluationRepository
     public async Task<CredentialEvaluation?> GetByIdAsync(CredentialEvaluationId id, CancellationToken cancellationToken = default)
     {
         var dbo = await _dbContext.CredentialEvaluations
-            .FirstOrDefaultAsync(e => e.Id == id.Value, cancellationToken);
+            .FirstOrDefaultAsync(e => e.Id == id.Value.ToString(), cancellationToken);
         
         if (dbo == null) return null;
         
@@ -27,10 +27,10 @@ public class CredentialEvaluationRepository : ICredentialEvaluationRepository
 
     public async Task SaveAsync(CredentialEvaluation aggregate, CancellationToken cancellationToken = default)
     {
-        var existing = await _dbContext.CredentialEvaluations
-            .FirstOrDefaultAsync(e => e.Id == aggregate.Id.Value, cancellationToken);
-
         var dbo = MapToDbo(aggregate);
+        var id = aggregate.Id.Value;
+        var existing = await _dbContext.CredentialEvaluations
+            .FirstOrDefaultAsync(e => e.Id == id.ToString(), cancellationToken);
 
         if (existing == null)
         {
@@ -65,9 +65,11 @@ public class CredentialEvaluationRepository : ICredentialEvaluationRepository
             publicId = CredentialEvaluationPublicId.FromString(dbo.PublicId);
         }
 
+        var id = CredentialEvaluationId.Create(dbo.Id).Value ?? throw new InvalidOperationException($"Invalid credential evaluation ID in database: {dbo.Id}");
+
         // Use internal constructor for rehydration (infrastructure concern)
         return new CredentialEvaluation(
-            id: CredentialEvaluationId.Create(dbo.Id).Value ?? throw new InvalidOperationException($"Invalid credential evaluation ID in database: {dbo.Id}"),
+            id: id,
             publicId: publicId,
             providerId: providerId,
             licenseNumber: licenseNumber,
@@ -84,9 +86,9 @@ public class CredentialEvaluationRepository : ICredentialEvaluationRepository
     {
         return new CredentialEvaluationDbo
         {
-            Id = evaluation.Id.Value,
+            Id = evaluation.Id.Value.ToString(),
             PublicId = evaluation.PublicId?.ToString(),
-            ProviderId = evaluation.ProviderId.Value,
+            ProviderId = evaluation.ProviderId.ToString(),
             LicenseNumber = evaluation.LicenseNumber.Value,
             MedicalBoard = evaluation.MedicalBoard.Value,
             LicenseExpiryDate = evaluation.LicenseExpiryDate.Value,

@@ -41,7 +41,7 @@ public class ProviderCredentialingController : ControllerBase
 
         // Map the validated domain values into the Primitive DTO
         var workflowInput = new CredentialingInput(
-            providerIdResult.Value.Value,
+            providerIdResult.Value.ToString(),
             licenseNumberResult.Value.Value,
             request.MedicalBoard,
             request.ExpiryDate
@@ -65,10 +65,12 @@ public class ProviderCredentialingController : ControllerBase
         // Extract provider ID from workflow ID for prototyping
         // Format: provider-credentialing-{providerId}-{guid}
         var parts = workflowId.Split('-');
-        if (parts.Length < 3 || !uint.TryParse(parts[2], out var providerId))
+        if (parts.Length < 3)
         {
             return BadRequest(new { Error = "Invalid workflow ID format" });
         }
+
+        var providerId = string.Join('-', parts.Skip(2).SkipLast(1)); // Extract provider ID (everything between second dash and last dash)
 
         // Query database for credential evaluation status
         var evaluation = await _dbContext.CredentialEvaluations
@@ -121,7 +123,7 @@ public class ProviderCredentialingController : ControllerBase
         };
     }
 
-    public record StartCredentialingRequest(uint ProviderId, string LicenseNumber, string MedicalBoard, DateTimeOffset ExpiryDate);
+    public record StartCredentialingRequest(string ProviderId, string LicenseNumber, string MedicalBoard, DateTimeOffset ExpiryDate);
     public record ManualReviewRequest(bool IsApproved, string? Notes);
     public record CredentialEvaluationStatus
     {

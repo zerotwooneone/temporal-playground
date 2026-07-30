@@ -34,12 +34,12 @@ public sealed class ProviderProfile
         Version = version;
     }
 
-    // Factory for creating new profile (ID will be set by database)
+    // Factory for creating new profile (ID is client-generated)
     public static ProviderProfile Create(PersonName firstName, PersonName lastName, Email email, Specialty specialty)
     {
         return new ProviderProfile
         {
-            Id = ProviderProfileId.Create(0).Value!, // Temporary, will be set by DB
+            Id = ProviderProfileId.New(),
             PublicId = ProviderPublicId.New(),
             FirstName = firstName,
             LastName = lastName,

@@ -5,6 +5,6 @@ namespace TemporalDDD.Application.ProviderOnboarding;
 /// All fields are primitive types to ensure clean JSON serialization with Temporal.
 /// </summary>
 public record OnboardingInput(
-    uint ProviderId,
+    string ProviderId,
     string LicenseNumber
 );

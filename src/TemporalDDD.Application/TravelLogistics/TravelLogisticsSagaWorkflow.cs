@@ -5,8 +5,8 @@ namespace TemporalDDD.Application.TravelLogistics;
 [Workflow]
 public class TravelLogisticsSagaWorkflow
 {
-    private uint? _flightBookingId;
-    private uint? _lodgingBookingId;
+    private string? _flightBookingId;
+    private string? _lodgingBookingId;
 
     [WorkflowRun]
     public async Task RunAsync(TravelLogisticsInput input)
@@ -39,7 +39,7 @@ public class TravelLogisticsSagaWorkflow
             if (_flightBookingId is not null)
             {
                 await Workflow.ExecuteActivityAsync(
-                    (ITravelLogisticsActivities activities) => activities.CancelFlightAsync(new CancelFlightInput(_flightBookingId.Value)),
+                    (ITravelLogisticsActivities activities) => activities.CancelFlightAsync(new CancelFlightInput(_flightBookingId)),
                     new ActivityOptions { StartToCloseTimeout = TimeSpan.FromMinutes(5) }
                 );
             }
@@ -48,7 +48,7 @@ public class TravelLogisticsSagaWorkflow
             if (_lodgingBookingId is not null)
             {
                 await Workflow.ExecuteActivityAsync(
-                    (ITravelLogisticsActivities activities) => activities.CancelLodgingAsync(new CancelLodgingInput(_lodgingBookingId.Value)),
+                    (ITravelLogisticsActivities activities) => activities.CancelLodgingAsync(new CancelLodgingInput(_lodgingBookingId)),
                     new ActivityOptions { StartToCloseTimeout = TimeSpan.FromMinutes(5) }
                 );
             }

@@ -4,22 +4,31 @@ namespace TemporalDDD.Domain.PlacementMatching;
 
 public sealed record FacilityId
 {
-    public uint Value { get; }
+    private const string Abbreviation = "FAC";
+    public Guid Value { get; }
 
-    private FacilityId(uint value)
+    private FacilityId(Guid value)
     {
         Value = value;
     }
 
-    public static Result<FacilityId> Create(uint value)
+    public static Result<FacilityId> Create(string value)
     {
-        if (value == 0)
-            return Result<FacilityId>.Failure("FacilityId cannot be zero");
+        if (string.IsNullOrEmpty(value))
+            return Result<FacilityId>.Failure("Facility ID cannot be null or empty");
 
-        return Result<FacilityId>.Success(new FacilityId(value));
+        var expectedPrefix = $"{Abbreviation}Id";
+        if (!value.StartsWith(expectedPrefix))
+            return Result<FacilityId>.Failure($"Facility ID must start with '{expectedPrefix}'");
+
+        var guidString = value.Substring(expectedPrefix.Length);
+        if (!Guid.TryParse(guidString, out var guid))
+            return Result<FacilityId>.Failure("Invalid GUID format in Facility ID");
+
+        return Result<FacilityId>.Success(new FacilityId(guid));
     }
 
-    public static implicit operator uint(FacilityId id) => id.Value;
+    public static FacilityId New() => new FacilityId(Guid.CreateVersion7());
 
-    public override string ToString() => Value.ToString();
+    public override string ToString() => $"{Abbreviation}Id{Value}";
 }

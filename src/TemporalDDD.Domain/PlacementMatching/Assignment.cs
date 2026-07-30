@@ -33,12 +33,12 @@ public sealed class Assignment
         Version = version;
     }
 
-    // Factory for creating new assignment (ID will be set by database)
+    // Factory for creating new assignment (ID is client-generated)
     public static Assignment Create(ProviderId providerId, FacilityId facilityId, PositionId positionId, MatchScore matchScore)
     {
         return new Assignment
         {
-            Id = AssignmentId.Create(1).Value!,
+            Id = AssignmentId.New(),
             PublicId = AssignmentPublicId.New(),
             ProviderId = providerId,
             FacilityId = facilityId,

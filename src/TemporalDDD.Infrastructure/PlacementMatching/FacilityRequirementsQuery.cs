@@ -18,7 +18,7 @@ public class FacilityRequirementsQuery : IFacilityRequirementsQuery
     public async Task<FacilityRequirementsDto> GetFacilityRequirementsAsync(FacilityId facilityId, CancellationToken cancellationToken = default)
     {
         var dbo = await _dbContext.Facilities
-            .FirstOrDefaultAsync(f => f.Id == facilityId.Value, cancellationToken);
+            .FirstOrDefaultAsync(f => f.Id == facilityId.ToString(), cancellationToken);
 
         if (dbo == null)
         {

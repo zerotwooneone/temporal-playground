@@ -4,22 +4,31 @@ namespace TemporalDDD.Domain.PlacementMatching;
 
 public sealed record AssignmentId
 {
-    public uint Value { get; }
+    private const string Abbreviation = "ASM";
+    public Guid Value { get; }
 
-    private AssignmentId(uint value)
+    private AssignmentId(Guid value)
     {
         Value = value;
     }
 
-    public static Result<AssignmentId> Create(uint value)
+    public static Result<AssignmentId> Create(string value)
     {
-        if (value == 0)
-            return Result<AssignmentId>.Failure("AssignmentId cannot be zero");
+        if (string.IsNullOrEmpty(value))
+            return Result<AssignmentId>.Failure("Assignment ID cannot be null or empty");
 
-        return Result<AssignmentId>.Success(new AssignmentId(value));
+        var expectedPrefix = $"{Abbreviation}Id";
+        if (!value.StartsWith(expectedPrefix))
+            return Result<AssignmentId>.Failure($"Assignment ID must start with '{expectedPrefix}'");
+
+        var guidString = value.Substring(expectedPrefix.Length);
+        if (!Guid.TryParse(guidString, out var guid))
+            return Result<AssignmentId>.Failure("Invalid GUID format in Assignment ID");
+
+        return Result<AssignmentId>.Success(new AssignmentId(guid));
     }
 
-    public static implicit operator uint(AssignmentId id) => id.Value;
+    public static AssignmentId New() => new AssignmentId(Guid.CreateVersion7());
 
-    public override string ToString() => Value.ToString();
+    public override string ToString() => $"{Abbreviation}Id{Value}";
 }

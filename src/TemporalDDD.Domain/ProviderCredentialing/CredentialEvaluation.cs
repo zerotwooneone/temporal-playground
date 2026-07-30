@@ -33,12 +33,12 @@ public sealed class CredentialEvaluation
         Status = status;
     }
 
-    // Factory for creating new evaluation (ID will be set by database)
+    // Factory for creating new evaluation (ID is client-generated)
     public static CredentialEvaluation Create(ProviderId providerId, LicenseNumber licenseNumber, MedicalBoard medicalBoard, LicenseExpiryDate licenseExpiryDate)
     {
         return new CredentialEvaluation
         {
-            Id = CredentialEvaluationId.Create(0).Value!, // Temporary, will be set by DB
+            Id = CredentialEvaluationId.New(),
             PublicId = CredentialEvaluationPublicId.New(),
             ProviderId = providerId,
             LicenseNumber = licenseNumber,

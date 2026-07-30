@@ -7,7 +7,7 @@ public interface IPlacementMatchingActivities
     [Activity]
     Task<decimal> CalculateMatchScoreAsync(CalculateMatchScoreInput input);
     [Activity]
-    Task<uint> ProposeAssignmentAsync(ProposeAssignmentInput input);
+    Task<string> ProposeAssignmentAsync(ProposeAssignmentInput input);
     [Activity]
     Task CommitAssignmentAsync(CommitAssignmentInput input);
     [Activity]
@@ -15,7 +15,7 @@ public interface IPlacementMatchingActivities
 }
 
 // Primitive DTOs for activity parameters
-public record CalculateMatchScoreInput(uint ProviderId, uint FacilityId, uint PositionId);
-public record ProposeAssignmentInput(uint ProviderId, uint FacilityId, uint PositionId, decimal MatchScore);
-public record CommitAssignmentInput(uint AssignmentId, int ExpectedVersion);
-public record RevokeOfferInput(uint AssignmentId);
+public record CalculateMatchScoreInput(string ProviderId, string FacilityId, string PositionId);
+public record ProposeAssignmentInput(string ProviderId, string FacilityId, string PositionId, decimal MatchScore);
+public record CommitAssignmentInput(string AssignmentId, int ExpectedVersion);
+public record RevokeOfferInput(string AssignmentId);

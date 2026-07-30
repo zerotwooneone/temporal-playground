@@ -32,7 +32,7 @@ public class ComplianceActivities : IComplianceActivities
             .WithFailureRate(0.10, System.Net.HttpStatusCode.InternalServerError)
             .GetAsync($"https://external-medical-board.example.com/api/license/{licenseNumber.Value}");
 
-        var providerIdVo = ProviderId.Create(1).Value!; // Simulated provider ID
+        var providerIdVo = ProviderId.New(); // Simulated provider ID
         var medicalBoardVo = MedicalBoard.Create("Default").Value!;
         var licenseExpiryDateVo = LicenseExpiryDate.Create(DateTimeOffset.UtcNow.AddYears(2)).Value!;
         

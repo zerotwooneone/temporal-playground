@@ -5,7 +5,7 @@ namespace TemporalDDD.Application.ProviderCredentialing;
 /// All fields are primitive types to ensure clean JSON serialization with Temporal.
 /// </summary>
 public record CredentialingInput(
-    uint ProviderId,
+    string ProviderId,
     string LicenseNumber,
     string MedicalBoard,
     DateTimeOffset ExpiryDate

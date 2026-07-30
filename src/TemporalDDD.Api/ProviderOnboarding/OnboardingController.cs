@@ -31,7 +31,7 @@ public class OnboardingController : ControllerBase
 
         // Map the validated domain values into the Primitive DTO
         var workflowInput = new OnboardingInput(
-            providerIdResult.Value.Value,
+            providerIdResult.Value.ToString(),
             licenseNumberResult.Value.Value
         );
 
@@ -47,5 +47,5 @@ public class OnboardingController : ControllerBase
         return Ok(new { WorkflowId = workflowId, Message = "Provider onboarding workflow started" });
     }
 
-    public record OnboardingRequest(uint ProviderId, string LicenseNumber);
+    public record OnboardingRequest(string ProviderId, string LicenseNumber);
 }

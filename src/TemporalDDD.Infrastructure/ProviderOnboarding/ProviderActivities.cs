@@ -30,7 +30,8 @@ public class ProviderActivities : IProviderActivities
         var providerId = providerIdResult.Value;
         var status = statusResult.Value;
 
-        var providerProfileId = ProviderProfileId.Create(providerId.Value).Value!;
+        var hackyConversion = ProviderProfileId.Abbreviation + providerId.Value;
+        var providerProfileId = ProviderProfileId.Create(hackyConversion).Value!;
         var providerProfile = await _providerProfileRepository.GetByIdAsync(providerProfileId);
         
         if (providerProfile == null)

@@ -4,17 +4,28 @@ namespace TemporalDDD.Domain.TravelLogistics;
 
 public sealed record FlightBookingId
 {
-    public uint Value { get; }
+    private const string Abbreviation = "FLT";
+    public Guid Value { get; }
 
-    private FlightBookingId(uint value) => Value = value;
+    private FlightBookingId(Guid value) => Value = value;
 
-    public static Result<FlightBookingId> Create(uint value)
+    public static Result<FlightBookingId> Create(string value)
     {
-        if (value == 0)
-            return Result<FlightBookingId>.Failure("FlightBookingId cannot be zero");
-        return Result<FlightBookingId>.Success(new FlightBookingId(value));
+        if (string.IsNullOrEmpty(value))
+            return Result<FlightBookingId>.Failure("FlightBooking ID cannot be null or empty");
+
+        var expectedPrefix = $"{Abbreviation}Id";
+        if (!value.StartsWith(expectedPrefix))
+            return Result<FlightBookingId>.Failure($"FlightBooking ID must start with '{expectedPrefix}'");
+
+        var guidString = value.Substring(expectedPrefix.Length);
+        if (!Guid.TryParse(guidString, out var guid))
+            return Result<FlightBookingId>.Failure("Invalid GUID format in FlightBooking ID");
+
+        return Result<FlightBookingId>.Success(new FlightBookingId(guid));
     }
 
-    public static implicit operator uint(FlightBookingId id) => id.Value;
-    public override string ToString() => Value.ToString();
+    public static FlightBookingId New() => new FlightBookingId(Guid.CreateVersion7());
+
+    public override string ToString() => $"{Abbreviation}Id{Value}";
 }
