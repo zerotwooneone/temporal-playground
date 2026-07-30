@@ -27,11 +27,10 @@ public class ComplianceActivities : IComplianceActivities
         var licenseNumber = licenseNumberResult.Value;
 
         // Simulate external API call with chaos (100ms latency, 10% failure rate)
-        _chaosHttpClient
+        var response = await _chaosHttpClient
             .WithLatency(TimeSpan.FromMilliseconds(100), TimeSpan.FromMilliseconds(100))
-            .WithFailureRate(0.10, System.Net.HttpStatusCode.InternalServerError);
-
-        var response = await _chaosHttpClient.GetAsync($"https://external-medical-board.example.com/api/license/{licenseNumber.Value}");
+            .WithFailureRate(0.10, System.Net.HttpStatusCode.InternalServerError)
+            .GetAsync($"https://external-medical-board.example.com/api/license/{licenseNumber.Value}");
 
         var providerIdVo = ProviderId.Create(1).Value!; // Simulated provider ID
         var medicalBoardVo = MedicalBoard.Create("Default").Value!;

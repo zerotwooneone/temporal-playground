@@ -13,6 +13,7 @@ namespace TemporalDDD.Infrastructure.Testing;
 /// var client = new ChaosHttpClient()
 ///     .WithLatency(TimeSpan.FromMilliseconds(200), TimeSpan.FromSeconds(2))
 ///     .WithFailureRate(0.40, HttpStatusCode.ServiceUnavailable)
+///     .WithFailureRate(0.10, HttpStatusCode.GatewayTimeout)
 ///     .ReturnsJson(new { Status = "Cleared", Provider = providerId });
 /// 
 /// var response = await client.GetAsync($"/api/background-checks/{providerId}");
@@ -20,16 +21,43 @@ namespace TemporalDDD.Infrastructure.Testing;
 /// </summary>
 public class ChaosHttpClient
 {
-    private readonly Random _random = new();
-    private readonly object _lock = new();
+    private readonly Random _random;
     
-    private TimeSpan _minLatency = TimeSpan.Zero;
-    private TimeSpan _maxLatency = TimeSpan.Zero;
-    private double _failureRate = 0.0;
-    private HttpStatusCode _failureStatusCode = HttpStatusCode.InternalServerError;
-    private double _networkDropRate = 0.0;
-    private string? _defaultJsonResponse;
-    private string _defaultContentType = "application/json";
+    private readonly TimeSpan _minLatency;
+    private readonly TimeSpan _maxLatency;
+    private readonly IReadOnlyDictionary<HttpStatusCode, double> _failureScenarios;
+    private readonly double _networkDropRate;
+    private readonly string? _defaultJsonResponse;
+    private readonly string _defaultContentType;
+
+    public ChaosHttpClient(Random random)
+    {
+        _random = random;
+        _minLatency = TimeSpan.Zero;
+        _maxLatency = TimeSpan.Zero;
+        _failureScenarios = new Dictionary<HttpStatusCode, double>();
+        _networkDropRate = 0.0;
+        _defaultJsonResponse = null;
+        _defaultContentType = "application/json";
+    }
+
+    private ChaosHttpClient(
+        Random random,
+        TimeSpan minLatency,
+        TimeSpan maxLatency,
+        IReadOnlyDictionary<HttpStatusCode, double> failureScenarios,
+        double networkDropRate,
+        string? defaultJsonResponse,
+        string defaultContentType)
+    {
+        _random = random;
+        _minLatency = minLatency;
+        _maxLatency = maxLatency;
+        _failureScenarios = failureScenarios;
+        _networkDropRate = networkDropRate;
+        _defaultJsonResponse = defaultJsonResponse;
+        _defaultContentType = defaultContentType;
+    }
 
     public ChaosHttpClient WithLatency(TimeSpan min, TimeSpan max)
     {
@@ -38,12 +66,15 @@ public class ChaosHttpClient
         if (max < min)
             throw new ArgumentException("Maximum latency must be greater than or equal to minimum latency", nameof(max));
 
-        lock (_lock)
-        {
-            _minLatency = min;
-            _maxLatency = max;
-        }
-        return this;
+        return new ChaosHttpClient(
+            random: _random,
+            minLatency: min,
+            maxLatency: max,
+            failureScenarios: new Dictionary<HttpStatusCode, double>(_failureScenarios),
+            networkDropRate: _networkDropRate,
+            defaultJsonResponse: _defaultJsonResponse,
+            defaultContentType: _defaultContentType
+        );
     }
 
     public ChaosHttpClient WithFailureRate(double probability, HttpStatusCode statusCode)
@@ -51,12 +82,20 @@ public class ChaosHttpClient
         if (probability < 0.0 || probability > 1.0)
             throw new ArgumentException("Probability must be between 0.0 and 1.0", nameof(probability));
 
-        lock (_lock)
+        var newScenarios = new Dictionary<HttpStatusCode, double>(_failureScenarios)
         {
-            _failureRate = probability;
-            _failureStatusCode = statusCode;
-        }
-        return this;
+            [statusCode] = probability
+        };
+
+        return new ChaosHttpClient(
+            random: _random,
+            minLatency: _minLatency,
+            maxLatency: _maxLatency,
+            failureScenarios: newScenarios,
+            networkDropRate: _networkDropRate,
+            defaultJsonResponse: _defaultJsonResponse,
+            defaultContentType: _defaultContentType
+        );
     }
 
     public ChaosHttpClient WithNetworkDropRate(double probability)
@@ -64,38 +103,54 @@ public class ChaosHttpClient
         if (probability < 0.0 || probability > 1.0)
             throw new ArgumentException("Probability must be between 0.0 and 1.0", nameof(probability));
 
-        lock (_lock)
-        {
-            _networkDropRate = probability;
-        }
-        return this;
+        return new ChaosHttpClient(
+            random: _random,
+            minLatency: _minLatency,
+            maxLatency: _maxLatency,
+            failureScenarios: new Dictionary<HttpStatusCode, double>(_failureScenarios),
+            networkDropRate: probability,
+            defaultJsonResponse: _defaultJsonResponse,
+            defaultContentType: _defaultContentType
+        );
     }
 
     public ChaosHttpClient ReturnsJson<T>(T payload)
     {
-        lock (_lock)
-        {
-            _defaultJsonResponse = JsonSerializer.Serialize(payload);
-        }
-        return this;
+        return new ChaosHttpClient(
+            random: _random,
+            minLatency: _minLatency,
+            maxLatency: _maxLatency,
+            failureScenarios: new Dictionary<HttpStatusCode, double>(_failureScenarios),
+            networkDropRate: _networkDropRate,
+            defaultJsonResponse: JsonSerializer.Serialize(payload),
+            defaultContentType: _defaultContentType
+        );
     }
 
     public ChaosHttpClient ReturnsJson(string json)
     {
-        lock (_lock)
-        {
-            _defaultJsonResponse = json;
-        }
-        return this;
+        return new ChaosHttpClient(
+            random: _random,
+            minLatency: _minLatency,
+            maxLatency: _maxLatency,
+            failureScenarios: new Dictionary<HttpStatusCode, double>(_failureScenarios),
+            networkDropRate: _networkDropRate,
+            defaultJsonResponse: json,
+            defaultContentType: _defaultContentType
+        );
     }
 
     public ChaosHttpClient WithContentType(string contentType)
     {
-        lock (_lock)
-        {
-            _defaultContentType = contentType;
-        }
-        return this;
+        return new ChaosHttpClient(
+            random: _random,
+            minLatency: _minLatency,
+            maxLatency: _maxLatency,
+            failureScenarios: new Dictionary<HttpStatusCode, double>(_failureScenarios),
+            networkDropRate: _networkDropRate,
+            defaultJsonResponse: _defaultJsonResponse,
+            defaultContentType: contentType
+        );
     }
 
     public async Task<HttpResponseMessage> GetAsync(string requestUri, CancellationToken cancellationToken = default)
@@ -115,58 +170,34 @@ public class ChaosHttpClient
     public async Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken cancellationToken = default)
     {
         // Apply latency if configured
-        TimeSpan delay;
-        lock (_lock)
-        {
-            delay = GetRandomDelay();
-        }
-
+        var delay = GetRandomDelay();
         if (delay > TimeSpan.Zero)
         {
             await Task.Delay(delay, cancellationToken);
         }
 
         // Check for network drop (hard failure)
-        double dropRate;
-        lock (_lock)
-        {
-            dropRate = _networkDropRate;
-        }
-
-        if (dropRate > 0.0 && _random.NextDouble() < dropRate)
+        if (_networkDropRate > 0.0 && _random.NextDouble() < _networkDropRate)
         {
             throw new HttpRequestException("Chaos simulation: Simulated network drop");
         }
 
         // Check for failure injection (graceful HTTP error)
-        double failureRate;
-        HttpStatusCode failureStatusCode;
-        lock (_lock)
+        foreach (var (statusCode, probability) in _failureScenarios)
         {
-            failureRate = _failureRate;
-            failureStatusCode = _failureStatusCode;
-        }
-
-        if (failureRate > 0.0 && _random.NextDouble() < failureRate)
-        {
-            return new HttpResponseMessage(failureStatusCode)
+            if (_random.NextDouble() < probability)
             {
-                ReasonPhrase = "Chaos simulation: Simulated failure"
-            };
+                return new HttpResponseMessage(statusCode)
+                {
+                    ReasonPhrase = "Chaos simulation: Simulated failure"
+                };
+            }
         }
 
         // Return successful response
-        string? jsonResponse;
-        string contentType;
-        lock (_lock)
-        {
-            jsonResponse = _defaultJsonResponse;
-            contentType = _defaultContentType;
-        }
-
         var response = new HttpResponseMessage(HttpStatusCode.OK)
         {
-            Content = new StringContent(jsonResponse ?? "{}", Encoding.UTF8, contentType)
+            Content = new StringContent(_defaultJsonResponse ?? "{}", Encoding.UTF8, _defaultContentType)
         };
 
         return response;

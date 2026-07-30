@@ -54,11 +54,10 @@ public class TravelLogisticsActivities : ITravelLogisticsActivities
         var cost = costResult.Value;
 
         // Simulate external API call to flight booking system with chaos (100ms latency, 10% failure rate)
-        _chaosHttpClient
+        var response = await _chaosHttpClient
             .WithLatency(TimeSpan.FromMilliseconds(100), TimeSpan.FromMilliseconds(100))
-            .WithFailureRate(0.10, System.Net.HttpStatusCode.InternalServerError);
-
-        var response = await _chaosHttpClient.PostAsJsonAsync("https://airline-api.example.com/api/bookings", new { FlightNumber = flightNumber.Value, Origin = origin.Value, Destination = destination.Value, DepartureTime = departureTime.Value, Cost = cost.Amount });
+            .WithFailureRate(0.10, System.Net.HttpStatusCode.InternalServerError)
+            .PostAsJsonAsync("https://airline-api.example.com/api/bookings", new { FlightNumber = flightNumber.Value, Origin = origin.Value, Destination = destination.Value, DepartureTime = departureTime.Value, Cost = cost.Amount });
 
         // Create domain entity using factory
         var booking = Domain.TravelLogistics.FlightBooking.Create(flightNumber, origin, destination, departureTime, cost);
@@ -97,11 +96,10 @@ public class TravelLogisticsActivities : ITravelLogisticsActivities
         var cost = costResult.Value;
 
         // Simulate external API call to hotel booking system with chaos (100ms latency, 10% failure rate)
-        _chaosHttpClient
+        var response = await _chaosHttpClient
             .WithLatency(TimeSpan.FromMilliseconds(100), TimeSpan.FromMilliseconds(100))
-            .WithFailureRate(0.10, System.Net.HttpStatusCode.InternalServerError);
-
-        var response = await _chaosHttpClient.PostAsJsonAsync("https://hotel-booking.example.com/api/reservations", new { HotelName = hotelName.Value, Address = address.ToString(), CheckInDate = stayPeriod.Start, CheckOutDate = stayPeriod.End, Cost = cost.Amount });
+            .WithFailureRate(0.10, System.Net.HttpStatusCode.InternalServerError)
+            .PostAsJsonAsync("https://hotel-booking.example.com/api/reservations", new { HotelName = hotelName.Value, Address = address.ToString(), CheckInDate = stayPeriod.Start, CheckOutDate = stayPeriod.End, Cost = cost.Amount });
 
         // Create domain entity using factory
         var booking = Domain.TravelLogistics.LodgingBooking.Create(hotelName, address, stayPeriod, cost);

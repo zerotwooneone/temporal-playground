@@ -42,6 +42,9 @@ public static class DependencyInjection
 
     public static IServiceCollection AddTesting(this IServiceCollection services)
     {
+        // Register Random as singleton for consistent chaos simulation
+        services.AddSingleton<Random>(sp => new Random());
+
         // Register testing utilities for chaos simulation
         services.AddTransient<ChaosHttpClient>();
 

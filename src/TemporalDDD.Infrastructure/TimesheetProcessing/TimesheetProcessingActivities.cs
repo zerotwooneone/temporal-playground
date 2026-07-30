@@ -98,11 +98,10 @@ public class TimesheetProcessingActivities : ITimesheetProcessingActivities
         var timesheetId = timesheetIdResult.Value;
 
         // Simulate external API call to payment gateway with chaos (100ms latency, 10% failure rate)
-        _chaosHttpClient
+        var response = await _chaosHttpClient
             .WithLatency(TimeSpan.FromMilliseconds(100), TimeSpan.FromMilliseconds(100))
-            .WithFailureRate(0.10, System.Net.HttpStatusCode.InternalServerError);
-
-        var response = await _chaosHttpClient.PostAsJsonAsync("https://payment-gateway.example.com/api/transfer", new { TimesheetId = timesheetId.Value, IdempotencyKey = input.IdempotencyKey });
+            .WithFailureRate(0.10, System.Net.HttpStatusCode.InternalServerError)
+            .PostAsJsonAsync("https://payment-gateway.example.com/api/transfer", new { TimesheetId = timesheetId.Value, IdempotencyKey = input.IdempotencyKey });
 
         // The idempotencyKey ensures that duplicate requests don't result in duplicate payments
         var paymentReference = $"PAY-{DateTime.UtcNow:yyyyMMddHHmmss}-{input.IdempotencyKey.Substring(0, 8)}";
@@ -139,11 +138,10 @@ public class TimesheetProcessingActivities : ITimesheetProcessingActivities
         var facilityBillAmount = Money.Create(timesheet.TotalHours.Value * facilityBillRate.Amount);
 
         // Simulate external API call to ERP system with chaos (100ms latency, 10% failure rate)
-        _chaosHttpClient
+        var response = await _chaosHttpClient
             .WithLatency(TimeSpan.FromMilliseconds(100), TimeSpan.FromMilliseconds(100))
-            .WithFailureRate(0.10, System.Net.HttpStatusCode.InternalServerError);
-
-        var response = await _chaosHttpClient.PostAsJsonAsync("https://erp-system.example.com/api/invoices", new { TimesheetId = timesheetId.Value, FacilityBillRate = facilityBillRate.Amount });
+            .WithFailureRate(0.10, System.Net.HttpStatusCode.InternalServerError)
+            .PostAsJsonAsync("https://erp-system.example.com/api/invoices", new { TimesheetId = timesheetId.Value, FacilityBillRate = facilityBillRate.Amount });
 
         var invoiceNumber = $"INV-{DateTime.UtcNow:yyyyMMdd}-{Guid.NewGuid().ToString().Substring(0, 8).ToUpper()}";
 
