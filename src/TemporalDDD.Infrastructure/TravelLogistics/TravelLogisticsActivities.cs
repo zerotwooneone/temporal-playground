@@ -23,6 +23,7 @@ public class TravelLogisticsActivities : ITravelLogisticsActivities
         _chaosHttpClient = chaosHttpClient;
     }
 
+    [Activity]
     public async Task<FlightBookingId> BookFlightAsync(FlightNumber flightNumber, AirportCode origin, AirportCode destination, FlightDepartureTime departureTime, Money cost)
     {
         // Simulate external API call to flight booking system with chaos (100ms latency, 10% failure rate)
@@ -43,6 +44,7 @@ public class TravelLogisticsActivities : ITravelLogisticsActivities
         return booking.Id;
     }
 
+    [Activity]
     public async Task<LodgingBookingId> BookLodgingAsync(HotelName hotelName, Address address, DateRange stayPeriod, Money cost)
     {
         // Simulate external API call to hotel booking system with chaos (100ms latency, 10% failure rate)
@@ -63,6 +65,7 @@ public class TravelLogisticsActivities : ITravelLogisticsActivities
         return booking.Id;
     }
 
+    [Activity]
     public async Task CancelFlightAsync(FlightBookingId flightBookingId)
     {
         var booking = await _flightBookingRepository.GetByIdAsync(flightBookingId);
@@ -85,6 +88,7 @@ public class TravelLogisticsActivities : ITravelLogisticsActivities
         Console.WriteLine($"[FlightCancellation] Cancelled flight booking {flightBookingId.Value}");
     }
 
+    [Activity]
     public async Task CancelLodgingAsync(LodgingBookingId lodgingBookingId)
     {
         var booking = await _lodgingBookingRepository.GetByIdAsync(lodgingBookingId);
@@ -107,6 +111,7 @@ public class TravelLogisticsActivities : ITravelLogisticsActivities
         Console.WriteLine($"[LodgingCancellation] Cancelled lodging booking {lodgingBookingId.Value}");
     }
 
+    [Activity]
     public async Task NotifyTravelerAsync(Email travelerEmail, string message, bool isCancellation)
     {
         // Simulate external notification (email/SMS) with chaos (100ms latency, 10% failure rate)

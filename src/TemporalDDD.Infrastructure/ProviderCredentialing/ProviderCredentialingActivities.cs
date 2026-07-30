@@ -24,6 +24,7 @@ public class ProviderCredentialingActivities : IProviderCredentialingActivities
         _chaosHttpClient = chaosHttpClient;
     }
 
+    [Activity]
     public async Task<MedicalBoardLicenseInfo> FetchMedicalBoardLicenseAsync(LicenseNumber licenseNumber, MedicalBoard medicalBoard)
     {
         // Simulate external API call to medical board with chaos (100ms latency, 10% failure rate)
@@ -48,6 +49,7 @@ public class ProviderCredentialingActivities : IProviderCredentialingActivities
         );
     }
 
+    [Activity]
     public async Task<CredentialEvaluationId> EvaluateAndSaveComplianceAsync(ProviderId providerId, MedicalBoardLicenseInfo licenseInfo)
     {
         // Simulate business rule evaluation
@@ -76,6 +78,7 @@ public class ProviderCredentialingActivities : IProviderCredentialingActivities
         return evaluation.Id;
     }
 
+    [Activity]
     public async Task RequestManualReviewAsync(CredentialEvaluationId evaluationId)
     {
         // Simulate external notification (e.g., email, webhook) with chaos
@@ -88,6 +91,7 @@ public class ProviderCredentialingActivities : IProviderCredentialingActivities
         Console.WriteLine($"[ManualReview] Request sent for evaluation {evaluationId.Value}");
     }
 
+    [Activity]
     public async Task ActivateProviderProfileAsync(ProviderProfileId providerId)
     {
         var providerProfile = await _providerProfileRepository.GetByIdAsync(providerId);
