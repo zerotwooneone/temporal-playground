@@ -9,10 +9,10 @@ public class ProviderProfileConfiguration : IEntityTypeConfiguration<ProviderPro
     {
         builder.ToTable("ProviderProfiles");
 
-        // Primary Key - auto-incrementing uint stored as INTEGER
+        // Primary Key - client-generated string ID
         builder.HasKey(x => x.Id);
         builder.Property(x => x.Id)
-            .ValueGeneratedOnAdd();
+            .IsRequired();
 
         // PublicId - stored as TEXT with Unique Index
         builder.Property(x => x.PublicId)
@@ -21,6 +21,12 @@ public class ProviderProfileConfiguration : IEntityTypeConfiguration<ProviderPro
         builder.HasIndex(x => x.PublicId)
             .IsUnique()
             .HasFilter("PublicId IS NOT NULL");
+
+        // ProviderId - stored as TEXT with Index for lookups
+        builder.Property(x => x.ProviderId)
+            .IsRequired();
+
+        builder.HasIndex(x => x.ProviderId);
 
         // Value Objects - flattened as primitives
         builder.Property(x => x.FirstName);

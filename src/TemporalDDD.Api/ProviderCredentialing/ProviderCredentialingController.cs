@@ -1,10 +1,8 @@
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
 using Temporalio.Client;
 using TemporalDDD.Application.ProviderCredentialing;
 using TemporalDDD.Domain.ProviderCredentialing.ValueObjects;
 using TemporalDDD.Domain.SharedKernel;
-using TemporalDDD.Infrastructure.Persistence;
 
 namespace TemporalDDD.Api.ProviderCredentialing;
 
@@ -13,18 +11,18 @@ namespace TemporalDDD.Api.ProviderCredentialing;
 public class ProviderCredentialingController : ControllerBase
 {
     private readonly ITemporalClient _temporalClient;
-    private readonly ApplicationDbContext _dbContext;
+    private readonly ICredentialEvaluationStatusQuery _statusQuery;
 
-    public ProviderCredentialingController(ITemporalClient temporalClient, ApplicationDbContext dbContext)
+    public ProviderCredentialingController(ITemporalClient temporalClient, ICredentialEvaluationStatusQuery statusQuery)
     {
         _temporalClient = temporalClient;
-        _dbContext = dbContext;
+        _statusQuery = statusQuery;
     }
 
     [HttpPost]
     public async Task<IActionResult> StartCredentialing([FromBody] StartCredentialingRequest request)
     {
-        var workflowId = $"provider-credentialing-{request.ProviderId}-{Guid.NewGuid():N}";
+        var workflowId = $"provider-credentialing-{Guid.NewGuid():N}";
         
         // Validate at the edge (Fail fast with HTTP 400 - No exceptions thrown)
         var providerIdResult = ProviderId.Create(request.ProviderId);
@@ -44,7 +42,11 @@ public class ProviderCredentialingController : ControllerBase
             providerIdResult.Value.ToString(),
             licenseNumberResult.Value.Value,
             request.MedicalBoard,
-            request.ExpiryDate
+            request.ExpiryDate,
+            request.FirstName,
+            request.LastName,
+            request.Email,
+            request.Specialty
         );
 
         // Pass the single JSON-friendly object to Temporal
@@ -53,51 +55,38 @@ public class ProviderCredentialingController : ControllerBase
             new WorkflowOptions
             {
                 Id = workflowId,
-                TaskQueue = "ONBOARDING_TASK_QUEUE"
+                TaskQueue = "ONBOARDING_TASK_QUEUE",
+                Memo = new Dictionary<string, object>
+                {
+                    ["ProviderId"] = request.ProviderId
+                }
             });
 
-        return Ok(new { WorkflowId = workflowId, Message = "Provider credentialing workflow started" });
+        return Ok(new { WorkflowId = workflowId, ProviderId = request.ProviderId, Message = "Provider credentialing workflow started" });
     }
 
-    [HttpGet("{workflowId}")]
-    public async Task<IActionResult> GetStatus(string workflowId)
+    [HttpGet("providers/{providerId}/status")]
+    public async Task<IActionResult> GetStatus(string providerId)
     {
-        // Extract provider ID from workflow ID for prototyping
-        // Format: provider-credentialing-{providerId}-{guid}
-        var parts = workflowId.Split('-');
-        if (parts.Length < 3)
-        {
-            return BadRequest(new { Error = "Invalid workflow ID format" });
-        }
+        var status = await _statusQuery.GetByProviderIdAsync(providerId);
 
-        var providerId = string.Join('-', parts.Skip(2).SkipLast(1)); // Extract provider ID (everything between second dash and last dash)
-
-        // Query database for credential evaluation status
-        var evaluation = await _dbContext.CredentialEvaluations
-            .FirstOrDefaultAsync(e => e.ProviderId == providerId);
-
-        if (evaluation == null)
+        if (status == null)
         {
             return Ok(new CredentialEvaluationStatus
             {
-                WorkflowId = workflowId,
                 Status = "FetchingLicense",
                 Step = 0,
                 IsWaitingForManualReview = false
             });
         }
 
-        var status = evaluation.Status.ToString();
-        var (step, isWaitingForManualReview) = MapStatusToStep(status);
-
         return Ok(new CredentialEvaluationStatus
         {
-            WorkflowId = workflowId,
-            Status = status,
-            Step = step,
-            IsWaitingForManualReview = isWaitingForManualReview,
-            IsCompliant = evaluation.IsCompliant,
-            Notes = evaluation.ComplianceNotes
+            Status = status.Status,
+            Step = status.Step,
+            IsWaitingForManualReview = status.IsWaitingForManualReview,
+            IsCompliant = status.IsCompliant,
+            Notes = status.Notes
         });
     }
 
@@ -111,23 +100,10 @@ public class ProviderCredentialingController : ControllerBase
         return Ok(new { Message = "Manual review signal sent" });
     }
 
-    private (int Step, bool IsWaitingForManualReview) MapStatusToStep(string status)
-    {
-        return status switch
-        {
-            "Pending" => (0, false),
-            "ManualReviewRequired" => (2, true),
-            "Approved" => (3, false),
-            "Rejected" => (2, false),
-            _ => (1, false)
-        };
-    }
-
-    public record StartCredentialingRequest(string ProviderId, string LicenseNumber, string MedicalBoard, DateTimeOffset ExpiryDate);
+    public record StartCredentialingRequest(string ProviderId, string LicenseNumber, string MedicalBoard, DateTimeOffset ExpiryDate, string FirstName, string LastName, string Email, string Specialty);
     public record ManualReviewRequest(bool IsApproved, string? Notes);
     public record CredentialEvaluationStatus
     {
-        public string WorkflowId { get; init; } = string.Empty;
         public string Status { get; init; } = string.Empty;
         public int Step { get; init; }
         public bool IsWaitingForManualReview { get; init; }

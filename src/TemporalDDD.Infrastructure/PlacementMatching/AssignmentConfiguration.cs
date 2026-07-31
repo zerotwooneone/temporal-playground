@@ -9,10 +9,10 @@ public class AssignmentConfiguration : IEntityTypeConfiguration<AssignmentDbo>
     {
         builder.ToTable("Assignments");
 
-        // Primary Key - auto-incrementing uint stored as INTEGER
+        // Primary Key - client-generated string ID
         builder.HasKey(x => x.Id);
         builder.Property(x => x.Id)
-            .ValueGeneratedOnAdd();
+            .IsRequired();
 
         // PublicId - stored as TEXT with Unique Index
         builder.Property(x => x.PublicId)

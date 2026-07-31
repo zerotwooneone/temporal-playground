@@ -18,7 +18,8 @@ public class TimesheetRepository : ITimesheetRepository
     public async Task<Timesheet?> GetByIdAsync(TimesheetId id, CancellationToken cancellationToken = default)
     {
         var dbo = await _dbContext.Timesheets
-            .FirstOrDefaultAsync(t => t.Id == id.Value.ToString(), cancellationToken);
+            .AsNoTracking()
+            .FirstOrDefaultAsync(t => t.Id == id.ToString(), cancellationToken);
         
         if (dbo == null) return null;
         
@@ -28,9 +29,10 @@ public class TimesheetRepository : ITimesheetRepository
     public async Task SaveAsync(Timesheet aggregate, CancellationToken cancellationToken = default)
     {
         var dbo = MapToDbo(aggregate);
-        var id = aggregate.Id.Value;
+        var idString = aggregate.Id.ToString();
         var existing = await _dbContext.Timesheets
-            .FirstOrDefaultAsync(t => t.Id == id.ToString(), cancellationToken);
+            .AsNoTracking()
+            .FirstOrDefaultAsync(t => t.Id == idString, cancellationToken);
 
         if (existing == null)
         {
@@ -38,9 +40,7 @@ public class TimesheetRepository : ITimesheetRepository
         }
         else
         {
-            _dbContext.Entry(existing).State = EntityState.Detached;
-            _dbContext.Timesheets.Attach(dbo);
-            _dbContext.Entry(dbo).State = EntityState.Modified;
+            _dbContext.Timesheets.Update(dbo);
         }
 
         await _dbContext.SaveChangesAsync(cancellationToken);
@@ -98,7 +98,7 @@ public class TimesheetRepository : ITimesheetRepository
     {
         return new TimesheetDbo
         {
-            Id = timesheet.Id.Value.ToString(),
+            Id = timesheet.Id.ToString(),
             PublicId = timesheet.PublicId?.ToString(),
             ProviderId = timesheet.ProviderId.ToString(),
             PeriodStartUtc = timesheet.Period.Start.ToUnixTimeMilliseconds(),

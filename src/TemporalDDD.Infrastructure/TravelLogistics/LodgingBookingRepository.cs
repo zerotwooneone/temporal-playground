@@ -18,7 +18,8 @@ public class LodgingBookingRepository : ILodgingBookingRepository
     public async Task<LodgingBooking?> GetByIdAsync(LodgingBookingId id, CancellationToken cancellationToken = default)
     {
         var dbo = await _dbContext.LodgingBookings
-            .FirstOrDefaultAsync(l => l.Id == id.Value.ToString(), cancellationToken);
+            .AsNoTracking()
+            .FirstOrDefaultAsync(l => l.Id == id.ToString(), cancellationToken);
         
         if (dbo == null) return null;
         
@@ -28,9 +29,10 @@ public class LodgingBookingRepository : ILodgingBookingRepository
     public async Task SaveAsync(LodgingBooking aggregate, CancellationToken cancellationToken = default)
     {
         var dbo = MapToDbo(aggregate);
-        var id = aggregate.Id.Value;
+        var idString = aggregate.Id.ToString();
         var existing = await _dbContext.LodgingBookings
-            .FirstOrDefaultAsync(l => l.Id == id.ToString(), cancellationToken);
+            .AsNoTracking()
+            .FirstOrDefaultAsync(l => l.Id == idString, cancellationToken);
 
         if (existing == null)
         {
@@ -38,9 +40,7 @@ public class LodgingBookingRepository : ILodgingBookingRepository
         }
         else
         {
-            _dbContext.Entry(existing).State = EntityState.Detached;
-            _dbContext.LodgingBookings.Attach(dbo);
-            _dbContext.Entry(dbo).State = EntityState.Modified;
+            _dbContext.LodgingBookings.Update(dbo);
         }
 
         await _dbContext.SaveChangesAsync(cancellationToken);
@@ -82,7 +82,7 @@ public class LodgingBookingRepository : ILodgingBookingRepository
     {
         return new LodgingBookingDbo
         {
-            Id = booking.Id.Value.ToString(),
+            Id = booking.Id.ToString(),
             PublicId = booking.PublicId?.ToString(),
             HotelName = booking.HotelName.Value,
             AddressStreet = booking.Address.Street,

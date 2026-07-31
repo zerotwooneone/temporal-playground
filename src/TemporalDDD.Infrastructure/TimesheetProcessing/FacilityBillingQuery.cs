@@ -18,6 +18,7 @@ public class FacilityBillingQuery : IFacilityBillingQuery
     public async Task<FacilityBillingRateDto> GetFacilityBillingRateAsync(FacilityId facilityId, AssignmentId assignmentId, CancellationToken cancellationToken = default)
     {
         var dbo = await _dbContext.Facilities
+            .AsNoTracking()
             .FirstOrDefaultAsync(f => f.Id == facilityId.ToString(), cancellationToken);
 
         if (dbo == null)

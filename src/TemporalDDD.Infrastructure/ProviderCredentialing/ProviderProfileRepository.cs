@@ -19,19 +19,33 @@ public class ProviderProfileRepository : IProviderProfileRepository
     public async Task<ProviderProfile?> GetByIdAsync(ProviderProfileId id, CancellationToken cancellationToken = default)
     {
         var dbo = await _dbContext.ProviderProfiles
-            .FirstOrDefaultAsync(p => p.Id == id.Value.ToString(), cancellationToken);
-        
+            .AsNoTracking()
+            .FirstOrDefaultAsync(p => p.Id == id.ToString(), cancellationToken);
+
         if (dbo == null) return null;
-        
+
+        return MapToDomain(dbo);
+    }
+
+    public async Task<ProviderProfile?> GetByProviderIdAsync(ProviderId providerId, CancellationToken cancellationToken = default)
+    {
+        var dbo = await _dbContext.ProviderProfiles
+            .AsNoTracking()
+            .FirstOrDefaultAsync(p => p.ProviderId == providerId.ToString(), cancellationToken);
+
+        if (dbo == null) return null;
+
         return MapToDomain(dbo);
     }
 
     public async Task SaveAsync(ProviderProfile aggregate, CancellationToken cancellationToken = default)
     {
         var dbo = MapToDbo(aggregate);
-        var id = aggregate.Id.Value;
+        var idString = aggregate.Id.ToString();
+
         var existing = await _dbContext.ProviderProfiles
-            .FirstOrDefaultAsync(p => p.Id == id.ToString(), cancellationToken);
+            .AsNoTracking()
+            .FirstOrDefaultAsync(p => p.Id == idString, cancellationToken);
 
         if (existing == null)
         {
@@ -39,12 +53,24 @@ public class ProviderProfileRepository : IProviderProfileRepository
         }
         else
         {
-            _dbContext.Entry(existing).State = EntityState.Detached;
-            _dbContext.ProviderProfiles.Attach(dbo);
-            _dbContext.Entry(dbo).State = EntityState.Modified;
+            // Preserve the original PublicId to avoid unique constraint violations
+            dbo.PublicId = existing.PublicId;
+            
+            var entry = _dbContext.ProviderProfiles.Update(dbo);
+            // Tell EF Core what the original version was for optimistic concurrency control
+            entry.OriginalValues[nameof(dbo.Version)] = existing.Version;
         }
 
-        await _dbContext.SaveChangesAsync(cancellationToken);
+        try
+        {
+            await _dbContext.SaveChangesAsync(cancellationToken);
+        }
+        catch (Exception e)
+        {
+            Console.Error.WriteLine("remove this");
+            Console.WriteLine(e);
+            throw;
+        }
     }
 
     private ProviderProfile MapToDomain(ProviderProfileDbo dbo)
@@ -64,11 +90,13 @@ public class ProviderProfileRepository : IProviderProfileRepository
         }
 
         var id = ProviderProfileId.Create(dbo.Id).Value ?? throw new InvalidOperationException($"Invalid provider profile ID in database: {dbo.Id}");
+        var providerId = ProviderId.Create(dbo.ProviderId).Value ?? throw new InvalidOperationException($"Invalid provider ID in database: {dbo.ProviderId}");
 
         // Use internal constructor for rehydration (infrastructure concern)
         return new ProviderProfile(
             id: id,
             publicId: publicId,
+            providerId: providerId,
             firstName: firstName,
             lastName: lastName,
             email: email,
@@ -84,8 +112,9 @@ public class ProviderProfileRepository : IProviderProfileRepository
     {
         return new ProviderProfileDbo
         {
-            Id = profile.Id.Value.ToString(),
+            Id = profile.Id.ToString(),
             PublicId = profile.PublicId?.ToString(),
+            ProviderId = profile.ProviderId.ToString(),
             FirstName = profile.FirstName.Value,
             LastName = profile.LastName.Value,
             Email = profile.Email.Value,

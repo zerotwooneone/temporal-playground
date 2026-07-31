@@ -2,6 +2,7 @@
 using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using TemporalDDD.Infrastructure.Persistence;
 
@@ -10,9 +11,11 @@ using TemporalDDD.Infrastructure.Persistence;
 namespace TemporalDDD.Infrastructure.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    partial class ApplicationDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260731000059_RestorePublicIdUniqueConstraint")]
+    partial class RestorePublicIdUniqueConstraint
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder.HasAnnotation("ProductVersion", "10.0.10");
@@ -20,6 +23,7 @@ namespace TemporalDDD.Infrastructure.Migrations
             modelBuilder.Entity("TemporalDDD.Infrastructure.PlacementMatching.AssignmentDbo", b =>
                 {
                     b.Property<string>("Id")
+                        .ValueGeneratedOnAdd()
                         .HasColumnType("TEXT");
 
                     b.Property<long?>("AcceptedAt")
@@ -65,6 +69,7 @@ namespace TemporalDDD.Infrastructure.Migrations
             modelBuilder.Entity("TemporalDDD.Infrastructure.PlacementMatching.FacilityDbo", b =>
                 {
                     b.Property<string>("Id")
+                        .ValueGeneratedOnAdd()
                         .HasColumnType("TEXT");
 
                     b.Property<string>("AcceptedMedicalBoards")
@@ -93,6 +98,7 @@ namespace TemporalDDD.Infrastructure.Migrations
             modelBuilder.Entity("TemporalDDD.Infrastructure.ProviderCredentialing.CredentialEvaluationDbo", b =>
                 {
                     b.Property<string>("Id")
+                        .ValueGeneratedOnAdd()
                         .HasColumnType("TEXT");
 
                     b.Property<string>("ComplianceNotes")
@@ -189,6 +195,7 @@ namespace TemporalDDD.Infrastructure.Migrations
             modelBuilder.Entity("TemporalDDD.Infrastructure.TimesheetProcessing.TimesheetDbo", b =>
                 {
                     b.Property<string>("Id")
+                        .ValueGeneratedOnAdd()
                         .HasColumnType("TEXT");
 
                     b.Property<string>("GrossPayAmount")
@@ -264,6 +271,7 @@ namespace TemporalDDD.Infrastructure.Migrations
             modelBuilder.Entity("TemporalDDD.Infrastructure.TravelLogistics.FlightBookingDbo", b =>
                 {
                     b.Property<string>("Id")
+                        .ValueGeneratedOnAdd()
                         .HasColumnType("TEXT");
 
                     b.Property<long>("BookedAt")
@@ -311,6 +319,7 @@ namespace TemporalDDD.Infrastructure.Migrations
             modelBuilder.Entity("TemporalDDD.Infrastructure.TravelLogistics.LodgingBookingDbo", b =>
                 {
                     b.Property<string>("Id")
+                        .ValueGeneratedOnAdd()
                         .HasColumnType("TEXT");
 
                     b.Property<string>("AddressCity")

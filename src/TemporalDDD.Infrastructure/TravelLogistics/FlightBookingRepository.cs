@@ -18,7 +18,8 @@ public class FlightBookingRepository : IFlightBookingRepository
     public async Task<FlightBooking?> GetByIdAsync(FlightBookingId id, CancellationToken cancellationToken = default)
     {
         var dbo = await _dbContext.FlightBookings
-            .FirstOrDefaultAsync(f => f.Id == id.Value.ToString(), cancellationToken);
+            .AsNoTracking()
+            .FirstOrDefaultAsync(f => f.Id == id.ToString(), cancellationToken);
         
         if (dbo == null) return null;
         
@@ -28,9 +29,10 @@ public class FlightBookingRepository : IFlightBookingRepository
     public async Task SaveAsync(FlightBooking aggregate, CancellationToken cancellationToken = default)
     {
         var dbo = MapToDbo(aggregate);
-        var id = aggregate.Id.Value;
+        var idString = aggregate.Id.ToString();
         var existing = await _dbContext.FlightBookings
-            .FirstOrDefaultAsync(f => f.Id == id.ToString(), cancellationToken);
+            .AsNoTracking()
+            .FirstOrDefaultAsync(f => f.Id == idString, cancellationToken);
 
         if (existing == null)
         {
@@ -38,9 +40,7 @@ public class FlightBookingRepository : IFlightBookingRepository
         }
         else
         {
-            _dbContext.Entry(existing).State = EntityState.Detached;
-            _dbContext.FlightBookings.Attach(dbo);
-            _dbContext.Entry(dbo).State = EntityState.Modified;
+            _dbContext.FlightBookings.Update(dbo);
         }
 
         await _dbContext.SaveChangesAsync(cancellationToken);
@@ -82,7 +82,7 @@ public class FlightBookingRepository : IFlightBookingRepository
     {
         return new FlightBookingDbo
         {
-            Id = booking.Id.Value.ToString(),
+            Id = booking.Id.ToString(),
             PublicId = booking.PublicId?.ToString(),
             FlightNumber = booking.FlightNumber.Value,
             Origin = booking.Origin.Value,

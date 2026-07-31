@@ -1,3 +1,4 @@
+using Microsoft.Extensions.DependencyInjection;
 using Temporalio.Activities;
 using TemporalDDD.Application.ProviderCredentialing;
 using TemporalDDD.Domain.ProviderCredentialing;
@@ -9,17 +10,14 @@ namespace TemporalDDD.Infrastructure.ProviderCredentialing;
 
 public class ProviderCredentialingActivities : IProviderCredentialingActivities
 {
-    private readonly ICredentialEvaluationRepository _credentialEvaluationRepository;
-    private readonly IProviderProfileRepository _providerProfileRepository;
+    private readonly IServiceScopeFactory _scopeFactory;
     private readonly ChaosHttpClient _chaosHttpClient;
 
     public ProviderCredentialingActivities(
-        ICredentialEvaluationRepository credentialEvaluationRepository,
-        IProviderProfileRepository providerProfileRepository,
+        IServiceScopeFactory scopeFactory,
         ChaosHttpClient chaosHttpClient)
     {
-        _credentialEvaluationRepository = credentialEvaluationRepository;
-        _providerProfileRepository = providerProfileRepository;
+        _scopeFactory = scopeFactory;
         _chaosHttpClient = chaosHttpClient;
     }
 
@@ -60,8 +58,11 @@ public class ProviderCredentialingActivities : IProviderCredentialingActivities
     }
 
     [Activity]
-    public async Task<string> EvaluateAndSaveComplianceAsync(EvaluateComplianceInput input)
+    public async Task<EvaluateComplianceResult> EvaluateAndSaveComplianceAsync(EvaluateComplianceInput input)
     {
+        using var scope = _scopeFactory.CreateScope();
+        var credentialEvaluationRepository = scope.ServiceProvider.GetRequiredService<ICredentialEvaluationRepository>();
+
         // Convert primitive DTO to Domain types with fail-fast validation
         var providerIdResult = ProviderId.Create(input.ProviderId);
         if (providerIdResult.IsFailure)
@@ -99,15 +100,11 @@ public class ProviderCredentialingActivities : IProviderCredentialingActivities
             Notes: input.Notes
         );
 
-        // Simulate business rule evaluation
-        var isCompliant = licenseInfo.IsValid && licenseInfo.ExpiryDate > DateTimeOffset.UtcNow.AddMonths(6);
-
-        // Convert primitives back to domain types for entity creation
+        // Create domain entity using factory
         var licenseNumberForEntity = LicenseNumber.Create(licenseInfo.LicenseNumber).Value!;
         var medicalBoardForEntity = MedicalBoard.Create(licenseInfo.MedicalBoard).Value!;
         var expiryDateForEntity = LicenseExpiryDate.Create(licenseInfo.ExpiryDate).Value!;
 
-        // Create domain entity using factory
         var evaluation = Domain.ProviderCredentialing.CredentialEvaluation.Create(
             providerId: providerId,
             licenseNumber: licenseNumberForEntity,
@@ -115,24 +112,23 @@ public class ProviderCredentialingActivities : IProviderCredentialingActivities
             licenseExpiryDate: expiryDateForEntity
         );
 
-        if (isCompliant)
-        {
-            evaluation.MarkAsCompliant(licenseInfo.Notes);
-        }
-        else
-        {
-            evaluation.RequestManualReview();
-        }
-
         // Save to database using repository
-        await _credentialEvaluationRepository.SaveAsync(evaluation);
+        await credentialEvaluationRepository.SaveAsync(evaluation);
 
-        return evaluation.Id.ToString();
+        // Return evaluation result - let workflow decide what to do with it
+        return new EvaluateComplianceResult(
+            EvaluationId: evaluation.Id.ToString(),
+            IsValid: licenseInfo.IsValid,
+            IsCompliant: licenseInfo.IsValid // Simplified: valid = compliant for now
+        );
     }
 
     [Activity]
     public async Task RequestManualReviewAsync(RequestManualReviewInput input)
     {
+        using var scope = _scopeFactory.CreateScope();
+        var credentialEvaluationRepository = scope.ServiceProvider.GetRequiredService<ICredentialEvaluationRepository>();
+
         // Convert primitive DTO to Domain types with fail-fast validation
         var evaluationIdResult = CredentialEvaluationId.Create(input.EvaluationId);
         if (evaluationIdResult.IsFailure)
@@ -140,7 +136,15 @@ public class ProviderCredentialingActivities : IProviderCredentialingActivities
 
         var evaluationId = evaluationIdResult.Value;
 
-        
+        // Get evaluation and update status to ManualReviewRequired
+        var evaluation = await credentialEvaluationRepository.GetByIdAsync(evaluationId);
+        if (evaluation == null)
+            throw new InvalidOperationException($"Evaluation {evaluationId} not found");
+
+        evaluation.RequestManualReview();
+        await credentialEvaluationRepository.SaveAsync(evaluation);
+
+        // Simulate external notification
         await _chaosHttpClient
             .WithLatency(TimeSpan.FromMilliseconds(100), TimeSpan.FromMilliseconds(100))
             .WithFailureRate(0.10, System.Net.HttpStatusCode.InternalServerError)
@@ -150,25 +154,117 @@ public class ProviderCredentialingActivities : IProviderCredentialingActivities
     }
 
     [Activity]
+    public async Task UpdateEvaluationStatusAsync(UpdateEvaluationStatusInput input)
+    {
+        using var scope = _scopeFactory.CreateScope();
+        var credentialEvaluationRepository = scope.ServiceProvider.GetRequiredService<ICredentialEvaluationRepository>();
+
+        // Convert primitive DTO to Domain types with fail-fast validation
+        var evaluationIdResult = CredentialEvaluationId.Create(input.EvaluationId);
+        if (evaluationIdResult.IsFailure)
+            throw new InvalidOperationException($"Internal Corruption: Invalid CredentialEvaluationId. {evaluationIdResult.Error}");
+
+        var evaluationId = evaluationIdResult.Value;
+
+        // Get evaluation and update status
+        var evaluation = await credentialEvaluationRepository.GetByIdAsync(evaluationId);
+        if (evaluation == null)
+            throw new InvalidOperationException($"Evaluation {evaluationId} not found");
+
+        if (input.IsCompliant)
+        {
+            evaluation.MarkAsCompliant(input.Notes);
+        }
+        else
+        {
+            evaluation.MarkAsNonCompliant(input.Notes ?? "Manual review rejected");
+        }
+
+        await credentialEvaluationRepository.SaveAsync(evaluation);
+    }
+
+    [Activity]
+    public async Task<string> GetOrCreateProviderProfileAsync(GetOrCreateProviderProfileInput input)
+    {
+        using var scope = _scopeFactory.CreateScope();
+        var providerProfileRepository = scope.ServiceProvider.GetRequiredService<IProviderProfileRepository>();
+
+        // Convert primitive DTO to Domain types with fail-fast validation
+        var providerIdResult = ProviderId.Create(input.ProviderId);
+        if (providerIdResult.IsFailure)
+            throw new InvalidOperationException($"Internal Corruption: Invalid ProviderId. {providerIdResult.Error}");
+
+        var firstNameResult = PersonName.Create(input.FirstName);
+        if (firstNameResult.IsFailure)
+            throw new InvalidOperationException($"Internal Corruption: Invalid FirstName. {firstNameResult.Error}");
+
+        var lastNameResult = PersonName.Create(input.LastName);
+        if (lastNameResult.IsFailure)
+            throw new InvalidOperationException($"Internal Corruption: Invalid LastName. {lastNameResult.Error}");
+
+        var emailResult = Email.Create(input.Email);
+        if (emailResult.IsFailure)
+            throw new InvalidOperationException($"Internal Corruption: Invalid Email. {emailResult.Error}");
+
+        var specialtyResult = Specialty.Create(input.Specialty);
+        if (specialtyResult.IsFailure)
+            throw new InvalidOperationException($"Internal Corruption: Invalid Specialty. {specialtyResult.Error}");
+
+        var providerId = providerIdResult.Value;
+
+        // Try to get existing profile by ProviderId
+        var existingProfile = await providerProfileRepository.GetByProviderIdAsync(providerId);
+        if (existingProfile != null)
+        {
+            return existingProfile.Id.ToString();
+        }
+
+        // Create new profile
+        var newProfile = ProviderProfile.Create(
+            providerId: providerId,
+            firstName: firstNameResult.Value,
+            lastName: lastNameResult.Value,
+            email: emailResult.Value,
+            specialty: specialtyResult.Value
+        );
+
+        await providerProfileRepository.SaveAsync(newProfile);
+        return newProfile.Id.ToString();
+    }
+
+    [Activity]
     public async Task ActivateProviderProfileAsync(ActivateProviderProfileInput input)
     {
+        using var scope = _scopeFactory.CreateScope();
+        var providerProfileRepository = scope.ServiceProvider.GetRequiredService<IProviderProfileRepository>();
+
         // Convert primitive DTO to Domain types with fail-fast validation
+        
         var providerProfileIdResult = ProviderProfileId.Create(input.ProviderProfileId);
         if (providerProfileIdResult.IsFailure)
             throw new InvalidOperationException($"Internal Corruption: Invalid ProviderProfileId. {providerProfileIdResult.Error}");
 
         var providerProfileId = providerProfileIdResult.Value;
 
-        var providerProfile = await _providerProfileRepository.GetByIdAsync(providerProfileId);
+        var providerProfile = await providerProfileRepository.GetByIdAsync(providerProfileId);
 
         if (providerProfile == null)
         {
-            throw new InvalidOperationException($"Provider profile {providerProfileId.Value} not found");
+            throw new InvalidOperationException($"Provider profile {providerProfileId} not found");
         }
 
         providerProfile.Activate();
-        await _providerProfileRepository.SaveAsync(providerProfile);
+        try
+        {
+            await providerProfileRepository.SaveAsync(providerProfile);
+        }
+        catch (Exception e)
+        {
+            Console.Error.WriteLine("remove this");
+            Console.WriteLine(e);
+            throw;
+        }
 
-        Console.WriteLine($"[ProviderActivation] Provider {providerProfileId.Value} activated successfully");
+        Console.WriteLine($"[ProviderActivation] Provider {providerProfileId} activated successfully");
     }
 }

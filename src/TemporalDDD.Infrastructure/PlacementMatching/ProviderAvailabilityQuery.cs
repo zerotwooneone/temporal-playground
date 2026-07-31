@@ -23,6 +23,7 @@ public class ProviderAvailabilityQuery : IProviderAvailabilityQuery
 
         // Check for conflicting assignments in the database
         var conflictingAssignment = await _dbContext.Assignments
+            .AsNoTracking()
             .Where(a => a.ProviderId == providerId.ToString() &&
                        a.Status == AssignmentStatus.Accepted &&
                        a.ProposedAt >= startMs &&

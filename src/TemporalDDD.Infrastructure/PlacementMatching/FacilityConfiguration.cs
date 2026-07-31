@@ -9,10 +9,10 @@ public class FacilityConfiguration : IEntityTypeConfiguration<FacilityDbo>
     {
         builder.ToTable("Facilities");
 
-        // Primary Key - uint stored as INTEGER
+        // Primary Key - client-generated string ID
         builder.HasKey(x => x.Id);
         builder.Property(x => x.Id)
-            .ValueGeneratedOnAdd();
+            .IsRequired();
 
         // Name - stored as string
         builder.Property(x => x.Name);

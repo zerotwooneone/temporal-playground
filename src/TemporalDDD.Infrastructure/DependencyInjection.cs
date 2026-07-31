@@ -1,6 +1,7 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using TemporalDDD.Application.PlacementMatching;
+using TemporalDDD.Application.ProviderCredentialing;
 using TemporalDDD.Application.TimesheetProcessing;
 using TemporalDDD.Domain.PlacementMatching;
 using TemporalDDD.Domain.ProviderCredentialing;
@@ -19,8 +20,8 @@ public static class DependencyInjection
 {
     public static IServiceCollection AddDatabase(this IServiceCollection services, string connectionString)
     {
-        
-        
+
+
         services.AddDbContext<ApplicationDbContext>(options =>
             options.UseSqlite(connectionString));
 
@@ -36,6 +37,7 @@ public static class DependencyInjection
         services.AddScoped<IFacilityRequirementsQuery, FacilityRequirementsQuery>();
         services.AddScoped<IProviderAvailabilityQuery, ProviderAvailabilityQuery>();
         services.AddScoped<IFacilityBillingQuery, FacilityBillingQuery>();
+        services.AddScoped<ICredentialEvaluationStatusQuery, CredentialEvaluationStatusQuery>();
 
         return services;
     }

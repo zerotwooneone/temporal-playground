@@ -30,9 +30,7 @@ public class ProviderActivities : IProviderActivities
         var providerId = providerIdResult.Value;
         var status = statusResult.Value;
 
-        var hackyConversion = ProviderProfileId.Abbreviation + providerId.Value;
-        var providerProfileId = ProviderProfileId.Create(hackyConversion).Value!;
-        var providerProfile = await _providerProfileRepository.GetByIdAsync(providerProfileId);
+        var providerProfile = await _providerProfileRepository.GetByProviderIdAsync(providerId);
         
         if (providerProfile == null)
         {
@@ -41,8 +39,8 @@ public class ProviderActivities : IProviderActivities
             var lastNameVo = PersonName.Create("Doe").Value!;
             var emailVo = Email.Create("john.doe@example.com").Value!;
             var specialtyVo = Specialty.Cardiology;
-            
-            providerProfile = ProviderProfile.Create(firstNameVo, lastNameVo, emailVo, specialtyVo);
+
+            providerProfile = ProviderProfile.Create(providerId, firstNameVo, lastNameVo, emailVo, specialtyVo);
         }
         
         if (status == EvaluationStatus.Approved)

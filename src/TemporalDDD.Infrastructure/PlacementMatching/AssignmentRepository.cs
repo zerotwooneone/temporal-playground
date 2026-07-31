@@ -18,7 +18,8 @@ public class AssignmentRepository : IAssignmentRepository
     public async Task<Assignment?> GetByIdAsync(AssignmentId id, CancellationToken cancellationToken = default)
     {
         var dbo = await _dbContext.Assignments
-            .FirstOrDefaultAsync(a => a.Id == id.Value.ToString(), cancellationToken);
+            .AsNoTracking()
+            .FirstOrDefaultAsync(a => a.Id == id.ToString(), cancellationToken);
         
         if (dbo == null) return null;
         
@@ -28,9 +29,10 @@ public class AssignmentRepository : IAssignmentRepository
     public async Task SaveAsync(Assignment aggregate, CancellationToken cancellationToken = default)
     {
         var dbo = MapToDbo(aggregate);
-        var id = aggregate.Id.Value;
+        var idString = aggregate.Id.ToString();
         var existing = await _dbContext.Assignments
-            .FirstOrDefaultAsync(a => a.Id == id.ToString(), cancellationToken);
+            .AsNoTracking()
+            .FirstOrDefaultAsync(a => a.Id == idString, cancellationToken);
 
         if (existing == null)
         {
@@ -38,9 +40,9 @@ public class AssignmentRepository : IAssignmentRepository
         }
         else
         {
-            _dbContext.Entry(existing).State = EntityState.Detached;
-            _dbContext.Assignments.Attach(dbo);
-            _dbContext.Entry(dbo).State = EntityState.Modified;
+            var entry = _dbContext.Assignments.Update(dbo);
+            // Tell EF Core what the original version was for optimistic concurrency control
+            entry.OriginalValues[nameof(dbo.Version)] = existing.Version;
         }
 
         await _dbContext.SaveChangesAsync(cancellationToken);
@@ -84,7 +86,7 @@ public class AssignmentRepository : IAssignmentRepository
     {
         return new AssignmentDbo
         {
-            Id = assignment.Id.Value.ToString(),
+            Id = assignment.Id.ToString(),
             PublicId = assignment.PublicId?.ToString(),
             ProviderId = assignment.ProviderId.ToString(),
             FacilityId = assignment.FacilityId.ToString(),

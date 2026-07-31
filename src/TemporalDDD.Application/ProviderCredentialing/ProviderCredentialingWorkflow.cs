@@ -18,7 +18,7 @@ public class ProviderCredentialingWorkflow
         );
 
         // Step 2: Evaluate and Save Compliance (DB Write)
-        var evaluationId = await Workflow.ExecuteActivityAsync(
+        var evaluationResult = await Workflow.ExecuteActivityAsync(
             (IProviderCredentialingActivities activities) => activities.EvaluateAndSaveComplianceAsync(new EvaluateComplianceInput(
                 input.ProviderId,
                 licenseInfo.LicenseNumber,
@@ -31,26 +31,75 @@ public class ProviderCredentialingWorkflow
             new ActivityOptions { StartToCloseTimeout = TimeSpan.FromMinutes(5) }
         );
 
-        // Step 3: Request Manual Review if needed (External Notification)
+        // Step 3: Workflow orchestration decision based on evaluation result
         if (!licenseInfo.IsValid)
         {
+            // Request manual review
             await Workflow.ExecuteActivityAsync(
-                (IProviderCredentialingActivities activities) => activities.RequestManualReviewAsync(new RequestManualReviewInput(evaluationId)),
+                (IProviderCredentialingActivities activities) => activities.RequestManualReviewAsync(new RequestManualReviewInput(evaluationResult.EvaluationId)),
                 new ActivityOptions { StartToCloseTimeout = TimeSpan.FromMinutes(5) }
             );
 
-            // Step 4: Wait for Manual Review Completed Signal
+            // Wait for Manual Review Completed Signal
             await Workflow.WaitConditionAsync(() => _manualReviewSignal is not null);
 
             if (_manualReviewSignal == null || !_manualReviewSignal.Approved)
             {
+                // Update evaluation status to rejected
+                var rejectionNotes = _manualReviewSignal?.Notes ?? "Manual review rejected";
+                await Workflow.ExecuteActivityAsync(
+                    (IProviderCredentialingActivities activities) => activities.UpdateEvaluationStatusAsync(new UpdateEvaluationStatusInput(
+                        evaluationResult.EvaluationId,
+                        IsCompliant: false,
+                        Notes: rejectionNotes
+                    )),
+                    new ActivityOptions { StartToCloseTimeout = TimeSpan.FromMinutes(5) }
+                );
+
                 throw new ApplicationFailedException("Manual review rejected or not completed");
             }
+            else
+            {
+                // Update evaluation status to approved
+                var approvalNotes = _manualReviewSignal?.Notes;
+                await Workflow.ExecuteActivityAsync(
+                    (IProviderCredentialingActivities activities) => activities.UpdateEvaluationStatusAsync(new UpdateEvaluationStatusInput(
+                        evaluationResult.EvaluationId,
+                        IsCompliant: true,
+                        Notes: approvalNotes
+                    )),
+                    new ActivityOptions { StartToCloseTimeout = TimeSpan.FromMinutes(5) }
+                );
+            }
         }
+        else
+        {
+            // License is valid - mark as compliant
+            await Workflow.ExecuteActivityAsync(
+                (IProviderCredentialingActivities activities) => activities.UpdateEvaluationStatusAsync(new UpdateEvaluationStatusInput(
+                    evaluationResult.EvaluationId,
+                    IsCompliant: true,
+                    Notes: "License verified successfully"
+                )),
+                new ActivityOptions { StartToCloseTimeout = TimeSpan.FromMinutes(5) }
+            );
+        }
+
+        // Step 4: Get or Create Provider Profile (DB Write)
+        var providerProfileId = await Workflow.ExecuteActivityAsync(
+            (IProviderCredentialingActivities activities) => activities.GetOrCreateProviderProfileAsync(new GetOrCreateProviderProfileInput(
+                input.ProviderId,
+                input.FirstName,
+                input.LastName,
+                input.Email,
+                input.Specialty
+            )),
+            new ActivityOptions { StartToCloseTimeout = TimeSpan.FromMinutes(5) }
+        );
 
         // Step 5: Activate Provider Profile (DB Write)
         await Workflow.ExecuteActivityAsync(
-            (IProviderCredentialingActivities activities) => activities.ActivateProviderProfileAsync(new ActivateProviderProfileInput(input.ProviderId)),
+            (IProviderCredentialingActivities activities) => activities.ActivateProviderProfileAsync(new ActivateProviderProfileInput(providerProfileId)),
             new ActivityOptions { StartToCloseTimeout = TimeSpan.FromMinutes(5) }
         );
     }

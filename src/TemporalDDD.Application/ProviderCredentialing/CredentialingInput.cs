@@ -8,5 +8,9 @@ public record CredentialingInput(
     string ProviderId,
     string LicenseNumber,
     string MedicalBoard,
-    DateTimeOffset ExpiryDate
+    DateTimeOffset ExpiryDate,
+    string FirstName,
+    string LastName,
+    string Email,
+    string Specialty
 );

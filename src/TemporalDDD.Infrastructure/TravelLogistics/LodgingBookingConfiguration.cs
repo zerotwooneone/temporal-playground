@@ -9,10 +9,10 @@ public class LodgingBookingConfiguration : IEntityTypeConfiguration<LodgingBooki
     {
         builder.ToTable("LodgingBookings");
 
-        // Primary Key - auto-incrementing uint stored as INTEGER
+        // Primary Key - client-generated string ID
         builder.HasKey(x => x.Id);
         builder.Property(x => x.Id)
-            .ValueGeneratedOnAdd();
+            .IsRequired();
 
         // PublicId - stored as TEXT with Unique Index
         builder.Property(x => x.PublicId)

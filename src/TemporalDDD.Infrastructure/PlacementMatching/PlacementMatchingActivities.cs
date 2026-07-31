@@ -41,7 +41,7 @@ public class PlacementMatchingActivities : IPlacementMatchingActivities
         // In real implementation, this would use ML model or business rules
         var random = new Random();
         var matchScoreValue = (decimal)(random.Next(60, 100) + (random.NextDouble() * 0.9));
-        Console.WriteLine($"[MatchScore] Calculated score {matchScoreValue:F2} for provider {providerId.Value} at facility {facilityId.Value}");
+        Console.WriteLine($"[MatchScore] Calculated score {matchScoreValue:F2} for provider {providerId} at facility {facilityId.Value}");
 
         return matchScoreValue;
     }
@@ -75,7 +75,7 @@ public class PlacementMatchingActivities : IPlacementMatchingActivities
 
         await _assignmentRepository.SaveAsync(assignment);
 
-        Console.WriteLine($"[Assignment] Proposed assignment {assignment.Id} for provider {providerId.Value} at facility {facilityId.Value} (Score: {input.MatchScore:F2})");
+        Console.WriteLine($"[Assignment] Proposed assignment {assignment.Id} for provider {providerId} at facility {facilityId.Value} (Score: {input.MatchScore:F2})");
 
         return assignment.Id.ToString();
     }

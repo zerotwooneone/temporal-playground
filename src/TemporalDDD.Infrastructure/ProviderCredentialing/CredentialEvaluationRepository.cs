@@ -18,19 +18,21 @@ public class CredentialEvaluationRepository : ICredentialEvaluationRepository
     public async Task<CredentialEvaluation?> GetByIdAsync(CredentialEvaluationId id, CancellationToken cancellationToken = default)
     {
         var dbo = await _dbContext.CredentialEvaluations
-            .FirstOrDefaultAsync(e => e.Id == id.Value.ToString(), cancellationToken);
-        
+            .AsNoTracking()
+            .FirstOrDefaultAsync(e => e.Id == id.ToString(), cancellationToken);
+
         if (dbo == null) return null;
-        
+
         return MapToDomain(dbo);
     }
 
     public async Task SaveAsync(CredentialEvaluation aggregate, CancellationToken cancellationToken = default)
     {
         var dbo = MapToDbo(aggregate);
-        var id = aggregate.Id.Value;
+        var id = aggregate.Id.ToString();
         var existing = await _dbContext.CredentialEvaluations
-            .FirstOrDefaultAsync(e => e.Id == id.ToString(), cancellationToken);
+            .AsNoTracking()
+            .FirstOrDefaultAsync(e => e.Id == id, cancellationToken);
 
         if (existing == null)
         {
@@ -38,9 +40,7 @@ public class CredentialEvaluationRepository : ICredentialEvaluationRepository
         }
         else
         {
-            _dbContext.Entry(existing).State = EntityState.Detached;
-            _dbContext.CredentialEvaluations.Attach(dbo);
-            _dbContext.Entry(dbo).State = EntityState.Modified;
+            _dbContext.CredentialEvaluations.Update(dbo);
         }
 
         await _dbContext.SaveChangesAsync(cancellationToken);
@@ -86,7 +86,7 @@ public class CredentialEvaluationRepository : ICredentialEvaluationRepository
     {
         return new CredentialEvaluationDbo
         {
-            Id = evaluation.Id.Value.ToString(),
+            Id = evaluation.Id.ToString(),
             PublicId = evaluation.PublicId?.ToString(),
             ProviderId = evaluation.ProviderId.ToString(),
             LicenseNumber = evaluation.LicenseNumber.Value,
