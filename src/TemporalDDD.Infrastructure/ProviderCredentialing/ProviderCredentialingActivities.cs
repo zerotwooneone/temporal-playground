@@ -254,17 +254,8 @@ public class ProviderCredentialingActivities : IProviderCredentialingActivities
         }
 
         providerProfile.Activate();
-        try
-        {
-            await providerProfileRepository.SaveAsync(providerProfile);
-        }
-        catch (Exception e)
-        {
-            Console.Error.WriteLine("remove this");
-            Console.WriteLine(e);
-            throw;
-        }
-
+        await providerProfileRepository.SaveAsync(providerProfile);
+        
         Console.WriteLine($"[ProviderActivation] Provider {providerProfileId} activated successfully");
     }
 }

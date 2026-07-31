@@ -61,16 +61,7 @@ public class ProviderProfileRepository : IProviderProfileRepository
             entry.OriginalValues[nameof(dbo.Version)] = existing.Version;
         }
 
-        try
-        {
-            await _dbContext.SaveChangesAsync(cancellationToken);
-        }
-        catch (Exception e)
-        {
-            Console.Error.WriteLine("remove this");
-            Console.WriteLine(e);
-            throw;
-        }
+        await _dbContext.SaveChangesAsync(cancellationToken);
     }
 
     private ProviderProfile MapToDomain(ProviderProfileDbo dbo)
