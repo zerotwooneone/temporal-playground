@@ -11,12 +11,10 @@ namespace TemporalDDD.Api.ProviderCredentialing;
 public class ProviderCredentialingController : ControllerBase
 {
     private readonly ITemporalClient _temporalClient;
-    private readonly ICredentialEvaluationStatusQuery _statusQuery;
 
-    public ProviderCredentialingController(ITemporalClient temporalClient, ICredentialEvaluationStatusQuery statusQuery)
+    public ProviderCredentialingController(ITemporalClient temporalClient)
     {
         _temporalClient = temporalClient;
-        _statusQuery = statusQuery;
     }
 
     [HttpPost]
@@ -65,31 +63,6 @@ public class ProviderCredentialingController : ControllerBase
         return Ok(new { WorkflowId = workflowId, ProviderId = request.ProviderId, Message = "Provider credentialing workflow started" });
     }
 
-    [HttpGet("providers/{providerId}/status")]
-    public async Task<IActionResult> GetStatus(string providerId)
-    {
-        var status = await _statusQuery.GetByProviderIdAsync(providerId);
-
-        if (status == null)
-        {
-            return Ok(new CredentialEvaluationStatus
-            {
-                Status = "FetchingLicense",
-                Step = 0,
-                IsWaitingForManualReview = false
-            });
-        }
-
-        return Ok(new CredentialEvaluationStatus
-        {
-            Status = status.Status,
-            Step = status.Step,
-            IsWaitingForManualReview = status.IsWaitingForManualReview,
-            IsCompliant = status.IsCompliant,
-            Notes = status.Notes
-        });
-    }
-
     [HttpPost("{workflowId}/manual-review")]
     public async Task<IActionResult> CompleteManualReview(string workflowId, [FromBody] ManualReviewRequest request)
     {
@@ -102,12 +75,4 @@ public class ProviderCredentialingController : ControllerBase
 
     public record StartCredentialingRequest(string ProviderId, string LicenseNumber, string MedicalBoard, DateTimeOffset ExpiryDate, string FirstName, string LastName, string Email, string Specialty);
     public record ManualReviewRequest(bool IsApproved, string? Notes);
-    public record CredentialEvaluationStatus
-    {
-        public string Status { get; init; } = string.Empty;
-        public int Step { get; init; }
-        public bool IsWaitingForManualReview { get; init; }
-        public bool? IsCompliant { get; init; }
-        public string? Notes { get; init; }
-    }
 }
