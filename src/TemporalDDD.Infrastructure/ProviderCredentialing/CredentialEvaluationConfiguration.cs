@@ -36,5 +36,9 @@ public class CredentialEvaluationConfiguration : IEntityTypeConfiguration<Creden
 
         // Smart Enum - stored as int
         builder.Property(x => x.Status);
+
+        // WorkflowId - optional string for Temporal workflow correlation
+        builder.Property(x => x.WorkflowId)
+            .IsRequired(false);
     }
 }

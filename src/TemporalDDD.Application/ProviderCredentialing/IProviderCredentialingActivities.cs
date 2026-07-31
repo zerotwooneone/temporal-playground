@@ -22,7 +22,7 @@ public interface IProviderCredentialingActivities
 // Primitive DTOs for activity parameters
 public record FetchLicenseInput(string LicenseNumber, string MedicalBoard);
 public record EvaluateComplianceInput(string ProviderId, string LicenseNumber, string MedicalBoard, DateTimeOffset ExpiryDate, bool IsValid, string ProviderIdResult, string? Notes = null);
-public record RequestManualReviewInput(string EvaluationId);
+public record RequestManualReviewInput(string EvaluationId, string WorkflowId);
 public record GetOrCreateProviderProfileInput(string ProviderId, string FirstName, string LastName, string Email, string Specialty);
 public record ActivateProviderProfileInput(string ProviderProfileId);
 

@@ -136,12 +136,12 @@ public class ProviderCredentialingActivities : IProviderCredentialingActivities
 
         var evaluationId = evaluationIdResult.Value;
 
-        // Get evaluation and update status to ManualReviewRequired
+        // Get evaluation and update status to ManualReviewRequired with WorkflowId
         var evaluation = await credentialEvaluationRepository.GetByIdAsync(evaluationId);
         if (evaluation == null)
             throw new InvalidOperationException($"Evaluation {evaluationId} not found");
 
-        evaluation.RequestManualReview();
+        evaluation.RequestManualReview(input.WorkflowId);
         await credentialEvaluationRepository.SaveAsync(evaluation);
 
         // Simulate external notification
@@ -150,7 +150,7 @@ public class ProviderCredentialingActivities : IProviderCredentialingActivities
             .WithFailureRate(0.10, System.Net.HttpStatusCode.InternalServerError)
             .PostAsJsonAsync($"https://notifications.example.com/api/manual-review/{evaluationId}", new { });
 
-        Console.WriteLine($"[ManualReview] Request sent for evaluation {evaluationId}");
+        Console.WriteLine($"[ManualReview] Request sent for evaluation {evaluationId}, workflow {input.WorkflowId}");
     }
 
     [Activity]

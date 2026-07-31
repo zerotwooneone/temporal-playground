@@ -11,10 +11,12 @@ namespace TemporalDDD.Api.ProviderCredentialing;
 public class ProviderCredentialingController : ControllerBase
 {
     private readonly ITemporalClient _temporalClient;
+    private readonly IPendingManualReviewsQuery _pendingReviewsQuery;
 
-    public ProviderCredentialingController(ITemporalClient temporalClient)
+    public ProviderCredentialingController(ITemporalClient temporalClient, IPendingManualReviewsQuery pendingReviewsQuery)
     {
         _temporalClient = temporalClient;
+        _pendingReviewsQuery = pendingReviewsQuery;
     }
 
     [HttpPost]
@@ -61,6 +63,13 @@ public class ProviderCredentialingController : ControllerBase
             });
 
         return Ok(new { WorkflowId = workflowId, ProviderId = request.ProviderId, Message = "Provider credentialing workflow started" });
+    }
+
+    [HttpGet("pending-reviews")]
+    public async Task<IActionResult> GetPendingReviews()
+    {
+        var pendingReviews = await _pendingReviewsQuery.GetPendingReviewsAsync();
+        return Ok(pendingReviews);
     }
 
     [HttpPost("{workflowId}/manual-review")]

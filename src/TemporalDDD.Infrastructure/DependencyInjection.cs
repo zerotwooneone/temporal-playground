@@ -38,6 +38,7 @@ public static class DependencyInjection
         services.AddScoped<IProviderAvailabilityQuery, ProviderAvailabilityQuery>();
         services.AddScoped<IFacilityBillingQuery, FacilityBillingQuery>();
         services.AddScoped<ICredentialEvaluationStatusQuery, CredentialEvaluationStatusQuery>();
+        services.AddScoped<IPendingManualReviewsQuery, PendingManualReviewsQuery>();
 
         return services;
     }

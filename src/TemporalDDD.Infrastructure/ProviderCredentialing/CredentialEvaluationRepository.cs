@@ -78,7 +78,8 @@ public class CredentialEvaluationRepository : ICredentialEvaluationRepository
             isCompliant: dbo.IsCompliant,
             complianceNotes: complianceNotes,
             evaluatedAt: evaluatedAt,
-            status: status
+            status: status,
+            workflowId: dbo.WorkflowId
         );
     }
 
@@ -95,7 +96,8 @@ public class CredentialEvaluationRepository : ICredentialEvaluationRepository
             IsCompliant = evaluation.IsCompliant,
             ComplianceNotes = evaluation.ComplianceNotes.Value,
             EvaluatedAt = evaluation.EvaluatedAt.ToUnixTimeMilliseconds(),
-            Status = evaluation.Status.Value
+            Status = evaluation.Status.Value,
+            WorkflowId = evaluation.WorkflowId
         };
     }
 }

@@ -12,4 +12,5 @@ public class CredentialEvaluationDbo
     public string? ComplianceNotes { get; set; }
     public long EvaluatedAt { get; set; } // Unix milliseconds
     public int Status { get; set; }
+    public string? WorkflowId { get; set; }
 }

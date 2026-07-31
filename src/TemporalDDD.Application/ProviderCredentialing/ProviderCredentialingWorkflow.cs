@@ -34,9 +34,9 @@ public class ProviderCredentialingWorkflow
         // Step 3: Workflow orchestration decision based on evaluation result
         if (!licenseInfo.IsValid)
         {
-            // Request manual review
+            // Request manual review with workflow ID for correlation
             await Workflow.ExecuteActivityAsync(
-                (IProviderCredentialingActivities activities) => activities.RequestManualReviewAsync(new RequestManualReviewInput(evaluationResult.EvaluationId)),
+                (IProviderCredentialingActivities activities) => activities.RequestManualReviewAsync(new RequestManualReviewInput(evaluationResult.EvaluationId, Workflow.Info.WorkflowId)),
                 new ActivityOptions { StartToCloseTimeout = TimeSpan.FromMinutes(5) }
             );
 
