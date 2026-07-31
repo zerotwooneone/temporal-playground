@@ -1,12 +1,24 @@
 <Solution>
+  <Folder Name="/01 - Domain/">
+    <Project Path="TemporalDDD.Domain/TemporalDDD.Domain.csproj" />
+  </Folder>
+  <Folder Name="/02 - Application/">
+    <Project Path="TemporalDDD.Application/TemporalDDD.Application.csproj" />
+  </Folder>
+  <Folder Name="/03 - Infrastructure/">
+    <Project Path="TemporalDDD.Infrastructure/TemporalDDD.Infrastructure.csproj" />
+  </Folder>
+  <Folder Name="/04 - Api/">
+    <Project Path="TemporalDDD.Api/TemporalDDD.Api.csproj" />
+  </Folder>
+  <Folder Name="/04 - Web Ui/">
+    <Project Path="TemporalDDD.UI/TemporalDDD.UI.csproj" />
+  </Folder>
+  <Folder Name="/04 - Worker/">
+    <Project Path="TemporalDDD.Worker/TemporalDDD.Worker.csproj" />
+  </Folder>
   <Folder Name="/SolutionFolder1/">
     <File Path="../README.md" />
     <File Path="../workflows.md" />
   </Folder>
-  <Project Path="TemporalDDD.Api/TemporalDDD.Api.csproj" />
-  <Project Path="TemporalDDD.Application/TemporalDDD.Application.csproj" />
-  <Project Path="TemporalDDD.Domain/TemporalDDD.Domain.csproj" />
-  <Project Path="TemporalDDD.Infrastructure/TemporalDDD.Infrastructure.csproj" />
-  <Project Path="TemporalDDD.UI/TemporalDDD.UI.csproj" />
-  <Project Path="TemporalDDD.Worker/TemporalDDD.Worker.csproj" />
 </Solution>
