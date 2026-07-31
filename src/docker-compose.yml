@@ -1,0 +1,12 @@
+services:
+
+
+  # 2. The Orchestration Engine (Server & SQLite)
+  temporal:
+    image: temporalio/temporal:latest
+    container_name: temporal
+    # --ip 0.0.0.0 allows the container to accept connections from your host machine (.NET app)
+    command: [ "server", "start-dev", "--ip", "0.0.0.0" ]
+    ports:
+      - "7233:7233" # gRPC Frontend port (Connected to by your C# Worker/API)
+      - "8233:8233" # Temporal Web UI dashboard

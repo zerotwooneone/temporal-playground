@@ -35,10 +35,59 @@ This project is a proof-of-concept demonstrating how to integrate Temporal into 
 
 ## Prerequisites
 * .NET 10 SDK
-* Local Temporal CLI (`temporal server start-dev`)
+* Docker Desktop
 
 ## Getting Started
-1. Start the local Temporal dev server: `temporal server start-dev`
-2. Run the Worker project: `dotnet run --project src/TemporalDDD.Worker`
-3. Run the API project: `dotnet run --project src/TemporalDDD.Api`
-4. Run the UI project: `dotnet run --project src/TemporalDDD.UI`
+
+### 1. Start Temporal with Docker
+
+Navigate to the `src` directory and start the Temporal server:
+
+```bash
+cd src
+docker-compose up -d
+```
+
+This will start:
+- **Temporal Server** on ports `7233` (gRPC) and `8233` (Web UI)
+- Access the Temporal Web UI at http://localhost:8233
+
+### 2. Run the Applications
+
+Open three terminal windows and run:
+
+**Terminal 1 - API:**
+```bash
+cd src/TemporalDDD.Api
+dotnet run
+```
+
+**Terminal 2 - Worker:**
+```bash
+cd src/TemporalDDD.Worker
+dotnet run
+```
+
+**Terminal 3 - UI:**
+```bash
+cd src/TemporalDDD.UI
+dotnet run
+```
+
+The UI will be available at https://localhost:5001 (accept the self-signed certificate warning).
+
+### 3. Apply Database Migrations
+
+The application uses SQLite for data storage and messaging. Migrations are automatically applied on startup via the `DatabaseInitializationService`.
+
+## Architecture Notes
+
+### Messaging
+This project uses Rebus with SQLite for message passing between the Worker and API processes. The message queue shares the same SQLite database as the application data, eliminating the need for an external message broker.
+
+### Database
+All data (application data and message queue) is stored in a single SQLite file located at:
+```
+%LocalAppData%\TemporalDDD\temporal_playground.sqlite
+```
+
