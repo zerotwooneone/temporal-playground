@@ -1,20 +1,11 @@
 using TemporalDDD.Domain.ProviderCredentialing.ValueObjects;
 using TemporalDDD.Domain.SharedKernel;
+using TemporalDDD.Domain.Testing;
 
 namespace TemporalDDD.Domain.Tests.ProviderCredentialing.ValueObjects;
 
 public class LicenseExpiryDateTests
 {
-    private class FixedTimeProvider : ITimeProvider
-    {
-        public DateTimeOffset UtcNow { get; }
-
-        public FixedTimeProvider(DateTimeOffset fixedTime)
-        {
-            UtcNow = fixedTime;
-        }
-    }
-
     private static readonly DateTimeOffset FixedCurrentDate = new DateTimeOffset(2026, 1, 1, 0, 0, 0, TimeSpan.Zero);
 
     #region Create Tests

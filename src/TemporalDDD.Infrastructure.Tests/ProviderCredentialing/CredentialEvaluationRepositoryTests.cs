@@ -1,8 +1,8 @@
 using Microsoft.EntityFrameworkCore;
-using Moq;
 using TemporalDDD.Domain.ProviderCredentialing;
 using TemporalDDD.Domain.ProviderCredentialing.ValueObjects;
 using TemporalDDD.Domain.SharedKernel;
+using TemporalDDD.Domain.Testing;
 using TemporalDDD.Infrastructure.Persistence;
 using TemporalDDD.Infrastructure.ProviderCredentialing;
 
@@ -12,12 +12,11 @@ public class CredentialEvaluationRepositoryTests
 {
     private static readonly DateTimeOffset FixedCurrentDate = new DateTimeOffset(2026, 1, 1, 0, 0, 0, TimeSpan.Zero);
     private static readonly DateTimeOffset FixedExpiryDate = new DateTimeOffset(2028, 1, 1, 0, 0, 0, TimeSpan.Zero);
-    private readonly Mock<ITimeProvider> _mockTimeProvider;
+    private readonly ITimeProvider _timeProvider;
 
     public CredentialEvaluationRepositoryTests()
     {
-        _mockTimeProvider = new Mock<ITimeProvider>();
-        _mockTimeProvider.Setup(x => x.UtcNow).Returns(FixedCurrentDate);
+        _timeProvider = new FixedTimeProvider(FixedCurrentDate);
     }
 
     private ApplicationDbContext CreateInMemoryDbContext()
@@ -35,13 +34,13 @@ public class CredentialEvaluationRepositoryTests
     {
         // Arrange
         var dbContext = CreateInMemoryDbContext();
-        var repository = new CredentialEvaluationRepository(dbContext, _mockTimeProvider.Object);
+        var repository = new CredentialEvaluationRepository(dbContext, _timeProvider);
         
         var providerId = ProviderId.New();
         var publicId = CredentialEvaluationPublicId.New();
         var licenseNumber = LicenseNumber.Create("LICENSE123456").Value!;
         var medicalBoard = MedicalBoard.Create("Medical Board of California").Value!;
-        var licenseExpiryDate = LicenseExpiryDate.Create(FixedExpiryDate, _mockTimeProvider.Object).Value!;
+        var licenseExpiryDate = LicenseExpiryDate.Create(FixedExpiryDate, _timeProvider).Value!;
         
         var evaluation = CredentialEvaluation.Create(
             providerId,
@@ -67,13 +66,13 @@ public class CredentialEvaluationRepositoryTests
     {
         // Arrange
         var dbContext = CreateInMemoryDbContext();
-        var repository = new CredentialEvaluationRepository(dbContext, _mockTimeProvider.Object);
+        var repository = new CredentialEvaluationRepository(dbContext, _timeProvider);
         
         var providerId = ProviderId.New();
         var publicId = CredentialEvaluationPublicId.New();
         var licenseNumber = LicenseNumber.Create("LICENSE123456").Value!;
         var medicalBoard = MedicalBoard.Create("Medical Board of California").Value!;
-        var licenseExpiryDate = LicenseExpiryDate.Create(FixedExpiryDate, _mockTimeProvider.Object).Value!;
+        var licenseExpiryDate = LicenseExpiryDate.Create(FixedExpiryDate, _timeProvider).Value!;
         
         var evaluation = CredentialEvaluation.Create(
             providerId,
@@ -105,13 +104,13 @@ public class CredentialEvaluationRepositoryTests
     {
         // Arrange
         var dbContext = CreateInMemoryDbContext();
-        var repository = new CredentialEvaluationRepository(dbContext, _mockTimeProvider.Object);
+        var repository = new CredentialEvaluationRepository(dbContext, _timeProvider);
         
         var providerId = ProviderId.New();
         var publicId = CredentialEvaluationPublicId.New();
         var licenseNumber = LicenseNumber.Create("LICENSE123456").Value!;
         var medicalBoard = MedicalBoard.Create("Medical Board of California").Value!;
-        var licenseExpiryDate = LicenseExpiryDate.Create(FixedExpiryDate, _mockTimeProvider.Object).Value!;
+        var licenseExpiryDate = LicenseExpiryDate.Create(FixedExpiryDate, _timeProvider).Value!;
         
         var evaluation = CredentialEvaluation.Create(
             providerId,
@@ -137,7 +136,7 @@ public class CredentialEvaluationRepositoryTests
     {
         // Arrange
         var dbContext = CreateInMemoryDbContext();
-        var repository = new CredentialEvaluationRepository(dbContext, _mockTimeProvider.Object);
+        var repository = new CredentialEvaluationRepository(dbContext, _timeProvider);
         var nonExistentId = CredentialEvaluationId.New();
 
         // Act

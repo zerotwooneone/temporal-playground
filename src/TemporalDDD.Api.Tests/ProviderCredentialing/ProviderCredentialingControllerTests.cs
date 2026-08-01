@@ -1,10 +1,10 @@
-using System.Linq.Expressions;
 using Microsoft.AspNetCore.Mvc;
 using Moq;
 using Temporalio.Client;
 using TemporalDDD.Api.ProviderCredentialing;
 using TemporalDDD.Application.ProviderCredentialing;
 using TemporalDDD.Domain.SharedKernel;
+using TemporalDDD.Domain.Testing;
 
 namespace TemporalDDD.Api.Tests.ProviderCredentialing;
 
@@ -16,14 +16,13 @@ public class ProviderCredentialingControllerTests
 
     private readonly Mock<ITemporalClient> _mockTemporalClient;
     private readonly Mock<IPendingManualReviewsQuery> _mockPendingReviewsQuery;
-    private readonly Mock<ITimeProvider> _mockTimeProvider;
+    private readonly ITimeProvider _timeProvider;
 
     public ProviderCredentialingControllerTests()
     {
         _mockTemporalClient = new Mock<ITemporalClient>();
         _mockPendingReviewsQuery = new Mock<IPendingManualReviewsQuery>();
-        _mockTimeProvider = new Mock<ITimeProvider>();
-        _mockTimeProvider.Setup(x => x.UtcNow).Returns(FixedCurrentDate);
+        _timeProvider = new FixedTimeProvider(FixedCurrentDate);
     }
 
     #region StartCredentialing Tests
@@ -44,7 +43,7 @@ public class ProviderCredentialingControllerTests
         var controller = new ProviderCredentialingController(
             _mockTemporalClient.Object,
             _mockPendingReviewsQuery.Object,
-            _mockTimeProvider.Object
+            _timeProvider
         );
 
         // Act
@@ -74,7 +73,7 @@ public class ProviderCredentialingControllerTests
         var controller = new ProviderCredentialingController(
             _mockTemporalClient.Object,
             _mockPendingReviewsQuery.Object,
-            _mockTimeProvider.Object
+            _timeProvider
         );
 
         // Act
@@ -101,7 +100,7 @@ public class ProviderCredentialingControllerTests
         var controller = new ProviderCredentialingController(
             _mockTemporalClient.Object,
             _mockPendingReviewsQuery.Object,
-            _mockTimeProvider.Object
+            _timeProvider
         );
 
         // Act

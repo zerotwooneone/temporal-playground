@@ -3,6 +3,7 @@
     <Project Path="TemporalDDD.Analyzers/TemporalDDD.Analyzers.csproj" />
   </Folder>
   <Folder Name="/01 - Domain/">
+    <Project Path="TemporalDDD.Domain.Testing/TemporalDDD.Domain.Testing.csproj" />
     <Project Path="TemporalDDD.Domain.Tests/TemporalDDD.Domain.Tests.csproj" />
     <Project Path="TemporalDDD.Domain/TemporalDDD.Domain.csproj" />
   </Folder>
