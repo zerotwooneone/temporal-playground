@@ -26,6 +26,9 @@ builder.Services.AddHostedService<DatabaseInitializationService>();
 // Add Testing utilities
 builder.Services.AddTesting();
 
+// Add Messaging with RabbitMQ
+builder.Services.AddMessaging("amqp://guest:guest@localhost:5672");
+
 // Register activities with DI
 builder.Services.AddScoped<ComplianceActivities>();
 builder.Services.AddScoped<ProviderActivities>();

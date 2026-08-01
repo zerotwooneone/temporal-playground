@@ -1,5 +1,10 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
+using Rebus.Config;
+using Rebus.Routing.TypeBased;
+using Rebus.Serialization.Json;
+using Rebus.ServiceProvider;
+using TemporalDDD.Application.Messaging;
 using TemporalDDD.Application.PlacementMatching;
 using TemporalDDD.Application.ProviderCredentialing;
 using TemporalDDD.Application.TimesheetProcessing;
@@ -7,6 +12,7 @@ using TemporalDDD.Domain.PlacementMatching;
 using TemporalDDD.Domain.ProviderCredentialing;
 using TemporalDDD.Domain.TimesheetProcessing;
 using TemporalDDD.Domain.TravelLogistics;
+using TemporalDDD.Infrastructure.Messaging;
 using TemporalDDD.Infrastructure.Persistence;
 using TemporalDDD.Infrastructure.Testing;
 using TemporalDDD.Infrastructure.ProviderCredentialing;
@@ -53,6 +59,17 @@ public static class DependencyInjection
 
         // Register testing utilities for chaos simulation
         services.AddTransient<ChaosHttpClient>();
+
+        return services;
+    }
+
+    public static IServiceCollection AddMessaging(this IServiceCollection services, string connectionString)
+    {
+        services.AddRebus(configure => configure
+            .Transport(t => t.UseRabbitMq(connectionString, "temporal-ddd-events")))
+            ;
+
+        services.AddSingleton<IMessagePublisher, RebusMessagePublisher>();
 
         return services;
     }

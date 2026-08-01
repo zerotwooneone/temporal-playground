@@ -18,6 +18,9 @@ builder.Services.AddHostedService<DatabaseInitializationService>();
 // Add Testing utilities
 builder.Services.AddTesting();
 
+// Add Messaging with RabbitMQ
+builder.Services.AddMessaging("amqp://guest:guest@localhost:5672");
+
 // Add Temporal Client
 builder.Services.AddSingleton<ITemporalClient>(sp => 
 {

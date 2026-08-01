@@ -20,5 +20,6 @@
   <Folder Name="/SolutionFolder1/">
     <File Path="../README.md" />
     <File Path="../workflows.md" />
+    <File Path="docker-compose.yml" />
   </Folder>
 </Solution>
