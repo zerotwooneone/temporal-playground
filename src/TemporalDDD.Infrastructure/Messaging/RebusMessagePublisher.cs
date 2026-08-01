@@ -12,10 +12,10 @@ public class RebusMessagePublisher : IMessagePublisher
         _bus = bus;
     }
 
-    public async Task PublishAsync<TMessage>(
-        TMessage message, 
-        PublishOptions? options = null, 
-        CancellationToken cancellationToken = default) where TMessage : class
+    public async Task PublishEventAsync(
+        IApplicationEvent message, 
+        EventPublishOptions? options = null, 
+        CancellationToken cancellationToken = default)
     {
         var rebusHeaders = new Dictionary<string, string>();
 
@@ -31,13 +31,6 @@ public class RebusMessagePublisher : IMessagePublisher
             }
         }
 
-        if (options?.Delay.HasValue == true)
-        {
-            await _bus.Defer(options.Delay.Value, message, rebusHeaders);
-        }
-        else
-        {
-            await _bus.Publish(message, rebusHeaders);
-        }
+        await _bus.Publish(message, rebusHeaders);
     }
 }

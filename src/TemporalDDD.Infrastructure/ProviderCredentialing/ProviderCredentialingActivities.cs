@@ -1,4 +1,5 @@
 using Microsoft.Extensions.DependencyInjection;
+using TemporalDDD.Application.Messaging;
 using Temporalio.Activities;
 using TemporalDDD.Application.ProviderCredentialing;
 using TemporalDDD.Domain.ProviderCredentialing;
@@ -12,13 +13,19 @@ public class ProviderCredentialingActivities : IProviderCredentialingActivities
 {
     private readonly IServiceScopeFactory _scopeFactory;
     private readonly ChaosHttpClient _chaosHttpClient;
+    private readonly ICredentialEvaluationEventMapper _eventMapper;
+    private readonly IMessagePublisher _messagePublisher;
 
     public ProviderCredentialingActivities(
         IServiceScopeFactory scopeFactory,
-        ChaosHttpClient chaosHttpClient)
+        ChaosHttpClient chaosHttpClient,
+        ICredentialEvaluationEventMapper eventMapper,
+        IMessagePublisher messagePublisher)
     {
         _scopeFactory = scopeFactory;
         _chaosHttpClient = chaosHttpClient;
+        _eventMapper = eventMapper;
+        _messagePublisher = messagePublisher;
     }
 
     [Activity]
@@ -115,16 +122,21 @@ public class ProviderCredentialingActivities : IProviderCredentialingActivities
         // Save to database using repository
         await credentialEvaluationRepository.SaveAsync(evaluation);
 
-        // Return evaluation result - let workflow decide what to do with it
+        // Map domain events to application events
+        var domainEvents = evaluation.DomainEvents;
+        var applicationEvents = _eventMapper.MapToApplicationEvents(domainEvents);
+
+        // Return evaluation result with events
         return new EvaluateComplianceResult(
             EvaluationId: evaluation.Id.ToString(),
             IsValid: licenseInfo.IsValid,
-            IsCompliant: licenseInfo.IsValid // Simplified: valid = compliant for now
+            IsCompliant: licenseInfo.IsValid, // Simplified: valid = compliant for now
+            Events: applicationEvents
         );
     }
 
     [Activity]
-    public async Task RequestManualReviewAsync(RequestManualReviewInput input)
+    public async Task<IReadOnlyCollection<IApplicationEvent>> RequestManualReviewAsync(RequestManualReviewInput input)
     {
         using var scope = _scopeFactory.CreateScope();
         var credentialEvaluationRepository = scope.ServiceProvider.GetRequiredService<ICredentialEvaluationRepository>();
@@ -144,6 +156,10 @@ public class ProviderCredentialingActivities : IProviderCredentialingActivities
         evaluation.RequestManualReview(input.WorkflowId);
         await credentialEvaluationRepository.SaveAsync(evaluation);
 
+        // Map domain events to application events
+        var domainEvents = evaluation.DomainEvents;
+        var applicationEvents = _eventMapper.MapToApplicationEvents(domainEvents);
+
         // Simulate external notification
         await _chaosHttpClient
             .WithLatency(TimeSpan.FromMilliseconds(100), TimeSpan.FromMilliseconds(100))
@@ -151,10 +167,12 @@ public class ProviderCredentialingActivities : IProviderCredentialingActivities
             .PostAsJsonAsync($"https://notifications.example.com/api/manual-review/{evaluationId}", new { });
 
         Console.WriteLine($"[ManualReview] Request sent for evaluation {evaluationId}, workflow {input.WorkflowId}");
+
+        return applicationEvents;
     }
 
     [Activity]
-    public async Task UpdateEvaluationStatusAsync(UpdateEvaluationStatusInput input)
+    public async Task<IReadOnlyCollection<IApplicationEvent>> UpdateEvaluationStatusAsync(UpdateEvaluationStatusInput input)
     {
         using var scope = _scopeFactory.CreateScope();
         var credentialEvaluationRepository = scope.ServiceProvider.GetRequiredService<ICredentialEvaluationRepository>();
@@ -174,6 +192,12 @@ public class ProviderCredentialingActivities : IProviderCredentialingActivities
         evaluation.CompleteManualReview(input.IsCompliant, input.Notes);
         
         await credentialEvaluationRepository.SaveAsync(evaluation);
+
+        // Map domain events to application events
+        var domainEvents = evaluation.DomainEvents;
+        var applicationEvents = _eventMapper.MapToApplicationEvents(domainEvents);
+
+        return applicationEvents;
     }
 
     [Activity]
@@ -250,5 +274,14 @@ public class ProviderCredentialingActivities : IProviderCredentialingActivities
         await providerProfileRepository.SaveAsync(providerProfile);
         
         Console.WriteLine($"[ProviderActivation] Provider {providerProfileId} activated successfully");
+    }
+
+    [Activity]
+    public async Task PublishApplicationEventsAsync(PublishApplicationEventsInput input)
+    {
+        foreach (var applicationEvent in input.Events)
+        {
+            await _messagePublisher.PublishEventAsync(applicationEvent);
+        }
     }
 }

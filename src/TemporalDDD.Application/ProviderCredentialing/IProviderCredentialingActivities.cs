@@ -1,3 +1,4 @@
+using TemporalDDD.Application.Messaging;
 using Temporalio.Activities;
 using TemporalDDD.Domain.ProviderCredentialing;
 
@@ -10,13 +11,15 @@ public interface IProviderCredentialingActivities
     [Activity]
     Task<EvaluateComplianceResult> EvaluateAndSaveComplianceAsync(EvaluateComplianceInput input);
     [Activity]
-    Task RequestManualReviewAsync(RequestManualReviewInput input);
+    Task<IReadOnlyCollection<IApplicationEvent>> RequestManualReviewAsync(RequestManualReviewInput input);
     [Activity]
     Task<string> GetOrCreateProviderProfileAsync(GetOrCreateProviderProfileInput input);
     [Activity]
     Task ActivateProviderProfileAsync(ActivateProviderProfileInput input);
     [Activity]
-    Task UpdateEvaluationStatusAsync(UpdateEvaluationStatusInput input);
+    Task<IReadOnlyCollection<IApplicationEvent>> UpdateEvaluationStatusAsync(UpdateEvaluationStatusInput input);
+    [Activity]
+    Task PublishApplicationEventsAsync(PublishApplicationEventsInput input);
 }
 
 // Primitive DTOs for activity parameters
@@ -25,6 +28,7 @@ public record EvaluateComplianceInput(string ProviderId, string LicenseNumber, s
 public record RequestManualReviewInput(string EvaluationId, string WorkflowId);
 public record GetOrCreateProviderProfileInput(string ProviderId, string FirstName, string LastName, string Email, string Specialty);
 public record ActivateProviderProfileInput(string ProviderProfileId);
+public record PublishApplicationEventsInput(IReadOnlyCollection<IApplicationEvent> Events);
 
 // Primitive result types
 public record MedicalBoardLicenseInfo(
@@ -39,7 +43,8 @@ public record MedicalBoardLicenseInfo(
 public record EvaluateComplianceResult(
     string EvaluationId,
     bool IsValid,
-    bool IsCompliant
+    bool IsCompliant,
+    IReadOnlyCollection<IApplicationEvent> Events
 );
 
 public record UpdateEvaluationStatusInput(string EvaluationId, bool IsCompliant, string? Notes = null);

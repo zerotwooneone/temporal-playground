@@ -31,14 +31,32 @@ public class ProviderCredentialingWorkflow
             new ActivityOptions { StartToCloseTimeout = TimeSpan.FromMinutes(5) }
         );
 
+        // Publish application events from evaluation
+        if (evaluationResult.Events.Count > 0)
+        {
+            await Workflow.ExecuteActivityAsync(
+                (IProviderCredentialingActivities activities) => activities.PublishApplicationEventsAsync(new PublishApplicationEventsInput(evaluationResult.Events)),
+                new ActivityOptions { StartToCloseTimeout = TimeSpan.FromMinutes(5) }
+            );
+        }
+
         // Step 3: Workflow orchestration decision based on evaluation result
         if (!licenseInfo.IsValid)
         {
             // Request manual review with workflow ID for correlation
-            await Workflow.ExecuteActivityAsync(
+            var manualReviewEvents = await Workflow.ExecuteActivityAsync(
                 (IProviderCredentialingActivities activities) => activities.RequestManualReviewAsync(new RequestManualReviewInput(evaluationResult.EvaluationId, Workflow.Info.WorkflowId)),
                 new ActivityOptions { StartToCloseTimeout = TimeSpan.FromMinutes(5) }
             );
+
+            // Publish application events from manual review request
+            if (manualReviewEvents.Count > 0)
+            {
+                await Workflow.ExecuteActivityAsync(
+                    (IProviderCredentialingActivities activities) => activities.PublishApplicationEventsAsync(new PublishApplicationEventsInput(manualReviewEvents)),
+                    new ActivityOptions { StartToCloseTimeout = TimeSpan.FromMinutes(5) }
+                );
+            }
 
             // Wait for Manual Review Completed Signal
             await Workflow.WaitConditionAsync(() => _manualReviewSignal is not null);
@@ -47,7 +65,7 @@ public class ProviderCredentialingWorkflow
             {
                 // Update evaluation status to rejected
                 var rejectionNotes = _manualReviewSignal?.Notes ?? "Manual review rejected";
-                await Workflow.ExecuteActivityAsync(
+                var rejectionEvents = await Workflow.ExecuteActivityAsync(
                     (IProviderCredentialingActivities activities) => activities.UpdateEvaluationStatusAsync(new UpdateEvaluationStatusInput(
                         evaluationResult.EvaluationId,
                         IsCompliant: false,
@@ -56,13 +74,22 @@ public class ProviderCredentialingWorkflow
                     new ActivityOptions { StartToCloseTimeout = TimeSpan.FromMinutes(5) }
                 );
 
+                // Publish application events from rejection
+                if (rejectionEvents.Count > 0)
+                {
+                    await Workflow.ExecuteActivityAsync(
+                        (IProviderCredentialingActivities activities) => activities.PublishApplicationEventsAsync(new PublishApplicationEventsInput(rejectionEvents)),
+                        new ActivityOptions { StartToCloseTimeout = TimeSpan.FromMinutes(5) }
+                    );
+                }
+
                 throw new ApplicationFailedException("Manual review rejected or not completed");
             }
             else
             {
                 // Update evaluation status to approved
                 var approvalNotes = _manualReviewSignal?.Notes;
-                await Workflow.ExecuteActivityAsync(
+                var approvalEvents = await Workflow.ExecuteActivityAsync(
                     (IProviderCredentialingActivities activities) => activities.UpdateEvaluationStatusAsync(new UpdateEvaluationStatusInput(
                         evaluationResult.EvaluationId,
                         IsCompliant: true,
@@ -70,12 +97,21 @@ public class ProviderCredentialingWorkflow
                     )),
                     new ActivityOptions { StartToCloseTimeout = TimeSpan.FromMinutes(5) }
                 );
+
+                // Publish application events from approval
+                if (approvalEvents.Count > 0)
+                {
+                    await Workflow.ExecuteActivityAsync(
+                        (IProviderCredentialingActivities activities) => activities.PublishApplicationEventsAsync(new PublishApplicationEventsInput(approvalEvents)),
+                        new ActivityOptions { StartToCloseTimeout = TimeSpan.FromMinutes(5) }
+                    );
+                }
             }
         }
         else
         {
             // License is valid - mark as compliant
-            await Workflow.ExecuteActivityAsync(
+            var approvalEvents = await Workflow.ExecuteActivityAsync(
                 (IProviderCredentialingActivities activities) => activities.UpdateEvaluationStatusAsync(new UpdateEvaluationStatusInput(
                     evaluationResult.EvaluationId,
                     IsCompliant: true,
@@ -83,6 +119,15 @@ public class ProviderCredentialingWorkflow
                 )),
                 new ActivityOptions { StartToCloseTimeout = TimeSpan.FromMinutes(5) }
             );
+
+            // Publish application events from approval
+            if (approvalEvents.Count > 0)
+            {
+                await Workflow.ExecuteActivityAsync(
+                    (IProviderCredentialingActivities activities) => activities.PublishApplicationEventsAsync(new PublishApplicationEventsInput(approvalEvents)),
+                    new ActivityOptions { StartToCloseTimeout = TimeSpan.FromMinutes(5) }
+                );
+            }
         }
 
         // Step 4: Get or Create Provider Profile (DB Write)
