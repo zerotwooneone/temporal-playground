@@ -171,15 +171,8 @@ public class ProviderCredentialingActivities : IProviderCredentialingActivities
         if (evaluation == null)
             throw new InvalidOperationException($"Evaluation {evaluationId} not found");
 
-        if (input.IsCompliant)
-        {
-            evaluation.MarkAsCompliant(input.Notes);
-        }
-        else
-        {
-            evaluation.MarkAsNonCompliant(input.Notes ?? "Manual review rejected");
-        }
-
+        evaluation.CompleteManualReview(input.IsCompliant, input.Notes);
+        
         await credentialEvaluationRepository.SaveAsync(evaluation);
     }
 
