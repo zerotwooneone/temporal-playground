@@ -31,7 +31,8 @@ public class CredentialEvaluationEventMapper : ICredentialEvaluationEventMapper
                 new Application.ProviderCredentialing.CredentialEvaluationRequiresManualReviewEvent(
                     EvaluationId: e.EvaluationId.ToString()),
             
-            _ => throw new InvalidOperationException($"Unknown domain event type: {domainEvent.GetType().Name}")
+            _ => new Application.Messaging.UnknownTypeEvent(
+                new InvalidOperationException($"Unknown domain event type: {domainEvent.GetType().Name}").ToString())
         };
     }
 }

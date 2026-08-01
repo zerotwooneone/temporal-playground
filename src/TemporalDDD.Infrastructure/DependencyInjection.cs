@@ -72,6 +72,8 @@ public static class DependencyInjection
         services.AddRebus(configure => configure
             .Transport(t => t.UseRabbitMq(connectionString, "temporal-ddd-events")))
             ;
+        
+        services.AutoRegisterHandlersFromAssemblyOf<UnknownTypeEventHandler>();
 
         services.AddSingleton<IMessagePublisher, RebusMessagePublisher>();
 

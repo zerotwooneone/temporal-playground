@@ -1,3 +1,4 @@
+using Rebus.Config;
 using Temporalio.Client;
 using TemporalDDD.Infrastructure;
 using TemporalDDD.Api.Messaging;
@@ -24,6 +25,7 @@ builder.Services.AddTesting();
 
 // Add Messaging with RabbitMQ
 builder.Services.AddMessaging("amqp://guest:guest@localhost:5672");
+builder.Services.AutoRegisterHandlersFromAssemblyOf<CredentialEventHandler>();
 
 // Register event handlers
 builder.Services.AddProviderCredentialingHandlers();
