@@ -28,7 +28,7 @@ public class CredentialEvaluationEventMapper : ICredentialEvaluationEventMapper
                     ComplianceNotes: e.ComplianceNotes.Value),
             
             Domain.ProviderCredentialing.CredentialEvaluationRequiresManualReview e => 
-                new Application.ProviderCredentialing.CredentialEvaluationRequiresManualReview(
+                new Application.ProviderCredentialing.CredentialEvaluationRequiresManualReviewEvent(
                     EvaluationId: e.EvaluationId.ToString()),
             
             _ => throw new InvalidOperationException($"Unknown domain event type: {domainEvent.GetType().Name}")
