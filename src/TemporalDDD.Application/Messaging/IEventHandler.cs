@@ -1,9 +1,9 @@
 ﻿namespace TemporalDDD.Application.Messaging;
 
-public interface IEventHandler<in TMessage> where TMessage : class
+public interface IEventHandler<in TMessage> where TMessage : IApplicationEvent
 {
     // Now the application developer gets the payload AND the headers
     Task HandleAsync(
-        IMessageContext<TMessage> context, 
+        IEventContext<TMessage> context, 
         CancellationToken cancellationToken);
 }

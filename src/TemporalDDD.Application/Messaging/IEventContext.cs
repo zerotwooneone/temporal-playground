@@ -1,8 +1,8 @@
 ﻿namespace TemporalDDD.Application.Messaging;
 
-public interface IMessageContext<out TMessage> where TMessage : class
+public interface IEventContext<out TMessage> where TMessage : IApplicationEvent
 {
-    TMessage Message { get; }
+    TMessage Event { get; }
     string MessageId { get; }
     string? CorrelationId { get; }
     IReadOnlyDictionary<string, string> Headers { get; }
