@@ -1,3 +1,5 @@
+using TemporalDDD.Domain.SharedKernel;
+
 namespace TemporalDDD.Domain.ProviderCredentialing;
 
 public sealed record ProviderPublicId
@@ -10,31 +12,25 @@ public sealed record ProviderPublicId
         Value = value;
     }
 
-    public static ProviderPublicId Create(Guid value)
-    {
-        if (value == Guid.Empty)
-            throw new ArgumentException("ProviderPublicId cannot be empty", nameof(value));
-
-        return new ProviderPublicId(value);
-    }
-
-    public static ProviderPublicId FromString(string value)
+    public static Result<ProviderPublicId> Create(string value)
     {
         if (string.IsNullOrWhiteSpace(value))
-            throw new ArgumentException("ProviderPublicId cannot be null or whitespace", nameof(value));
+            return Result<ProviderPublicId>.Failure("ProviderPublicId cannot be null or whitespace");
 
         var parts = value.Split('_');
         if (parts.Length != 2)
-            throw new ArgumentException("ProviderPublicId must be in format 'PREFIX_Guid'", nameof(value));
+            return Result<ProviderPublicId>.Failure("ProviderPublicId must be in format 'PREFIX_Guid'");
 
         if (parts[0] != Prefix)
-            throw new ArgumentException($"ProviderPublicId must have prefix '{Prefix}'", nameof(value));
+            return Result<ProviderPublicId>.Failure($"ProviderPublicId must have prefix '{Prefix}'");
 
-        var guidValue = Guid.Parse(parts[1]);
+        if (!Guid.TryParse(parts[1], out var guidValue))
+            return Result<ProviderPublicId>.Failure("Invalid GUID format in ProviderPublicId");
+
         if (guidValue == Guid.Empty)
-            throw new ArgumentException("ProviderPublicId cannot be empty", nameof(value));
+            return Result<ProviderPublicId>.Failure("ProviderPublicId cannot be empty");
 
-        return new ProviderPublicId(guidValue);
+        return Result<ProviderPublicId>.Success(new ProviderPublicId(guidValue));
     }
 
     public static ProviderPublicId New() => new(Guid.NewGuid());

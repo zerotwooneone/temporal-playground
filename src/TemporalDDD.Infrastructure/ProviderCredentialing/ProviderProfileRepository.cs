@@ -74,12 +74,8 @@ public class ProviderProfileRepository : IProviderProfileRepository
         var createdAt = DateTimeOffset.FromUnixTimeMilliseconds(dbo.CreatedAt);
         var activatedAt = dbo.ActivatedAt.HasValue ? DateTimeOffset.FromUnixTimeMilliseconds(dbo.ActivatedAt.Value) : (DateTimeOffset?)null;
 
-        ProviderPublicId? publicId = null;
-        if (!string.IsNullOrEmpty(dbo.PublicId))
-        {
-            publicId = ProviderPublicId.FromString(dbo.PublicId);
-        }
-
+        var publicId = ProviderPublicId.Create(dbo.PublicId).Value ?? throw new InvalidOperationException($"Invalid public ID in database: {dbo.PublicId}");
+        
         var id = ProviderProfileId.Create(dbo.Id).Value ?? throw new InvalidOperationException($"Invalid provider profile ID in database: {dbo.Id}");
         var providerId = ProviderId.Create(dbo.ProviderId).Value ?? throw new InvalidOperationException($"Invalid provider ID in database: {dbo.ProviderId}");
 

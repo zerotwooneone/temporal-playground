@@ -1,3 +1,4 @@
+using TemporalDDD.Application.ProviderCredentialing;
 using Temporalio.Activities;
 using TemporalDDD.Application.ProviderOnboarding;
 using TemporalDDD.Domain.ProviderCredentialing;
@@ -34,13 +35,7 @@ public class ProviderActivities : IProviderActivities
         
         if (providerProfile == null)
         {
-            // Create new provider profile if it doesn't exist
-            var firstNameVo = PersonName.Create("John").Value!;
-            var lastNameVo = PersonName.Create("Doe").Value!;
-            var emailVo = Email.Create("john.doe@example.com").Value!;
-            var specialtyVo = Specialty.Cardiology;
-
-            providerProfile = ProviderProfile.Create(providerId, firstNameVo, lastNameVo, emailVo, specialtyVo);
+            throw new ApplicationFailedException("profile not found to activate");
         }
         
         if (status == EvaluationStatus.Approved)

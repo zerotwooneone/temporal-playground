@@ -211,6 +211,10 @@ public class ProviderCredentialingActivities : IProviderCredentialingActivities
         if (providerIdResult.IsFailure)
             throw new InvalidOperationException($"Internal Corruption: Invalid ProviderId. {providerIdResult.Error}");
 
+        var providerPublicIdResult = ProviderPublicId.Create(input.ProviderPublicId);
+        if (providerPublicIdResult.IsFailure)
+            throw new InvalidOperationException($"Internal Corruption: Invalid ProviderPublicId. {providerPublicIdResult.Error}");
+
         var firstNameResult = PersonName.Create(input.FirstName);
         if (firstNameResult.IsFailure)
             throw new InvalidOperationException($"Internal Corruption: Invalid FirstName. {firstNameResult.Error}");
@@ -228,6 +232,7 @@ public class ProviderCredentialingActivities : IProviderCredentialingActivities
             throw new InvalidOperationException($"Internal Corruption: Invalid Specialty. {specialtyResult.Error}");
 
         var providerId = providerIdResult.Value;
+        var providerPublicId = providerPublicIdResult.Value;
 
         // Try to get existing profile by ProviderId
         var existingProfile = await providerProfileRepository.GetByProviderIdAsync(providerId);
@@ -236,9 +241,10 @@ public class ProviderCredentialingActivities : IProviderCredentialingActivities
             return existingProfile.Id.ToString();
         }
 
-        // Create new profile
+        // Create new profile with the provided ProviderPublicId
         var newProfile = ProviderProfile.Create(
             providerId: providerId,
+            publicId: providerPublicId,
             firstName: firstNameResult.Value,
             lastName: lastNameResult.Value,
             email: emailResult.Value,

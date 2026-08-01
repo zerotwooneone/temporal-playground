@@ -6,6 +6,7 @@ namespace TemporalDDD.Application.ProviderCredentialing;
 /// </summary>
 public record CredentialingInput(
     string ProviderId,
+    string ProviderPublicId,
     string LicenseNumber,
     string MedicalBoard,
     DateTimeOffset ExpiryDate,

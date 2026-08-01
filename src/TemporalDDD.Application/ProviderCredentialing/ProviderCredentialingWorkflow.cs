@@ -134,6 +134,7 @@ public class ProviderCredentialingWorkflow
         var providerProfileId = await Workflow.ExecuteActivityAsync(
             (IProviderCredentialingActivities activities) => activities.GetOrCreateProviderProfileAsync(new GetOrCreateProviderProfileInput(
                 input.ProviderId,
+                input.ProviderPublicId,
                 input.FirstName,
                 input.LastName,
                 input.Email,

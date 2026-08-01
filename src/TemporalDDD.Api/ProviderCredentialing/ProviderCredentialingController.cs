@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Mvc;
 using Temporalio.Client;
 using TemporalDDD.Application.ProviderCredentialing;
+using TemporalDDD.Domain.ProviderCredentialing;
 using TemporalDDD.Domain.ProviderCredentialing.ValueObjects;
 using TemporalDDD.Domain.SharedKernel;
 
@@ -24,10 +25,9 @@ public class ProviderCredentialingController : ControllerBase
     {
         var workflowId = $"provider-credentialing-{Guid.NewGuid():N}";
         
+        
+        
         // Validate at the edge (Fail fast with HTTP 400 - No exceptions thrown)
-        var providerIdResult = ProviderId.Create(request.ProviderId);
-        if (providerIdResult.IsFailure) return BadRequest(providerIdResult.Error);
-
         var licenseNumberResult = LicenseNumber.Create(request.LicenseNumber);
         if (licenseNumberResult.IsFailure) return BadRequest(licenseNumberResult.Error);
 
@@ -36,10 +36,15 @@ public class ProviderCredentialingController : ControllerBase
 
         var expiryDateResult = LicenseExpiryDate.Create(request.ExpiryDate);
         if (expiryDateResult.IsFailure) return BadRequest(expiryDateResult.Error);
+        
+        // Generate ProviderId and ProviderPublicId server-side
+        var providerId = ProviderId.New();
+        var providerPublicId = ProviderPublicId.New();
 
         // Map the validated domain values into the Primitive DTO
         var workflowInput = new CredentialingInput(
-            providerIdResult.Value.ToString(),
+            providerId.ToString(),
+            providerPublicId.ToString(),
             licenseNumberResult.Value.Value,
             request.MedicalBoard,
             request.ExpiryDate,
@@ -58,11 +63,11 @@ public class ProviderCredentialingController : ControllerBase
                 TaskQueue = "ONBOARDING_TASK_QUEUE",
                 Memo = new Dictionary<string, object>
                 {
-                    ["ProviderId"] = request.ProviderId
+                    ["ProviderId"] = providerId.ToString()
                 }
             });
 
-        return Ok(new { WorkflowId = workflowId, ProviderId = request.ProviderId, Message = "Provider credentialing workflow started" });
+        return Ok(new { WorkflowId = workflowId, ProviderPublicId = providerPublicId.ToString(), Message = "Provider credentialing workflow started" });
     }
 
     [HttpGet("pending-reviews")]
@@ -82,6 +87,6 @@ public class ProviderCredentialingController : ControllerBase
         return Ok(new { Message = "Manual review signal sent" });
     }
 
-    public record StartCredentialingRequest(string ProviderId, string LicenseNumber, string MedicalBoard, DateTimeOffset ExpiryDate, string FirstName, string LastName, string Email, string Specialty);
+    public record StartCredentialingRequest(string LicenseNumber, string MedicalBoard, DateTimeOffset ExpiryDate, string FirstName, string LastName, string Email, string Specialty);
     public record ManualReviewRequest(bool IsApproved, string? Notes);
 }
