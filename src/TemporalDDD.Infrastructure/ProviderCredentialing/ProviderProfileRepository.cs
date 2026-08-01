@@ -52,8 +52,6 @@ public class ProviderProfileRepository : IProviderProfileRepository
         }
         else
         {
-            // Tell EF Core what the original version was for optimistic concurrency control
-            _dbContext.Entry(existing).OriginalValues[nameof(existing.Version)] = aggregate.Version.Value;
             MapToDbo(aggregate, existing, existing.PublicId);
         }
 
