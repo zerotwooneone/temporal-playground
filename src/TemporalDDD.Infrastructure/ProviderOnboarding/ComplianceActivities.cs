@@ -36,7 +36,7 @@ public class ComplianceActivities : IComplianceActivities
         var medicalBoardVo = MedicalBoard.Create("Default").Value!;
         var licenseExpiryDateVo = LicenseExpiryDate.Create(DateTimeOffset.UtcNow.AddYears(2)).Value!;
         
-        var evaluation = CredentialEvaluation.Create(providerIdVo, licenseNumber, medicalBoardVo, licenseExpiryDateVo);
+        var evaluation = CredentialEvaluation.Create(providerIdVo, CredentialEvaluationPublicId.New(), licenseNumber, medicalBoardVo, licenseExpiryDateVo);
         
         // Simulate license validation (in real scenario, this would call an external API)
         bool isLicenseValid = licenseNumber.Value.Length > 5;

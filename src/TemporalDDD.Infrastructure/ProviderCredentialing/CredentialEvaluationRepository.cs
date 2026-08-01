@@ -59,11 +59,7 @@ public class CredentialEvaluationRepository : ICredentialEvaluationRepository
         var status = statusResult.Value;
         var evaluatedAt = DateTimeOffset.FromUnixTimeMilliseconds(dbo.EvaluatedAt);
 
-        CredentialEvaluationPublicId? publicId = null;
-        if (!string.IsNullOrEmpty(dbo.PublicId))
-        {
-            publicId = CredentialEvaluationPublicId.FromString(dbo.PublicId);
-        }
+        var publicId =  CredentialEvaluationPublicId.Create(dbo.PublicId).Value ?? throw new InvalidOperationException($"Invalid public ID in database: {dbo.PublicId}");
 
         var id = CredentialEvaluationId.Create(dbo.Id).Value ?? throw new InvalidOperationException($"Invalid credential evaluation ID in database: {dbo.Id}");
 

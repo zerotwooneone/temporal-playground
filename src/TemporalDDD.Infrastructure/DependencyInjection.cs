@@ -45,6 +45,7 @@ public static class DependencyInjection
         services.AddScoped<IFacilityBillingQuery, FacilityBillingQuery>();
         services.AddScoped<ICredentialEvaluationStatusQuery, CredentialEvaluationStatusQuery>();
         services.AddScoped<IPendingManualReviewsQuery, PendingManualReviewsQuery>();
+        services.AddScoped<IEvaluationPublicIdQuery, EvaluationPublicIdQuery>();
 
         // Register event mappers
         services.AddScoped<ICredentialEvaluationEventMapper, CredentialEvaluationEventMapper>();

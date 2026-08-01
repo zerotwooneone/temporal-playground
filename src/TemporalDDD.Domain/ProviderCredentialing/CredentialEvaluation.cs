@@ -7,7 +7,7 @@ namespace TemporalDDD.Domain.ProviderCredentialing;
 public sealed class CredentialEvaluation : AggregateRoot
 {
     public CredentialEvaluationId Id { get; private set; }
-    public CredentialEvaluationPublicId? PublicId { get; private set; }
+    public CredentialEvaluationPublicId PublicId { get; private set; }
     public ProviderId ProviderId { get; private set; }
     public LicenseNumber LicenseNumber { get; private set; }
     public MedicalBoard MedicalBoard { get; private set; }
@@ -21,7 +21,7 @@ public sealed class CredentialEvaluation : AggregateRoot
     internal CredentialEvaluation() { }
 
     // Internal constructor for infrastructure rehydration
-    internal CredentialEvaluation(CredentialEvaluationId id, CredentialEvaluationPublicId? publicId, ProviderId providerId, LicenseNumber licenseNumber, MedicalBoard medicalBoard, LicenseExpiryDate licenseExpiryDate, bool isCompliant, ComplianceNotes complianceNotes, DateTimeOffset evaluatedAt, EvaluationStatus status, string? workflowId = null)
+    internal CredentialEvaluation(CredentialEvaluationId id, CredentialEvaluationPublicId publicId, ProviderId providerId, LicenseNumber licenseNumber, MedicalBoard medicalBoard, LicenseExpiryDate licenseExpiryDate, bool isCompliant, ComplianceNotes complianceNotes, DateTimeOffset evaluatedAt, EvaluationStatus status, string? workflowId = null)
     {
         Id = id;
         PublicId = publicId;
@@ -37,12 +37,12 @@ public sealed class CredentialEvaluation : AggregateRoot
     }
 
     // Factory for creating new evaluation (ID is client-generated)
-    public static CredentialEvaluation Create(ProviderId providerId, LicenseNumber licenseNumber, MedicalBoard medicalBoard, LicenseExpiryDate licenseExpiryDate)
+    public static CredentialEvaluation Create(ProviderId providerId, CredentialEvaluationPublicId publicId, LicenseNumber licenseNumber, MedicalBoard medicalBoard, LicenseExpiryDate licenseExpiryDate)
     {
         var credentialEvaluation = new CredentialEvaluation
         {
             Id = CredentialEvaluationId.New(),
-            PublicId = CredentialEvaluationPublicId.New(),
+            PublicId = publicId,
             ProviderId = providerId,
             LicenseNumber = licenseNumber,
             MedicalBoard = medicalBoard,

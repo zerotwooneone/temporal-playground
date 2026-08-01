@@ -3,7 +3,7 @@ namespace TemporalDDD.Infrastructure.ProviderCredentialing;
 public class ProviderProfileDbo
 {
     public string Id { get; set; }
-    public string? PublicId { get; set; }
+    public string PublicId { get; set; }
     public string ProviderId { get; set; }
     public string FirstName { get; set; }
     public string LastName { get; set; }

@@ -1,3 +1,5 @@
+using TemporalDDD.Domain.SharedKernel;
+
 namespace TemporalDDD.Domain.ProviderCredentialing;
 
 public sealed record CredentialEvaluationPublicId
@@ -10,31 +12,25 @@ public sealed record CredentialEvaluationPublicId
         Value = value;
     }
 
-    public static CredentialEvaluationPublicId Create(Guid value)
-    {
-        if (value == Guid.Empty)
-            throw new ArgumentException("CredentialEvaluationPublicId cannot be empty", nameof(value));
-
-        return new CredentialEvaluationPublicId(value);
-    }
-
-    public static CredentialEvaluationPublicId FromString(string value)
+    public static Result<CredentialEvaluationPublicId> Create(string value)
     {
         if (string.IsNullOrWhiteSpace(value))
-            throw new ArgumentException("CredentialEvaluationPublicId cannot be null or whitespace", nameof(value));
+            return Result<CredentialEvaluationPublicId>.Failure("CredentialEvaluationPublicId cannot be null or whitespace");
 
         var parts = value.Split('_');
         if (parts.Length != 2)
-            throw new ArgumentException("CredentialEvaluationPublicId must be in format 'PREFIX_Guid'", nameof(value));
+            return Result<CredentialEvaluationPublicId>.Failure("CredentialEvaluationPublicId must be in format 'PREFIX_Guid'");
 
         if (parts[0] != Prefix)
-            throw new ArgumentException($"CredentialEvaluationPublicId must have prefix '{Prefix}'", nameof(value));
+            return Result<CredentialEvaluationPublicId>.Failure($"CredentialEvaluationPublicId must have prefix '{Prefix}'");
 
-        var guidValue = Guid.Parse(parts[1]);
+        if (!Guid.TryParse(parts[1], out var guidValue))
+            return Result<CredentialEvaluationPublicId>.Failure("Invalid GUID format in CredentialEvaluationPublicId");
+
         if (guidValue == Guid.Empty)
-            throw new ArgumentException("CredentialEvaluationPublicId cannot be empty", nameof(value));
+            return Result<CredentialEvaluationPublicId>.Failure("CredentialEvaluationPublicId cannot be empty");
 
-        return new CredentialEvaluationPublicId(guidValue);
+        return Result<CredentialEvaluationPublicId>.Success(new CredentialEvaluationPublicId(guidValue));
     }
 
     public static CredentialEvaluationPublicId New() => new(Guid.NewGuid());

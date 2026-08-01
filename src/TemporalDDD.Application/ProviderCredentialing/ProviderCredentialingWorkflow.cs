@@ -21,6 +21,7 @@ public class ProviderCredentialingWorkflow
         var evaluationResult = await Workflow.ExecuteActivityAsync(
             (IProviderCredentialingActivities activities) => activities.EvaluateAndSaveComplianceAsync(new EvaluateComplianceInput(
                 input.ProviderId,
+                input.EvaluationPublicId,
                 licenseInfo.LicenseNumber,
                 licenseInfo.MedicalBoard,
                 licenseInfo.ExpiryDate,

@@ -9,13 +9,17 @@ builder.Services.AddServerSideBlazor();
 builder.Services.AddMudServices();
 
 // Add HttpClient for API communication with SSL bypass for development
+var httpClientHandler = new HttpClientHandler
+{
+    ServerCertificateCustomValidationCallback = HttpClientHandler.DangerousAcceptAnyServerCertificateValidator
+};
 builder.Services.AddHttpClient("TemporalApi", client =>
 {
     client.BaseAddress = new Uri(builder.Configuration["ApiBaseUrl"] ?? "https://localhost:5001");
-}).ConfigurePrimaryHttpMessageHandler(() => new HttpClientHandler
-{
-    ServerCertificateCustomValidationCallback = HttpClientHandler.DangerousAcceptAnyServerCertificateValidator
-});
+}).ConfigurePrimaryHttpMessageHandler(() => httpClientHandler);
+
+// Add HttpClientHandler for SignalR with SSL bypass for development
+builder.Services.AddSingleton<HttpClientHandler>(sp => httpClientHandler);
 
 // Add Persona State Service
 builder.Services.AddScoped<PersonaStateService>();

@@ -1,11 +1,14 @@
 using Temporalio.Client;
 using TemporalDDD.Infrastructure;
+using TemporalDDD.Api.Messaging;
+using TemporalDDD.Api.ProviderCredentialing;
 
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
 builder.Services.AddControllers();
 builder.Services.AddOpenApi();
+builder.Services.AddSignalR();
 
 // Add Database
 var localAppData = Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData);
@@ -20,6 +23,9 @@ builder.Services.AddTesting();
 
 // Add Messaging with RabbitMQ
 builder.Services.AddMessaging("amqp://guest:guest@localhost:5672");
+
+// Register event handlers
+builder.Services.AddProviderCredentialingHandlers();
 
 // Add Temporal Client
 builder.Services.AddSingleton<ITemporalClient>(sp => 
@@ -39,5 +45,6 @@ if (app.Environment.IsDevelopment())
 app.UseHttpsRedirection();
 
 app.MapControllers();
+app.MapHub<ApplicationEventHub>("/hubs/applicationevents");
 
 app.Run();

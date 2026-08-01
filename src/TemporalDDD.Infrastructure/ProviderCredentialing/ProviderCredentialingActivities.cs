@@ -75,6 +75,10 @@ public class ProviderCredentialingActivities : IProviderCredentialingActivities
         if (providerIdResult.IsFailure)
             throw new InvalidOperationException($"Internal Corruption: Invalid ProviderId. {providerIdResult.Error}");
         
+        var evaluationPublicIdResult = CredentialEvaluationPublicId.Create(input.EvaluationPublicId);
+        if (evaluationPublicIdResult.IsFailure)
+            throw new InvalidOperationException($"Internal Corruption: Invalid EvaluationPublicId. {evaluationPublicIdResult.Error}");
+        
         var licenseNumberResult = LicenseNumber.Create(input.LicenseNumber);
         if (licenseNumberResult.IsFailure)
             throw new InvalidOperationException($"Internal Corruption: Invalid LicenseNumber. {licenseNumberResult.Error}");
@@ -92,6 +96,7 @@ public class ProviderCredentialingActivities : IProviderCredentialingActivities
             throw new InvalidOperationException($"Internal Corruption: Invalid ProviderIdResult. {providerIdResult2.Error}");
 
         var providerId = providerIdResult.Value;
+        var evaluationPublicId = evaluationPublicIdResult.Value;
         var licenseNumber = licenseNumberResult.Value;
         var medicalBoard = medicalBoardResult.Value;
         var expiryDate = expiryDateResult.Value;
@@ -114,6 +119,7 @@ public class ProviderCredentialingActivities : IProviderCredentialingActivities
 
         var evaluation = Domain.ProviderCredentialing.CredentialEvaluation.Create(
             providerId: providerId,
+            publicId: evaluationPublicId,
             licenseNumber: licenseNumberForEntity,
             medicalBoard: medicalBoardForEntity,
             licenseExpiryDate: expiryDateForEntity

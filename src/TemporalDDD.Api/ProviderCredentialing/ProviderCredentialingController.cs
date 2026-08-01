@@ -25,8 +25,6 @@ public class ProviderCredentialingController : ControllerBase
     {
         var workflowId = $"provider-credentialing-{Guid.NewGuid():N}";
         
-        
-        
         // Validate at the edge (Fail fast with HTTP 400 - No exceptions thrown)
         var licenseNumberResult = LicenseNumber.Create(request.LicenseNumber);
         if (licenseNumberResult.IsFailure) return BadRequest(licenseNumberResult.Error);
@@ -37,14 +35,16 @@ public class ProviderCredentialingController : ControllerBase
         var expiryDateResult = LicenseExpiryDate.Create(request.ExpiryDate);
         if (expiryDateResult.IsFailure) return BadRequest(expiryDateResult.Error);
         
-        // Generate ProviderId and ProviderPublicId server-side
+        // Generate ProviderId, ProviderPublicId, and EvaluationPublicId server-side
         var providerId = ProviderId.New();
         var providerPublicId = ProviderPublicId.New();
+        var evaluationPublicId = CredentialEvaluationPublicId.New();
 
         // Map the validated domain values into the Primitive DTO
         var workflowInput = new CredentialingInput(
             providerId.ToString(),
             providerPublicId.ToString(),
+            evaluationPublicId.ToString(),
             licenseNumberResult.Value.Value,
             request.MedicalBoard,
             request.ExpiryDate,
@@ -67,7 +67,7 @@ public class ProviderCredentialingController : ControllerBase
                 }
             });
 
-        return Ok(new { WorkflowId = workflowId, ProviderPublicId = providerPublicId.ToString(), Message = "Provider credentialing workflow started" });
+        return Ok(new { WorkflowId = workflowId, ProviderPublicId = providerPublicId.ToString(), EvaluationPublicId = evaluationPublicId.ToString(), Message = "Provider credentialing workflow started" });
     }
 
     [HttpGet("pending-reviews")]
