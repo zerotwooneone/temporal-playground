@@ -1,4 +1,7 @@
 <Solution>
+  <Folder Name="/00 - Source Generator/">
+    <Project Path="TemporalDDD.Analyzers/TemporalDDD.Analyzers.csproj" />
+  </Folder>
   <Folder Name="/01 - Domain/">
     <Project Path="TemporalDDD.Domain/TemporalDDD.Domain.csproj" />
   </Folder>

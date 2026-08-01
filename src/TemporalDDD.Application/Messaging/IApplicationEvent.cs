@@ -1,13 +1,10 @@
-using System.Text.Json.Serialization;
-
 namespace TemporalDDD.Application.Messaging;
 
-[JsonPolymorphic(TypeDiscriminatorPropertyName = "$type")]
-
-[JsonDerivedType(typeof(ProviderCredentialing.CredentialEvaluationCreatedEvent), "EvaluationCreated")]
-[JsonDerivedType(typeof(ProviderCredentialing.CredentialEvaluationApprovedEvent), "EvaluationApproved")]
-[JsonDerivedType(typeof(ProviderCredentialing.CredentialEvaluationRejectedEvent), "EvaluationRejected")]
-[JsonDerivedType(typeof(ProviderCredentialing.CredentialEvaluationRequiresManualReviewEvent), "EvaluationRequiresManualReview")]
-public interface IApplicationEvent
+/// <summary>
+/// This is the target of a source generator - any type that implements this interface will be added like
+/// [JsonDerivedType(typeof(FullyQualifiedTypeName), "FullyQualifiedTypeName")]
+/// to this interface. Implementers should use only primitive types that can be serialized by System.Text.Json.
+/// </summary>
+public partial interface IApplicationEvent
 {
 }
