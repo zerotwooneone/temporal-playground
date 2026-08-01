@@ -34,7 +34,7 @@ public class ProviderCredentialingController : ControllerBase
         var medicalBoardResult = MedicalBoard.Create(request.MedicalBoard);
         if (medicalBoardResult.IsFailure) return BadRequest(medicalBoardResult.Error);
 
-        var expiryDateResult = LicenseExpiryDate.Create(request.ExpiryDate, _timeProvider);
+        var expiryDateResult = LicenseExpiryDate.Create(request.ExpiryDate);
         if (expiryDateResult.IsFailure) return BadRequest(expiryDateResult.Error);
         
         // Generate ProviderId, ProviderPublicId, and EvaluationPublicId server-side
@@ -89,6 +89,6 @@ public class ProviderCredentialingController : ControllerBase
         return Ok(new { Message = "Manual review signal sent" });
     }
 
-    public record StartCredentialingRequest(string LicenseNumber, string MedicalBoard, DateTimeOffset ExpiryDate, string FirstName, string LastName, string Email, string Specialty);
+    public record StartCredentialingRequest(string LicenseNumber, string MedicalBoard, DateOnly ExpiryDate, string FirstName, string LastName, string Email, string Specialty);
     public record ManualReviewRequest(bool IsApproved, string? Notes);
 }

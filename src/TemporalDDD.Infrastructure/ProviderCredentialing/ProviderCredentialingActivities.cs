@@ -54,13 +54,14 @@ public class ProviderCredentialingActivities : IProviderCredentialingActivities
 
         // Simulated response - in real implementation, this would call actual medical board API
         var isValid = licenseNumber.Value.Length >= 8;
-        var expiryDateResult = LicenseExpiryDate.Create(DateTimeOffset.UtcNow.AddYears(2), _timeProvider);
+        var futureDate = _timeProvider.LocalToday.AddYears(2);
+        var expiryDate = LicenseExpiryDate.Create(futureDate).Value!;
         var providerIdResult = ProviderId.New();
 
         return new MedicalBoardLicenseInfo(
             LicenseNumber: licenseNumber.Value,
             MedicalBoard: medicalBoard.Value,
-            ExpiryDate: expiryDateResult.Value.Value,
+            ExpiryDate: expiryDate.Value,
             IsValid: isValid,
             ProviderId: providerIdResult.ToString(),
             Notes: isValid ? "License verified successfully" : "License number format invalid"
@@ -90,7 +91,7 @@ public class ProviderCredentialingActivities : IProviderCredentialingActivities
         if (medicalBoardResult.IsFailure)
             throw new InvalidOperationException($"Internal Corruption: Invalid MedicalBoard. {medicalBoardResult.Error}");
         
-        var expiryDateResult = LicenseExpiryDate.Create(input.ExpiryDate, _timeProvider);
+        var expiryDateResult = LicenseExpiryDate.Create(input.ExpiryDate);
         if (expiryDateResult.IsFailure)
             throw new InvalidOperationException($"Internal Corruption: Invalid ExpiryDate. {expiryDateResult.Error}");
         
@@ -118,7 +119,7 @@ public class ProviderCredentialingActivities : IProviderCredentialingActivities
         // Create domain entity using factory
         var licenseNumberForEntity = LicenseNumber.Create(licenseInfo.LicenseNumber).Value!;
         var medicalBoardForEntity = MedicalBoard.Create(licenseInfo.MedicalBoard).Value!;
-        var expiryDateForEntity = LicenseExpiryDate.Create(licenseInfo.ExpiryDate, _timeProvider).Value!;
+        var expiryDateForEntity = LicenseExpiryDate.Create(licenseInfo.ExpiryDate).Value!;
 
         var evaluation = Domain.ProviderCredentialing.CredentialEvaluation.Create(
             providerId: providerId,

@@ -53,7 +53,7 @@ public class CredentialEvaluationRepository : ICredentialEvaluationRepository
         var providerId = ProviderId.Create(dbo.ProviderId).Value ?? throw new InvalidOperationException($"Invalid provider ID in database: {dbo.ProviderId}");
         var licenseNumber = LicenseNumber.Create(dbo.LicenseNumber).Value ?? throw new InvalidOperationException($"Invalid license number in database: {dbo.LicenseNumber}");
         var medicalBoard = MedicalBoard.Create(dbo.MedicalBoard).Value ?? throw new InvalidOperationException($"Invalid medical board in database: {dbo.MedicalBoard}");
-        var licenseExpiryDate = LicenseExpiryDate.Create(dbo.LicenseExpiryDate, _timeProvider).Value ?? throw new InvalidOperationException($"Invalid license expiry date in database: {dbo.LicenseExpiryDate}");
+        var licenseExpiryDate = new LicenseExpiryDate(dbo.LicenseExpiryDate);
         var complianceNotes = ComplianceNotes.Create(dbo.ComplianceNotes).Value ?? throw new InvalidOperationException($"Invalid compliance notes in database: {dbo.ComplianceNotes}");
         var statusResult = EvaluationStatus.FromValue(dbo.Status);
         if (statusResult.IsFailure)

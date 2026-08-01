@@ -7,7 +7,7 @@ public class CredentialEvaluationDbo
     public string ProviderId { get; set; }
     public string LicenseNumber { get; set; }
     public string MedicalBoard { get; set; }
-    public DateTimeOffset LicenseExpiryDate { get; set; }
+    public DateOnly LicenseExpiryDate { get; set; } 
     public bool IsCompliant { get; set; }
     public string? ComplianceNotes { get; set; }
     public long EvaluatedAt { get; set; } // Unix milliseconds

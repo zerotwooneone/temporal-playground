@@ -10,7 +10,7 @@ public record CredentialingInput(
     string EvaluationPublicId,
     string LicenseNumber,
     string MedicalBoard,
-    DateTimeOffset ExpiryDate,
+    DateOnly ExpiryDate,
     string FirstName,
     string LastName,
     string Email,

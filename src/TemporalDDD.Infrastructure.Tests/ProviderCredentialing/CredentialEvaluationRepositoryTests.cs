@@ -10,13 +10,13 @@ namespace TemporalDDD.Infrastructure.Tests.ProviderCredentialing;
 
 public class CredentialEvaluationRepositoryTests
 {
-    private static readonly DateTimeOffset FixedCurrentDate = new DateTimeOffset(2026, 1, 1, 0, 0, 0, TimeSpan.Zero);
-    private static readonly DateTimeOffset FixedExpiryDate = new DateTimeOffset(2028, 1, 1, 0, 0, 0, TimeSpan.Zero);
+    private static readonly DateOnly FixedCurrentDate = new DateOnly(2026, 1, 1);
+    private static readonly DateOnly FixedExpiryDate = new DateOnly(2028, 1, 1);
     private readonly ITimeProvider _timeProvider;
 
     public CredentialEvaluationRepositoryTests()
     {
-        _timeProvider = new FixedTimeProvider(FixedCurrentDate);
+        _timeProvider = new FixedTimeProvider(new DateTimeOffset(FixedCurrentDate.ToDateTime(TimeOnly.MinValue), TimeSpan.Zero));
     }
 
     private ApplicationDbContext CreateInMemoryDbContext()
@@ -40,7 +40,7 @@ public class CredentialEvaluationRepositoryTests
         var publicId = CredentialEvaluationPublicId.New();
         var licenseNumber = LicenseNumber.Create("LICENSE123456").Value!;
         var medicalBoard = MedicalBoard.Create("Medical Board of California").Value!;
-        var licenseExpiryDate = LicenseExpiryDate.Create(FixedExpiryDate, _timeProvider).Value!;
+        var licenseExpiryDate = LicenseExpiryDate.Create(FixedExpiryDate).Value!;
         
         var evaluation = CredentialEvaluation.Create(
             providerId,
@@ -72,7 +72,7 @@ public class CredentialEvaluationRepositoryTests
         var publicId = CredentialEvaluationPublicId.New();
         var licenseNumber = LicenseNumber.Create("LICENSE123456").Value!;
         var medicalBoard = MedicalBoard.Create("Medical Board of California").Value!;
-        var licenseExpiryDate = LicenseExpiryDate.Create(FixedExpiryDate, _timeProvider).Value!;
+        var licenseExpiryDate = LicenseExpiryDate.Create(FixedExpiryDate).Value!;
         
         var evaluation = CredentialEvaluation.Create(
             providerId,
@@ -110,7 +110,7 @@ public class CredentialEvaluationRepositoryTests
         var publicId = CredentialEvaluationPublicId.New();
         var licenseNumber = LicenseNumber.Create("LICENSE123456").Value!;
         var medicalBoard = MedicalBoard.Create("Medical Board of California").Value!;
-        var licenseExpiryDate = LicenseExpiryDate.Create(FixedExpiryDate, _timeProvider).Value!;
+        var licenseExpiryDate = LicenseExpiryDate.Create(FixedExpiryDate).Value!;
         
         var evaluation = CredentialEvaluation.Create(
             providerId,

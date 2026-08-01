@@ -10,9 +10,9 @@ namespace TemporalDDD.Api.Tests.ProviderCredentialing;
 
 public class ProviderCredentialingControllerTests
 {
-    private static readonly DateTimeOffset FixedCurrentDate = new DateTimeOffset(2026, 1, 1, 0, 0, 0, TimeSpan.Zero);
-    private static readonly DateTimeOffset FixedFutureDate = new DateTimeOffset(2028, 1, 1, 0, 0, 0, TimeSpan.Zero);
-    private static readonly DateTimeOffset FixedPastDate = new DateTimeOffset(2025, 1, 1, 0, 0, 0, TimeSpan.Zero);
+    private static readonly DateOnly FixedCurrentDate = new DateOnly(2026, 1, 1);
+    private static readonly DateOnly FixedFutureDate = new DateOnly(2028, 1, 1);
+    private static readonly DateOnly FixedPastDate = new DateOnly(2025, 1, 1);
 
     private readonly Mock<ITemporalClient> _mockTemporalClient;
     private readonly Mock<IPendingManualReviewsQuery> _mockPendingReviewsQuery;
@@ -22,7 +22,7 @@ public class ProviderCredentialingControllerTests
     {
         _mockTemporalClient = new Mock<ITemporalClient>();
         _mockPendingReviewsQuery = new Mock<IPendingManualReviewsQuery>();
-        _timeProvider = new FixedTimeProvider(FixedCurrentDate);
+        _timeProvider = new FixedTimeProvider(new DateTimeOffset(FixedCurrentDate.ToDateTime(TimeOnly.MinValue), TimeSpan.Zero));
     }
 
     #region StartCredentialing Tests
@@ -57,13 +57,13 @@ public class ProviderCredentialingControllerTests
     }
 
     [Fact]
-    public async Task StartCredentialing_WhenExpiryDateIsInPast_ReturnsBadRequest()
+    public async Task StartCredentialing_WhenExpiryDateIsDefault_ReturnsBadRequest()
     {
         // Arrange
         var request = new ProviderCredentialingController.StartCredentialingRequest(
             LicenseNumber: "LICENSE123456",
             MedicalBoard: "Medical Board of California",
-            ExpiryDate: FixedPastDate,
+            ExpiryDate: default(DateOnly),
             FirstName: "John",
             LastName: "Doe",
             Email: "john.doe@example.com",
@@ -83,7 +83,7 @@ public class ProviderCredentialingControllerTests
         result.Should().BeOfType<BadRequestObjectResult>();
         var badRequestResult = result as BadRequestObjectResult;
         badRequestResult.Should().NotBeNull();
-        badRequestResult!.Value.Should().Be("License expiry date must be in the future");
+        badRequestResult!.Value.Should().Be("Expiry date cannot be default");
     }
     #endregion
 

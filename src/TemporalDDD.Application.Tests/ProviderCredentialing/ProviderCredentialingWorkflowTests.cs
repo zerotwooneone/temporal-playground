@@ -4,7 +4,7 @@ namespace TemporalDDD.Application.Tests.ProviderCredentialing;
 
 public class ProviderCredentialingWorkflowTests
 {
-    private static readonly DateTimeOffset FixedExpiryDate = new DateTimeOffset(2027, 1, 1, 0, 0, 0, TimeSpan.Zero);
+    private static readonly DateOnly FixedExpiryDate = new DateOnly(2027, 1, 1);
 
     #region CredentialingInput Tests
     [Fact]

@@ -36,7 +36,8 @@ public class ComplianceActivities : IComplianceActivities
 
         var providerIdVo = ProviderId.New(); // Simulated provider ID
         var medicalBoardVo = MedicalBoard.Create("Default").Value!;
-        var licenseExpiryDateVo = LicenseExpiryDate.Create(DateTimeOffset.UtcNow.AddYears(2), _timeProvider).Value!;
+        var futureDate = _timeProvider.LocalToday.AddYears(2);
+        var licenseExpiryDateVo = LicenseExpiryDate.Create(futureDate).Value!;
         
         var evaluation = CredentialEvaluation.Create(providerIdVo, CredentialEvaluationPublicId.New(), licenseNumber, medicalBoardVo, licenseExpiryDateVo);
         

@@ -1,23 +1,20 @@
 using TemporalDDD.Domain.ProviderCredentialing.ValueObjects;
-using TemporalDDD.Domain.SharedKernel;
-using TemporalDDD.Domain.Testing;
 
 namespace TemporalDDD.Domain.Tests.ProviderCredentialing.ValueObjects;
 
 public class LicenseExpiryDateTests
 {
-    private static readonly DateTimeOffset FixedCurrentDate = new DateTimeOffset(2026, 1, 1, 0, 0, 0, TimeSpan.Zero);
+    private static readonly DateOnly FixedCurrentDate = new DateOnly(2026, 1, 1);
 
     #region Create Tests
     [Fact]
-    public void Create_WhenDateIsInFuture_ReturnsSuccess()
+    public void Create_WhenDateIsValid_ReturnsSuccess()
     {
         // Arrange
-        var timeProvider = new FixedTimeProvider(FixedCurrentDate);
-        var futureDate = new DateTimeOffset(2027, 1, 1, 0, 0, 0, TimeSpan.Zero);
+        var futureDate = new DateOnly(2027, 1, 1);
 
         // Act
-        var result = LicenseExpiryDate.Create(futureDate, timeProvider);
+        var result = LicenseExpiryDate.Create(futureDate);
 
         // Assert
         result.IsSuccess.Should().BeTrue();
@@ -26,33 +23,17 @@ public class LicenseExpiryDateTests
     }
 
     [Fact]
-    public void Create_WhenDateIsInPast_ReturnsFailure()
+    public void Create_WhenDateIsDefault_ReturnsFailure()
     {
         // Arrange
-        var timeProvider = new FixedTimeProvider(FixedCurrentDate);
-        var pastDate = new DateTimeOffset(2025, 1, 1, 0, 0, 0, TimeSpan.Zero);
+        var defaultDate = default(DateOnly);
 
         // Act
-        var result = LicenseExpiryDate.Create(pastDate, timeProvider);
+        var result = LicenseExpiryDate.Create(defaultDate);
 
         // Assert
         result.IsFailure.Should().BeTrue();
-        result.Error.Should().Be("License expiry date must be in the future");
-    }
-
-    [Fact]
-    public void Create_WhenDateIsCurrent_ReturnsFailure()
-    {
-        // Arrange
-        var timeProvider = new FixedTimeProvider(FixedCurrentDate);
-        var currentDate = FixedCurrentDate;
-
-        // Act
-        var result = LicenseExpiryDate.Create(currentDate, timeProvider);
-
-        // Assert
-        result.IsFailure.Should().BeTrue();
-        result.Error.Should().Be("License expiry date must be in the future");
+        result.Error.Should().Be("Expiry date cannot be default");
     }
     #endregion
 
@@ -61,15 +42,11 @@ public class LicenseExpiryDateTests
     public void IsExpired_WhenExpiryDateIsInPast_ReturnsTrue()
     {
         // Arrange
-        // Create with a time provider where the date is in the future
-        var creationTimeProvider = new FixedTimeProvider(new DateTimeOffset(2024, 1, 1, 0, 0, 0, TimeSpan.Zero));
-        var expiryDate = LicenseExpiryDate.Create(new DateTimeOffset(2025, 1, 1, 0, 0, 0, TimeSpan.Zero), creationTimeProvider).Value!;
-        
-        // Check with a time provider where the date is in the past
-        var checkTimeProvider = new FixedTimeProvider(FixedCurrentDate);
+        var expiryDate = LicenseExpiryDate.Create(new DateOnly(2025, 1, 1)).Value!;
+        var today = FixedCurrentDate;
 
         // Act
-        var isExpired = expiryDate.IsExpired(checkTimeProvider.UtcNow);
+        var isExpired = expiryDate.IsExpired(today);
 
         // Assert
         isExpired.Should().BeTrue();
@@ -79,11 +56,11 @@ public class LicenseExpiryDateTests
     public void IsExpired_WhenExpiryDateIsInFuture_ReturnsFalse()
     {
         // Arrange
-        var timeProvider = new FixedTimeProvider(FixedCurrentDate);
-        var expiryDate = LicenseExpiryDate.Create(new DateTimeOffset(2027, 1, 1, 0, 0, 0, TimeSpan.Zero), timeProvider).Value!;
+        var expiryDate = LicenseExpiryDate.Create(new DateOnly(2027, 1, 1)).Value!;
+        var today = FixedCurrentDate;
 
         // Act
-        var isExpired = expiryDate.IsExpired(timeProvider.UtcNow);
+        var isExpired = expiryDate.IsExpired(today);
 
         // Assert
         isExpired.Should().BeFalse();
@@ -95,11 +72,11 @@ public class LicenseExpiryDateTests
     public void DaysUntilExpiry_WhenDateIsInFuture_ReturnsCorrectDays()
     {
         // Arrange
-        var timeProvider = new FixedTimeProvider(FixedCurrentDate);
-        var expiryDate = LicenseExpiryDate.Create(new DateTimeOffset(2026, 1, 11, 0, 0, 0, TimeSpan.Zero), timeProvider).Value!;
+        var expiryDate = LicenseExpiryDate.Create(new DateOnly(2026, 1, 11)).Value!;
+        var today = FixedCurrentDate;
 
         // Act
-        var daysUntilExpiry = expiryDate.DaysUntilExpiry(timeProvider.UtcNow);
+        var daysUntilExpiry = expiryDate.DaysUntilExpiry(today);
 
         // Assert
         daysUntilExpiry.Should().Be(10);
@@ -109,18 +86,44 @@ public class LicenseExpiryDateTests
     public void DaysUntilExpiry_WhenDateIsInPast_ReturnsZero()
     {
         // Arrange
-        // Create with a time provider where the date is in the future
-        var creationTimeProvider = new FixedTimeProvider(new DateTimeOffset(2024, 1, 1, 0, 0, 0, TimeSpan.Zero));
-        var expiryDate = LicenseExpiryDate.Create(new DateTimeOffset(2025, 1, 1, 0, 0, 0, TimeSpan.Zero), creationTimeProvider).Value!;
-        
-        // Check with a time provider where the date is in the past
-        var checkTimeProvider = new FixedTimeProvider(FixedCurrentDate);
+        var expiryDate = LicenseExpiryDate.Create(new DateOnly(2025, 1, 1)).Value!;
+        var today = FixedCurrentDate;
 
         // Act
-        var daysUntilExpiry = expiryDate.DaysUntilExpiry(checkTimeProvider.UtcNow);
+        var daysUntilExpiry = expiryDate.DaysUntilExpiry(today);
 
         // Assert
         daysUntilExpiry.Should().Be(0);
+    }
+    #endregion
+
+    #region DaysSinceExpiry Tests
+    [Fact]
+    public void DaysSinceExpiry_WhenDateIsInPast_ReturnsCorrectDays()
+    {
+        // Arrange
+        var expiryDate = LicenseExpiryDate.Create(new DateOnly(2025, 1, 1)).Value!;
+        var today = FixedCurrentDate;
+
+        // Act
+        var daysSinceExpiry = expiryDate.DaysSinceExpiry(today);
+
+        // Assert
+        daysSinceExpiry.Should().Be(365); // 2025 is not a leap year
+    }
+
+    [Fact]
+    public void DaysSinceExpiry_WhenDateIsInFuture_ReturnsZero()
+    {
+        // Arrange
+        var expiryDate = LicenseExpiryDate.Create(new DateOnly(2027, 1, 1)).Value!;
+        var today = FixedCurrentDate;
+
+        // Act
+        var daysSinceExpiry = expiryDate.DaysSinceExpiry(today);
+
+        // Assert
+        daysSinceExpiry.Should().Be(0);
     }
     #endregion
 }
