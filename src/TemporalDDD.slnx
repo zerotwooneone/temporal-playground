@@ -3,18 +3,24 @@
     <Project Path="TemporalDDD.Analyzers/TemporalDDD.Analyzers.csproj" />
   </Folder>
   <Folder Name="/01 - Domain/">
+    <Project Path="TemporalDDD.Domain.Tests/TemporalDDD.Domain.Tests.csproj" />
     <Project Path="TemporalDDD.Domain/TemporalDDD.Domain.csproj" />
   </Folder>
   <Folder Name="/02 - Application/">
+    <Project Path="TemporalDDD.Application.Tests/TemporalDDD.Application.Tests.csproj" />
     <Project Path="TemporalDDD.Application/TemporalDDD.Application.csproj" />
+    <Project Path="TemporalDDD.Application.IntegrationTests/TemporalDDD.Application.IntegrationTests.csproj" />
   </Folder>
   <Folder Name="/03 - Infrastructure/">
+    <Project Path="TemporalDDD.Infrastructure.Tests/TemporalDDD.Infrastructure.Tests.csproj" />
     <Project Path="TemporalDDD.Infrastructure/TemporalDDD.Infrastructure.csproj" />
   </Folder>
   <Folder Name="/04 - Api/">
+    <Project Path="TemporalDDD.Api.Tests/TemporalDDD.Api.Tests.csproj" />
     <Project Path="TemporalDDD.Api/TemporalDDD.Api.csproj" />
   </Folder>
   <Folder Name="/04 - Web Ui/">
+    <Project Path="TemporalDDD.UI.Tests/TemporalDDD.UI.Tests.csproj" />
     <Project Path="TemporalDDD.UI/TemporalDDD.UI.csproj" />
   </Folder>
   <Folder Name="/04 - Worker/">

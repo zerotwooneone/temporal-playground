@@ -2,7 +2,6 @@ using TemporalDDD.Application.ProviderCredentialing;
 using Temporalio.Activities;
 using TemporalDDD.Application.ProviderOnboarding;
 using TemporalDDD.Domain.ProviderCredentialing;
-using TemporalDDD.Domain.ProviderCredentialing.ValueObjects;
 using TemporalDDD.Domain.SharedKernel;
 
 namespace TemporalDDD.Infrastructure.ProviderOnboarding;
@@ -10,10 +9,12 @@ namespace TemporalDDD.Infrastructure.ProviderOnboarding;
 public class ProviderActivities : IProviderActivities
 {
     private readonly IProviderProfileRepository _providerProfileRepository;
+    private readonly ITimeProvider _timeProvider;
 
-    public ProviderActivities(IProviderProfileRepository providerProfileRepository)
+    public ProviderActivities(IProviderProfileRepository providerProfileRepository, ITimeProvider timeProvider)
     {
         _providerProfileRepository = providerProfileRepository;
+        _timeProvider = timeProvider;
     }
 
     [Activity]
@@ -40,7 +41,7 @@ public class ProviderActivities : IProviderActivities
         
         if (status == EvaluationStatus.Approved)
         {
-            providerProfile.Activate();
+            providerProfile.Activate(_timeProvider.UtcNow);
             await _providerProfileRepository.SaveAsync(providerProfile);
         }
     }

@@ -28,19 +28,19 @@ public class FlightBookingRepository : IFlightBookingRepository
 
     public async Task SaveAsync(FlightBooking aggregate, CancellationToken cancellationToken = default)
     {
-        var dbo = MapToDbo(aggregate);
         var idString = aggregate.Id.ToString();
         var existing = await _dbContext.FlightBookings
-            .AsNoTracking()
             .FirstOrDefaultAsync(f => f.Id == idString, cancellationToken);
 
         if (existing == null)
         {
-            _dbContext.FlightBookings.Add(dbo);
+            existing = new FlightBookingDbo();
+            MapToDbo(aggregate, existing);
+            _dbContext.FlightBookings.Add(existing);
         }
         else
         {
-            _dbContext.FlightBookings.Update(dbo);
+            MapToDbo(aggregate, existing);
         }
 
         await _dbContext.SaveChangesAsync(cancellationToken);
@@ -78,20 +78,17 @@ public class FlightBookingRepository : IFlightBookingRepository
         );
     }
 
-    private FlightBookingDbo MapToDbo(FlightBooking booking)
+    private void MapToDbo(FlightBooking booking, FlightBookingDbo dbo)
     {
-        return new FlightBookingDbo
-        {
-            Id = booking.Id.ToString(),
-            PublicId = booking.PublicId?.ToString(),
-            FlightNumber = booking.FlightNumber.Value,
-            Origin = booking.Origin.Value,
-            Destination = booking.Destination.Value,
-            DepartureTime = booking.DepartureTime.Value.ToUnixTimeMilliseconds(),
-            CostAmount = booking.Cost.Amount.ToString(),
-            CostCurrency = booking.Cost.Currency,
-            Status = booking.Status.Value,
-            BookedAt = booking.BookedAt.ToUnixTimeMilliseconds()
-        };
+        dbo.Id = booking.Id.ToString();
+        dbo.PublicId = booking.PublicId?.ToString();
+        dbo.FlightNumber = booking.FlightNumber.Value;
+        dbo.Origin = booking.Origin.Value;
+        dbo.Destination = booking.Destination.Value;
+        dbo.DepartureTime = booking.DepartureTime.Value.ToUnixTimeMilliseconds();
+        dbo.CostAmount = booking.Cost.Amount.ToString();
+        dbo.CostCurrency = booking.Cost.Currency;
+        dbo.Status = booking.Status.Value;
+        dbo.BookedAt = booking.BookedAt.ToUnixTimeMilliseconds();
     }
 }

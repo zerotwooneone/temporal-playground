@@ -40,25 +40,21 @@ public class ProviderProfileRepository : IProviderProfileRepository
 
     public async Task SaveAsync(ProviderProfile aggregate, CancellationToken cancellationToken = default)
     {
-        var dbo = MapToDbo(aggregate);
         var idString = aggregate.Id.ToString();
-
         var existing = await _dbContext.ProviderProfiles
-            .AsNoTracking()
             .FirstOrDefaultAsync(p => p.Id == idString, cancellationToken);
 
         if (existing == null)
         {
-            _dbContext.ProviderProfiles.Add(dbo);
+            existing = new ProviderProfileDbo();
+            MapToDbo(aggregate, existing);
+            _dbContext.ProviderProfiles.Add(existing);
         }
         else
         {
-            // Preserve the original PublicId to avoid unique constraint violations
-            dbo.PublicId = existing.PublicId;
-            
-            var entry = _dbContext.ProviderProfiles.Update(dbo);
             // Tell EF Core what the original version was for optimistic concurrency control
-            entry.OriginalValues[nameof(dbo.Version)] = existing.Version;
+            _dbContext.Entry(existing).OriginalValues[nameof(existing.Version)] = aggregate.Version.Value;
+            MapToDbo(aggregate, existing, existing.PublicId);
         }
 
         await _dbContext.SaveChangesAsync(cancellationToken);
@@ -95,21 +91,18 @@ public class ProviderProfileRepository : IProviderProfileRepository
         );
     }
 
-    private ProviderProfileDbo MapToDbo(ProviderProfile profile)
+    private void MapToDbo(ProviderProfile profile, ProviderProfileDbo dbo, string? existingPublicId = null)
     {
-        return new ProviderProfileDbo
-        {
-            Id = profile.Id.ToString(),
-            PublicId = profile.PublicId?.ToString(),
-            ProviderId = profile.ProviderId.ToString(),
-            FirstName = profile.FirstName.Value,
-            LastName = profile.LastName.Value,
-            Email = profile.Email.Value,
-            Specialty = profile.Specialty.Value,
-            IsActive = profile.IsActive,
-            ActivatedAt = profile.ActivatedAt?.ToUnixTimeMilliseconds(),
-            CreatedAt = profile.CreatedAt.ToUnixTimeMilliseconds(),
-            Version = profile.Version.Value
-        };
+        dbo.Id = profile.Id.ToString();
+        dbo.PublicId = existingPublicId ?? profile.PublicId?.ToString();
+        dbo.ProviderId = profile.ProviderId.ToString();
+        dbo.FirstName = profile.FirstName.Value;
+        dbo.LastName = profile.LastName.Value;
+        dbo.Email = profile.Email.Value;
+        dbo.Specialty = profile.Specialty.Value;
+        dbo.IsActive = profile.IsActive;
+        dbo.ActivatedAt = profile.ActivatedAt?.ToUnixTimeMilliseconds();
+        dbo.CreatedAt = profile.CreatedAt.ToUnixTimeMilliseconds();
+        dbo.Version = profile.Version.Value;
     }
 }

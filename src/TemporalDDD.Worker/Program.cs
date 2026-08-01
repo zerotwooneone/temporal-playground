@@ -19,6 +19,7 @@ var builder = Host.CreateApplicationBuilder(args);
 var localAppData = Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData);
 var dbPath = Path.Combine(localAppData, "TemporalDDD", "temporal_playground.sqlite");
 builder.Services.AddDatabase($"Data Source={dbPath}");
+builder.Services.AddTimeProvider();
 
 // Add Database Initialization Hosted Service
 builder.Services.AddHostedService<DatabaseInitializationService>();

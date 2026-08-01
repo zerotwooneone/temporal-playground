@@ -11,11 +11,13 @@ public class TimesheetProcessingActivities : ITimesheetProcessingActivities
 {
     private readonly ITimesheetRepository _timesheetRepository;
     private readonly ChaosHttpClient _chaosHttpClient;
+    private readonly ITimeProvider _timeProvider;
 
-    public TimesheetProcessingActivities(ITimesheetRepository timesheetRepository, ChaosHttpClient chaosHttpClient)
+    public TimesheetProcessingActivities(ITimesheetRepository timesheetRepository, ChaosHttpClient chaosHttpClient, ITimeProvider timeProvider)
     {
         _timesheetRepository = timesheetRepository;
         _chaosHttpClient = chaosHttpClient;
+        _timeProvider = timeProvider;
     }
 
     [Activity]
@@ -42,7 +44,8 @@ public class TimesheetProcessingActivities : ITimesheetProcessingActivities
                 providerId: providerIdResult,
                 period: period,
                 totalHours: totalHours,
-                hourlyRate: hourlyRate
+                hourlyRate: hourlyRate,
+                submittedAt: _timeProvider.UtcNow
             );
         }
 

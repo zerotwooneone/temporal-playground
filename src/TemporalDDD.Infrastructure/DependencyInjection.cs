@@ -1,19 +1,18 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Rebus.Config;
-using Rebus.Routing.TypeBased;
-using Rebus.Serialization.Json;
-using Rebus.ServiceProvider;
 using TemporalDDD.Application.Messaging;
 using TemporalDDD.Application.PlacementMatching;
 using TemporalDDD.Application.ProviderCredentialing;
 using TemporalDDD.Application.TimesheetProcessing;
 using TemporalDDD.Domain.PlacementMatching;
 using TemporalDDD.Domain.ProviderCredentialing;
+using TemporalDDD.Domain.SharedKernel;
 using TemporalDDD.Domain.TimesheetProcessing;
 using TemporalDDD.Domain.TravelLogistics;
 using TemporalDDD.Infrastructure.Messaging;
 using TemporalDDD.Infrastructure.Persistence;
+using TemporalDDD.Infrastructure.SharedKernel;
 using TemporalDDD.Infrastructure.Testing;
 using TemporalDDD.Infrastructure.ProviderCredentialing;
 using TemporalDDD.Infrastructure.PlacementMatching;
@@ -24,10 +23,14 @@ namespace TemporalDDD.Infrastructure;
 
 public static class DependencyInjection
 {
+    public static IServiceCollection AddTimeProvider(this IServiceCollection services)
+    {
+        services.AddSingleton<ITimeProvider, SystemTimeProvider>();
+        return services;
+    }
+
     public static IServiceCollection AddDatabase(this IServiceCollection services, string connectionString)
     {
-
-
         services.AddDbContext<ApplicationDbContext>(options =>
             options.UseSqlite(connectionString));
 

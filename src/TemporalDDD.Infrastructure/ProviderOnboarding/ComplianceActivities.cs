@@ -10,10 +10,12 @@ namespace TemporalDDD.Infrastructure.ProviderOnboarding;
 public class ComplianceActivities : IComplianceActivities
 {
     private readonly ChaosHttpClient _chaosHttpClient;
+    private readonly ITimeProvider _timeProvider;
 
-    public ComplianceActivities(ChaosHttpClient chaosHttpClient)
+    public ComplianceActivities(ChaosHttpClient chaosHttpClient, ITimeProvider timeProvider)
     {
         _chaosHttpClient = chaosHttpClient;
+        _timeProvider = timeProvider;
     }
 
     [Activity]
@@ -34,7 +36,7 @@ public class ComplianceActivities : IComplianceActivities
 
         var providerIdVo = ProviderId.New(); // Simulated provider ID
         var medicalBoardVo = MedicalBoard.Create("Default").Value!;
-        var licenseExpiryDateVo = LicenseExpiryDate.Create(DateTimeOffset.UtcNow.AddYears(2)).Value!;
+        var licenseExpiryDateVo = LicenseExpiryDate.Create(DateTimeOffset.UtcNow.AddYears(2), _timeProvider).Value!;
         
         var evaluation = CredentialEvaluation.Create(providerIdVo, CredentialEvaluationPublicId.New(), licenseNumber, medicalBoardVo, licenseExpiryDateVo);
         

@@ -42,7 +42,7 @@ public sealed class Timesheet
     }
 
     // Factory for creating new timesheet (ID is client-generated)
-    public static Timesheet Create(ProviderId providerId, DateRange period, Hours totalHours, HourlyRate hourlyRate)
+    public static Timesheet Create(ProviderId providerId, DateRange period, Hours totalHours, HourlyRate hourlyRate, DateTimeOffset submittedAt)
     {
         return new Timesheet
         {
@@ -54,7 +54,7 @@ public sealed class Timesheet
             HourlyRate = hourlyRate,
             GrossPay = hourlyRate.CalculatePay(totalHours),
             Status = TimesheetStatus.Submitted,
-            SubmittedAt = DateTimeOffset.UtcNow
+            SubmittedAt = submittedAt
         };
     }
 
@@ -124,13 +124,13 @@ public sealed class Timesheet
         NetPay = GrossPay - TaxAmount;
     }
 
-    public void MarkAsProcessed(PaymentReference paymentReference)
+    public void MarkAsProcessed(PaymentReference paymentReference, DateTimeOffset processedAt)
     {
         if (Status != TimesheetStatus.Approved)
             throw new InvalidOperationException($"Cannot process timesheet in status: {Status}");
 
         Status = TimesheetStatus.Processed;
-        ProcessedAt = DateTimeOffset.UtcNow;
+        ProcessedAt = processedAt;
         PaymentReference = paymentReference;
     }
 }

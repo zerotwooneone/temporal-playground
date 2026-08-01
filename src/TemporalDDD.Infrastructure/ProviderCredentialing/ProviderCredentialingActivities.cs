@@ -15,17 +15,20 @@ public class ProviderCredentialingActivities : IProviderCredentialingActivities
     private readonly ChaosHttpClient _chaosHttpClient;
     private readonly ICredentialEvaluationEventMapper _eventMapper;
     private readonly IMessagePublisher _messagePublisher;
+    private readonly ITimeProvider _timeProvider;
 
     public ProviderCredentialingActivities(
         IServiceScopeFactory scopeFactory,
         ChaosHttpClient chaosHttpClient,
         ICredentialEvaluationEventMapper eventMapper,
-        IMessagePublisher messagePublisher)
+        IMessagePublisher messagePublisher,
+        ITimeProvider timeProvider)
     {
         _scopeFactory = scopeFactory;
         _chaosHttpClient = chaosHttpClient;
         _eventMapper = eventMapper;
         _messagePublisher = messagePublisher;
+        _timeProvider = timeProvider;
     }
 
     [Activity]
@@ -51,7 +54,7 @@ public class ProviderCredentialingActivities : IProviderCredentialingActivities
 
         // Simulated response - in real implementation, this would call actual medical board API
         var isValid = licenseNumber.Value.Length >= 8;
-        var expiryDateResult = LicenseExpiryDate.Create(DateTimeOffset.UtcNow.AddYears(2));
+        var expiryDateResult = LicenseExpiryDate.Create(DateTimeOffset.UtcNow.AddYears(2), _timeProvider);
         var providerIdResult = ProviderId.New();
 
         return new MedicalBoardLicenseInfo(
@@ -87,7 +90,7 @@ public class ProviderCredentialingActivities : IProviderCredentialingActivities
         if (medicalBoardResult.IsFailure)
             throw new InvalidOperationException($"Internal Corruption: Invalid MedicalBoard. {medicalBoardResult.Error}");
         
-        var expiryDateResult = LicenseExpiryDate.Create(input.ExpiryDate);
+        var expiryDateResult = LicenseExpiryDate.Create(input.ExpiryDate, _timeProvider);
         if (expiryDateResult.IsFailure)
             throw new InvalidOperationException($"Internal Corruption: Invalid ExpiryDate. {expiryDateResult.Error}");
         
@@ -115,7 +118,7 @@ public class ProviderCredentialingActivities : IProviderCredentialingActivities
         // Create domain entity using factory
         var licenseNumberForEntity = LicenseNumber.Create(licenseInfo.LicenseNumber).Value!;
         var medicalBoardForEntity = MedicalBoard.Create(licenseInfo.MedicalBoard).Value!;
-        var expiryDateForEntity = LicenseExpiryDate.Create(licenseInfo.ExpiryDate).Value!;
+        var expiryDateForEntity = LicenseExpiryDate.Create(licenseInfo.ExpiryDate, _timeProvider).Value!;
 
         var evaluation = Domain.ProviderCredentialing.CredentialEvaluation.Create(
             providerId: providerId,
@@ -254,7 +257,8 @@ public class ProviderCredentialingActivities : IProviderCredentialingActivities
             firstName: firstNameResult.Value,
             lastName: lastNameResult.Value,
             email: emailResult.Value,
-            specialty: specialtyResult.Value
+            specialty: specialtyResult.Value,
+            createdAt: _timeProvider.UtcNow
         );
 
         await providerProfileRepository.SaveAsync(newProfile);
@@ -282,7 +286,7 @@ public class ProviderCredentialingActivities : IProviderCredentialingActivities
             throw new InvalidOperationException($"Provider profile {providerProfileId} not found");
         }
 
-        providerProfile.Activate();
+        providerProfile.Activate(_timeProvider.UtcNow);
         await providerProfileRepository.SaveAsync(providerProfile);
         
         Console.WriteLine($"[ProviderActivation] Provider {providerProfileId} activated successfully");

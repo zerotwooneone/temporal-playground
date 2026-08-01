@@ -11,17 +11,17 @@ public sealed record LicenseExpiryDate
         Value = value;
     }
 
-    public static Result<LicenseExpiryDate> Create(DateTimeOffset value)
+    public static Result<LicenseExpiryDate> Create(DateTimeOffset value, ITimeProvider timeProvider)
     {
-        if (value <= DateTimeOffset.UtcNow)
+        if (value <= timeProvider.UtcNow)
             return Result<LicenseExpiryDate>.Failure("License expiry date must be in the future");
 
         return Result<LicenseExpiryDate>.Success(new LicenseExpiryDate(value));
     }
 
-    public bool IsExpired() => Value <= DateTimeOffset.UtcNow;
+    public bool IsExpired(DateTimeOffset now) => Value <= now;
 
-    public int DaysUntilExpiry() => Math.Max(0, (Value - DateTimeOffset.UtcNow).Days);
+    public int DaysUntilExpiry(DateTimeOffset now) => Math.Max(0, (Value - now).Days);
 
     public static implicit operator DateTimeOffset(LicenseExpiryDate expiryDate) => expiryDate.Value;
 

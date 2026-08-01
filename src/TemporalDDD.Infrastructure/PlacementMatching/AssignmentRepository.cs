@@ -28,21 +28,21 @@ public class AssignmentRepository : IAssignmentRepository
 
     public async Task SaveAsync(Assignment aggregate, CancellationToken cancellationToken = default)
     {
-        var dbo = MapToDbo(aggregate);
         var idString = aggregate.Id.ToString();
         var existing = await _dbContext.Assignments
-            .AsNoTracking()
             .FirstOrDefaultAsync(a => a.Id == idString, cancellationToken);
 
         if (existing == null)
         {
-            _dbContext.Assignments.Add(dbo);
+            existing = new AssignmentDbo();
+            MapToDbo(aggregate, existing);
+            _dbContext.Assignments.Add(existing);
         }
         else
         {
-            var entry = _dbContext.Assignments.Update(dbo);
             // Tell EF Core what the original version was for optimistic concurrency control
-            entry.OriginalValues[nameof(dbo.Version)] = existing.Version;
+            _dbContext.Entry(existing).OriginalValues[nameof(existing.Version)] = aggregate.Version.Value;
+            MapToDbo(aggregate, existing);
         }
 
         await _dbContext.SaveChangesAsync(cancellationToken);
@@ -82,20 +82,17 @@ public class AssignmentRepository : IAssignmentRepository
         );
     }
 
-    private AssignmentDbo MapToDbo(Assignment assignment)
+    private void MapToDbo(Assignment assignment, AssignmentDbo dbo)
     {
-        return new AssignmentDbo
-        {
-            Id = assignment.Id.ToString(),
-            PublicId = assignment.PublicId?.ToString(),
-            ProviderId = assignment.ProviderId.ToString(),
-            FacilityId = assignment.FacilityId.ToString(),
-            PositionId = assignment.PositionId.ToString(),
-            MatchScore = assignment.MatchScore.Value,
-            Status = assignment.Status.Value,
-            ProposedAt = assignment.ProposedAt.ToUnixTimeMilliseconds(),
-            AcceptedAt = assignment.AcceptedAt?.ToUnixTimeMilliseconds(),
-            Version = assignment.Version.Value
-        };
+        dbo.Id = assignment.Id.ToString();
+        dbo.PublicId = assignment.PublicId?.ToString();
+        dbo.ProviderId = assignment.ProviderId.ToString();
+        dbo.FacilityId = assignment.FacilityId.ToString();
+        dbo.PositionId = assignment.PositionId.ToString();
+        dbo.MatchScore = assignment.MatchScore.Value;
+        dbo.Status = assignment.Status.Value;
+        dbo.ProposedAt = assignment.ProposedAt.ToUnixTimeMilliseconds();
+        dbo.AcceptedAt = assignment.AcceptedAt?.ToUnixTimeMilliseconds();
+        dbo.Version = assignment.Version.Value;
     }
 }

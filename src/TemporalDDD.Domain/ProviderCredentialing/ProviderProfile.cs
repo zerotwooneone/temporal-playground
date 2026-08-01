@@ -37,7 +37,7 @@ public sealed class ProviderProfile
     }
 
     // Factory for creating new profile (ID is client-generated)
-    public static ProviderProfile Create(ProviderId providerId, ProviderPublicId publicId, PersonName firstName, PersonName lastName, Email email, Specialty specialty)
+    public static ProviderProfile Create(ProviderId providerId, ProviderPublicId publicId, PersonName firstName, PersonName lastName, Email email, Specialty specialty, DateTimeOffset createdAt)
     {
         return new ProviderProfile
         {
@@ -49,20 +49,20 @@ public sealed class ProviderProfile
             Email = email,
             Specialty = specialty,
             IsActive = false,
-            CreatedAt = DateTimeOffset.UtcNow,
+            CreatedAt = createdAt,
             Version = AggregateVersion.Initial()
         };
     }
 
     
 
-    public void Activate()
+    public void Activate(DateTimeOffset activatedAt)
     {
         if (IsActive)
             throw new InvalidOperationException("Provider profile is already active");
 
         IsActive = true;
-        ActivatedAt = DateTimeOffset.UtcNow;
+        ActivatedAt = activatedAt;
         Version = Version.Increment();
     }
 

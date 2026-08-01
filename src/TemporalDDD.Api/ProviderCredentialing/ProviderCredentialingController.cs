@@ -13,11 +13,13 @@ public class ProviderCredentialingController : ControllerBase
 {
     private readonly ITemporalClient _temporalClient;
     private readonly IPendingManualReviewsQuery _pendingReviewsQuery;
+    private readonly ITimeProvider _timeProvider;
 
-    public ProviderCredentialingController(ITemporalClient temporalClient, IPendingManualReviewsQuery pendingReviewsQuery)
+    public ProviderCredentialingController(ITemporalClient temporalClient, IPendingManualReviewsQuery pendingReviewsQuery, ITimeProvider timeProvider)
     {
         _temporalClient = temporalClient;
         _pendingReviewsQuery = pendingReviewsQuery;
+        _timeProvider = timeProvider;
     }
 
     [HttpPost]
@@ -32,7 +34,7 @@ public class ProviderCredentialingController : ControllerBase
         var medicalBoardResult = MedicalBoard.Create(request.MedicalBoard);
         if (medicalBoardResult.IsFailure) return BadRequest(medicalBoardResult.Error);
 
-        var expiryDateResult = LicenseExpiryDate.Create(request.ExpiryDate);
+        var expiryDateResult = LicenseExpiryDate.Create(request.ExpiryDate, _timeProvider);
         if (expiryDateResult.IsFailure) return BadRequest(expiryDateResult.Error);
         
         // Generate ProviderId, ProviderPublicId, and EvaluationPublicId server-side

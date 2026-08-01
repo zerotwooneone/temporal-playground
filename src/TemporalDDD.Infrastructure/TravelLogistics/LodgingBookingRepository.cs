@@ -28,19 +28,19 @@ public class LodgingBookingRepository : ILodgingBookingRepository
 
     public async Task SaveAsync(LodgingBooking aggregate, CancellationToken cancellationToken = default)
     {
-        var dbo = MapToDbo(aggregate);
         var idString = aggregate.Id.ToString();
         var existing = await _dbContext.LodgingBookings
-            .AsNoTracking()
             .FirstOrDefaultAsync(l => l.Id == idString, cancellationToken);
 
         if (existing == null)
         {
-            _dbContext.LodgingBookings.Add(dbo);
+            existing = new LodgingBookingDbo();
+            MapToDbo(aggregate, existing);
+            _dbContext.LodgingBookings.Add(existing);
         }
         else
         {
-            _dbContext.LodgingBookings.Update(dbo);
+            MapToDbo(aggregate, existing);
         }
 
         await _dbContext.SaveChangesAsync(cancellationToken);
@@ -78,23 +78,20 @@ public class LodgingBookingRepository : ILodgingBookingRepository
         );
     }
 
-    private LodgingBookingDbo MapToDbo(LodgingBooking booking)
+    private void MapToDbo(LodgingBooking booking, LodgingBookingDbo dbo)
     {
-        return new LodgingBookingDbo
-        {
-            Id = booking.Id.ToString(),
-            PublicId = booking.PublicId?.ToString(),
-            HotelName = booking.HotelName.Value,
-            AddressStreet = booking.Address.Street,
-            AddressCity = booking.Address.City,
-            AddressState = booking.Address.State,
-            AddressZipCode = booking.Address.ZipCode,
-            StayPeriodStartUtc = booking.StayPeriod.Start.ToUnixTimeMilliseconds(),
-            StayPeriodEndUtc = booking.StayPeriod.End.ToUnixTimeMilliseconds(),
-            CostAmount = booking.Cost.Amount.ToString(),
-            CostCurrency = booking.Cost.Currency,
-            Status = booking.Status.Value,
-            BookedAt = booking.BookedAt.ToUnixTimeMilliseconds()
-        };
+        dbo.Id = booking.Id.ToString();
+        dbo.PublicId = booking.PublicId?.ToString();
+        dbo.HotelName = booking.HotelName.Value;
+        dbo.AddressStreet = booking.Address.Street;
+        dbo.AddressCity = booking.Address.City;
+        dbo.AddressState = booking.Address.State;
+        dbo.AddressZipCode = booking.Address.ZipCode;
+        dbo.StayPeriodStartUtc = booking.StayPeriod.Start.ToUnixTimeMilliseconds();
+        dbo.StayPeriodEndUtc = booking.StayPeriod.End.ToUnixTimeMilliseconds();
+        dbo.CostAmount = booking.Cost.Amount.ToString();
+        dbo.CostCurrency = booking.Cost.Currency;
+        dbo.Status = booking.Status.Value;
+        dbo.BookedAt = booking.BookedAt.ToUnixTimeMilliseconds();
     }
 }

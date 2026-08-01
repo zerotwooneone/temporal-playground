@@ -28,19 +28,19 @@ public class TimesheetRepository : ITimesheetRepository
 
     public async Task SaveAsync(Timesheet aggregate, CancellationToken cancellationToken = default)
     {
-        var dbo = MapToDbo(aggregate);
         var idString = aggregate.Id.ToString();
         var existing = await _dbContext.Timesheets
-            .AsNoTracking()
             .FirstOrDefaultAsync(t => t.Id == idString, cancellationToken);
 
         if (existing == null)
         {
-            _dbContext.Timesheets.Add(dbo);
+            existing = new TimesheetDbo();
+            MapToDbo(aggregate, existing);
+            _dbContext.Timesheets.Add(existing);
         }
         else
         {
-            _dbContext.Timesheets.Update(dbo);
+            MapToDbo(aggregate, existing);
         }
 
         await _dbContext.SaveChangesAsync(cancellationToken);
@@ -94,28 +94,25 @@ public class TimesheetRepository : ITimesheetRepository
         );
     }
 
-    private TimesheetDbo MapToDbo(Timesheet timesheet)
+    private void MapToDbo(Timesheet timesheet, TimesheetDbo dbo)
     {
-        return new TimesheetDbo
-        {
-            Id = timesheet.Id.ToString(),
-            PublicId = timesheet.PublicId?.ToString(),
-            ProviderId = timesheet.ProviderId.ToString(),
-            PeriodStartUtc = timesheet.Period.Start.ToUnixTimeMilliseconds(),
-            PeriodEndUtc = timesheet.Period.End.ToUnixTimeMilliseconds(),
-            TotalHours = timesheet.TotalHours.Value,
-            HourlyRate = timesheet.HourlyRate.Value,
-            GrossPayAmount = timesheet.GrossPay.Amount.ToString(),
-            GrossPayCurrency = timesheet.GrossPay.Currency,
-            TaxAmount = timesheet.TaxAmount.Amount.ToString(),
-            TaxCurrency = timesheet.TaxAmount.Currency,
-            NetPayAmount = timesheet.NetPay.Amount.ToString(),
-            NetPayCurrency = timesheet.NetPay.Currency,
-            Status = timesheet.Status.Value,
-            SubmittedAt = timesheet.SubmittedAt.ToUnixTimeMilliseconds(),
-            ProcessedAt = timesheet.ProcessedAt?.ToUnixTimeMilliseconds(),
-            PaymentReference = timesheet.PaymentReference?.Value,
-            RejectionReason = timesheet.RejectionReason
-        };
+        dbo.Id = timesheet.Id.ToString();
+        dbo.PublicId = timesheet.PublicId?.ToString();
+        dbo.ProviderId = timesheet.ProviderId.ToString();
+        dbo.PeriodStartUtc = timesheet.Period.Start.ToUnixTimeMilliseconds();
+        dbo.PeriodEndUtc = timesheet.Period.End.ToUnixTimeMilliseconds();
+        dbo.TotalHours = timesheet.TotalHours.Value;
+        dbo.HourlyRate = timesheet.HourlyRate.Value;
+        dbo.GrossPayAmount = timesheet.GrossPay.Amount.ToString();
+        dbo.GrossPayCurrency = timesheet.GrossPay.Currency;
+        dbo.TaxAmount = timesheet.TaxAmount.Amount.ToString();
+        dbo.TaxCurrency = timesheet.TaxAmount.Currency;
+        dbo.NetPayAmount = timesheet.NetPay.Amount.ToString();
+        dbo.NetPayCurrency = timesheet.NetPay.Currency;
+        dbo.Status = timesheet.Status.Value;
+        dbo.SubmittedAt = timesheet.SubmittedAt.ToUnixTimeMilliseconds();
+        dbo.ProcessedAt = timesheet.ProcessedAt?.ToUnixTimeMilliseconds();
+        dbo.PaymentReference = timesheet.PaymentReference?.Value;
+        dbo.RejectionReason = timesheet.RejectionReason;
     }
 }

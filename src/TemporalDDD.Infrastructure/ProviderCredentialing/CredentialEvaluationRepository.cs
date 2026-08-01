@@ -9,10 +9,12 @@ namespace TemporalDDD.Infrastructure.ProviderCredentialing;
 public class CredentialEvaluationRepository : ICredentialEvaluationRepository
 {
     private readonly ApplicationDbContext _dbContext;
+    private readonly ITimeProvider _timeProvider;
 
-    public CredentialEvaluationRepository(ApplicationDbContext dbContext)
+    public CredentialEvaluationRepository(ApplicationDbContext dbContext, ITimeProvider timeProvider)
     {
         _dbContext = dbContext;
+        _timeProvider = timeProvider;
     }
 
     public async Task<CredentialEvaluation?> GetByIdAsync(CredentialEvaluationId id, CancellationToken cancellationToken = default)
@@ -28,19 +30,19 @@ public class CredentialEvaluationRepository : ICredentialEvaluationRepository
 
     public async Task SaveAsync(CredentialEvaluation aggregate, CancellationToken cancellationToken = default)
     {
-        var dbo = MapToDbo(aggregate);
         var id = aggregate.Id.ToString();
         var existing = await _dbContext.CredentialEvaluations
-            .AsNoTracking()
             .FirstOrDefaultAsync(e => e.Id == id, cancellationToken);
 
         if (existing == null)
         {
-            _dbContext.CredentialEvaluations.Add(dbo);
+            existing = new CredentialEvaluationDbo();
+            MapToDbo(aggregate, existing);
+            _dbContext.CredentialEvaluations.Add(existing);
         }
         else
         {
-            _dbContext.CredentialEvaluations.Update(dbo);
+            MapToDbo(aggregate, existing);
         }
 
         await _dbContext.SaveChangesAsync(cancellationToken);
@@ -51,7 +53,7 @@ public class CredentialEvaluationRepository : ICredentialEvaluationRepository
         var providerId = ProviderId.Create(dbo.ProviderId).Value ?? throw new InvalidOperationException($"Invalid provider ID in database: {dbo.ProviderId}");
         var licenseNumber = LicenseNumber.Create(dbo.LicenseNumber).Value ?? throw new InvalidOperationException($"Invalid license number in database: {dbo.LicenseNumber}");
         var medicalBoard = MedicalBoard.Create(dbo.MedicalBoard).Value ?? throw new InvalidOperationException($"Invalid medical board in database: {dbo.MedicalBoard}");
-        var licenseExpiryDate = LicenseExpiryDate.Create(dbo.LicenseExpiryDate).Value ?? throw new InvalidOperationException($"Invalid license expiry date in database: {dbo.LicenseExpiryDate}");
+        var licenseExpiryDate = LicenseExpiryDate.Create(dbo.LicenseExpiryDate, _timeProvider).Value ?? throw new InvalidOperationException($"Invalid license expiry date in database: {dbo.LicenseExpiryDate}");
         var complianceNotes = ComplianceNotes.Create(dbo.ComplianceNotes).Value ?? throw new InvalidOperationException($"Invalid compliance notes in database: {dbo.ComplianceNotes}");
         var statusResult = EvaluationStatus.FromValue(dbo.Status);
         if (statusResult.IsFailure)
@@ -79,21 +81,18 @@ public class CredentialEvaluationRepository : ICredentialEvaluationRepository
         );
     }
 
-    private CredentialEvaluationDbo MapToDbo(CredentialEvaluation evaluation)
+    private void MapToDbo(CredentialEvaluation evaluation, CredentialEvaluationDbo dbo)
     {
-        return new CredentialEvaluationDbo
-        {
-            Id = evaluation.Id.ToString(),
-            PublicId = evaluation.PublicId?.ToString(),
-            ProviderId = evaluation.ProviderId.ToString(),
-            LicenseNumber = evaluation.LicenseNumber.Value,
-            MedicalBoard = evaluation.MedicalBoard.Value,
-            LicenseExpiryDate = evaluation.LicenseExpiryDate.Value,
-            IsCompliant = evaluation.IsCompliant,
-            ComplianceNotes = evaluation.ComplianceNotes.Value,
-            EvaluatedAt = evaluation.EvaluatedAt.ToUnixTimeMilliseconds(),
-            Status = evaluation.Status.Value,
-            WorkflowId = evaluation.WorkflowId
-        };
+        dbo.Id = evaluation.Id.ToString();
+        dbo.PublicId = evaluation.PublicId.ToString();
+        dbo.ProviderId = evaluation.ProviderId.ToString();
+        dbo.LicenseNumber = evaluation.LicenseNumber.Value;
+        dbo.MedicalBoard = evaluation.MedicalBoard.Value;
+        dbo.LicenseExpiryDate = evaluation.LicenseExpiryDate.Value;
+        dbo.IsCompliant = evaluation.IsCompliant;
+        dbo.ComplianceNotes = evaluation.ComplianceNotes.Value;
+        dbo.EvaluatedAt = evaluation.EvaluatedAt.ToUnixTimeMilliseconds();
+        dbo.Status = evaluation.Status.Value;
+        dbo.WorkflowId = evaluation.WorkflowId;
     }
 }
