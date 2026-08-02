@@ -96,7 +96,8 @@ public class ProviderCredentialingWorkflow
                     );
                 }
 
-                throw new ApplicationFailedException("Manual review rejected or not completed");
+                // Exit workflow without activating provider profile
+                return;
             }
             else
             {
