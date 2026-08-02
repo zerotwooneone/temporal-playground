@@ -28,7 +28,8 @@ public class CredentialEventHandler :
         
         if (evaluationPublicId != null)
         {
-            await _hubContext.Clients.Group(evaluationPublicId).SendAsync("ApplicationEvent", context.Event, cancellationToken);
+            var contractEvent = new TemporalDDD.Contracts.ProviderCredentialing.CredentialEvaluationApprovedEvent(evaluationPublicId, context.Event.ComplianceNotes);
+            await _hubContext.Clients.Group(evaluationPublicId).SendAsync("CredentialEvaluationApproved", contractEvent, cancellationToken);
         }
     }
 
@@ -38,7 +39,8 @@ public class CredentialEventHandler :
         
         if (evaluationPublicId != null)
         {
-            await _hubContext.Clients.Group(evaluationPublicId).SendAsync("ApplicationEvent", context.Event, cancellationToken);
+            var contractEvent = new TemporalDDD.Contracts.ProviderCredentialing.CredentialEvaluationCreatedEvent(evaluationPublicId, context.Event.ProviderId, context.Event.TargetStatus);
+            await _hubContext.Clients.Group(evaluationPublicId).SendAsync("CredentialEvaluationCreated", contractEvent, cancellationToken);
         }
     }
 
@@ -48,7 +50,8 @@ public class CredentialEventHandler :
         
         if (evaluationPublicId != null)
         {
-            await _hubContext.Clients.Group(evaluationPublicId).SendAsync("ApplicationEvent", context.Event, cancellationToken);
+            var contractEvent = new TemporalDDD.Contracts.ProviderCredentialing.CredentialEvaluationRejectedEvent(evaluationPublicId, context.Event.ComplianceNotes);
+            await _hubContext.Clients.Group(evaluationPublicId).SendAsync("CredentialEvaluationRejected", contractEvent, cancellationToken);
         }
     }
 
@@ -58,7 +61,8 @@ public class CredentialEventHandler :
         
         if (evaluationPublicId != null)
         {
-            await _hubContext.Clients.Group(evaluationPublicId).SendAsync("ApplicationEvent", context.Event, cancellationToken);
+            var contractEvent = new TemporalDDD.Contracts.ProviderCredentialing.CredentialEvaluationRequiresManualReviewEvent(evaluationPublicId);
+            await _hubContext.Clients.Group(evaluationPublicId).SendAsync("CredentialEvaluationRequiresManualReview", contractEvent, cancellationToken);
         }
     }
 }

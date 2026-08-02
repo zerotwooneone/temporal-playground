@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Mvc;
 using Temporalio.Client;
 using TemporalDDD.Application.ProviderCredentialing;
+using TemporalDDD.Contracts.ProviderCredentialing;
 using TemporalDDD.Domain.ProviderCredentialing;
 using TemporalDDD.Domain.ProviderCredentialing.ValueObjects;
 using TemporalDDD.Domain.SharedKernel;
@@ -13,13 +14,11 @@ public class ProviderCredentialingController : ControllerBase
 {
     private readonly ITemporalClient _temporalClient;
     private readonly IPendingManualReviewsQuery _pendingReviewsQuery;
-    private readonly ITimeProvider _timeProvider;
 
     public ProviderCredentialingController(ITemporalClient temporalClient, IPendingManualReviewsQuery pendingReviewsQuery, ITimeProvider timeProvider)
     {
         _temporalClient = temporalClient;
         _pendingReviewsQuery = pendingReviewsQuery;
-        _timeProvider = timeProvider;
     }
 
     [HttpPost]
@@ -69,7 +68,7 @@ public class ProviderCredentialingController : ControllerBase
                 }
             });
 
-        return Ok(new { WorkflowId = workflowId, ProviderPublicId = providerPublicId.ToString(), EvaluationPublicId = evaluationPublicId.ToString(), Message = "Provider credentialing workflow started" });
+        return Ok(new CredentialingStartResponse(workflowId, providerPublicId.ToString(), evaluationPublicId.ToString(), "Provider credentialing workflow started"));
     }
 
     [HttpGet("pending-reviews")]
@@ -79,10 +78,10 @@ public class ProviderCredentialingController : ControllerBase
         return Ok(pendingReviews);
     }
 
-    [HttpPost("{workflowId}/manual-review")]
-    public async Task<IActionResult> CompleteManualReview(string workflowId, [FromBody] ManualReviewRequest request)
+    [HttpPost("{trackingToken}/manual-review")]
+    public async Task<IActionResult> CompleteManualReview(string trackingToken, [FromBody] ManualReviewRequest request)
     {
-        var handle = _temporalClient.GetWorkflowHandle(workflowId);
+        var handle = _temporalClient.GetWorkflowHandle(trackingToken);
         await handle.SignalAsync(
             (ProviderCredentialingWorkflow wf) => wf.ManualReviewCompletedAsync(request.IsApproved, request.Notes));
 

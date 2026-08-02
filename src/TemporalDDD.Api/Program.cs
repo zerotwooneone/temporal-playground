@@ -1,6 +1,7 @@
 using TemporalDDD.Api;
 using Temporalio.Client;
 using TemporalDDD.Infrastructure;
+using TemporalDDD.Infrastructure.Queries;
 using TemporalDDD.Api.Messaging;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -15,6 +16,7 @@ var localAppData = Environment.GetFolderPath(Environment.SpecialFolder.LocalAppl
 var dbPath = Path.Combine(localAppData, "TemporalDDD", "temporal_playground.sqlite");
 builder.Services.AddDatabase($"Data Source={dbPath}");
 builder.Services.AddTimeProvider();
+builder.Services.AddInfrastructureQueries();
 
 // Add Database Initialization Hosted Service
 builder.Services.AddHostedService<DatabaseInitializationService>();

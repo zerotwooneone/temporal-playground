@@ -1,6 +1,7 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
   <ItemGroup>
+    <ProjectReference Include="..\TemporalDDD.Contracts\TemporalDDD.Contracts.csproj" />
     <ProjectReference Include="..\TemporalDDD.Domain\TemporalDDD.Domain.csproj" />
     <ProjectReference Include="..\TemporalDDD.Analyzers\TemporalDDD.Analyzers.csproj" OutputItemType="Analyzer" ReferenceOutputAssembly="false" />
   </ItemGroup>

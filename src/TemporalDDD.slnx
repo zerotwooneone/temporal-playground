@@ -2,6 +2,9 @@
   <Folder Name="/00 - Source Generator/">
     <Project Path="TemporalDDD.Analyzers/TemporalDDD.Analyzers.csproj" />
   </Folder>
+  <Folder Name="/01 - Contracts/">
+    <Project Path="TemporalDDD.Contracts/TemporalDDD.Contracts.csproj" />
+  </Folder>
   <Folder Name="/01 - Domain/">
     <Project Path="TemporalDDD.Domain.Testing/TemporalDDD.Domain.Testing.csproj" />
     <Project Path="TemporalDDD.Domain.Tests/TemporalDDD.Domain.Tests.csproj" />
@@ -13,6 +16,7 @@
     <Project Path="TemporalDDD.Application.IntegrationTests/TemporalDDD.Application.IntegrationTests.csproj" />
   </Folder>
   <Folder Name="/03 - Infrastructure/">
+    <Project Path="TemporalDDD.Infrastructure.Queries/TemporalDDD.Infrastructure.Queries.csproj" />
     <Project Path="TemporalDDD.Infrastructure.Tests/TemporalDDD.Infrastructure.Tests.csproj" />
     <Project Path="TemporalDDD.Infrastructure/TemporalDDD.Infrastructure.csproj" />
   </Folder>

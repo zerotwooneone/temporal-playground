@@ -92,7 +92,7 @@ public class ProviderCredentialingControllerTests
     public async Task GetPendingReviews_WhenCalled_ReturnsOk()
     {
         // Arrange
-        var reviews = new List<PendingManualReviewDto>();
+        var reviews = new List<Contracts.ProviderCredentialing.PendingManualReviewDto>();
         _mockPendingReviewsQuery
             .Setup(x => x.GetPendingReviewsAsync())
             .ReturnsAsync(reviews);
