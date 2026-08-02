@@ -73,8 +73,6 @@ public static class DependencyInjection
             .Transport(t => t.UseRabbitMq(connectionString, "temporal-ddd-events")))
             ;
         
-        services.AddApplicationEventHandlers();
-
         services.AddSingleton<IMessagePublisher, RebusMessagePublisher>();
 
         return services;
