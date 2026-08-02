@@ -44,6 +44,7 @@ if (app.Environment.IsDevelopment())
 }
 
 app.UseHttpsRedirection();
+await app.SubscribeToApplicationEventsAsync();
 
 app.MapControllers();
 app.MapHub<ApplicationEventHub>("/hubs/applicationevents");
