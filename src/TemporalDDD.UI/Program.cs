@@ -18,9 +18,6 @@ builder.Services.AddHttpClient("TemporalApi", client =>
     client.BaseAddress = new Uri(builder.Configuration["ApiBaseUrl"] ?? "https://localhost:5001");
 }).ConfigurePrimaryHttpMessageHandler(() => httpClientHandler);
 
-// Add HttpClientHandler for SignalR with SSL bypass for development
-builder.Services.AddSingleton<HttpClientHandler>(sp => httpClientHandler);
-
 // Add Persona State Service
 builder.Services.AddScoped<PersonaStateService>();
 
