@@ -34,7 +34,6 @@ public class ProviderCredentialingActivities : IProviderCredentialingActivities
     [Activity]
     public async Task<MedicalBoardLicenseInfo> FetchMedicalBoardLicenseAsync(FetchLicenseInput input)
     {
-        // Convert primitive DTO to Domain types with fail-fast validation
         var licenseNumberResult = LicenseNumber.Create(input.LicenseNumber);
         if (licenseNumberResult.IsFailure)
             throw new InvalidOperationException($"Internal Corruption: Invalid LicenseNumber. {licenseNumberResult.Error}");
@@ -56,14 +55,12 @@ public class ProviderCredentialingActivities : IProviderCredentialingActivities
         var isValid = licenseNumber.Value.Length >= 8;
         var futureDate = _timeProvider.LocalToday.AddYears(2);
         var expiryDate = LicenseExpiryDate.Create(futureDate).Value!;
-        var providerIdResult = ProviderId.New();
 
         return new MedicalBoardLicenseInfo(
             LicenseNumber: licenseNumber.Value,
             MedicalBoard: medicalBoard.Value,
             ExpiryDate: expiryDate.Value,
             IsValid: isValid,
-            ProviderId: providerIdResult.ToString(),
             Notes: isValid ? "License verified successfully" : "License number format invalid"
         );
     }
@@ -94,32 +91,14 @@ public class ProviderCredentialingActivities : IProviderCredentialingActivities
         var expiryDateResult = LicenseExpiryDate.Create(input.ExpiryDate);
         if (expiryDateResult.IsFailure)
             throw new InvalidOperationException($"Internal Corruption: Invalid ExpiryDate. {expiryDateResult.Error}");
-        
-        var providerIdResult2 = ProviderId.Create(input.ProviderIdResult);
-        if (providerIdResult2.IsFailure)
-            throw new InvalidOperationException($"Internal Corruption: Invalid ProviderIdResult. {providerIdResult2.Error}");
 
         var providerId = providerIdResult.Value;
         var evaluationPublicId = evaluationPublicIdResult.Value;
-        var licenseNumber = licenseNumberResult.Value;
-        var medicalBoard = medicalBoardResult.Value;
-        var expiryDate = expiryDateResult.Value;
-        var providerIdResultValue = providerIdResult2.Value;
-
-        // Reconstruct MedicalBoardLicenseInfo from primitive DTO (now using primitives)
-        var licenseInfo = new MedicalBoardLicenseInfo(
-            LicenseNumber: input.LicenseNumber,
-            MedicalBoard: input.MedicalBoard,
-            ExpiryDate: input.ExpiryDate,
-            IsValid: input.IsValid,
-            ProviderId: providerIdResultValue.ToString(),
-            Notes: input.Notes
-        );
 
         // Create domain entity using factory
-        var licenseNumberForEntity = LicenseNumber.Create(licenseInfo.LicenseNumber).Value!;
-        var medicalBoardForEntity = MedicalBoard.Create(licenseInfo.MedicalBoard).Value!;
-        var expiryDateForEntity = LicenseExpiryDate.Create(licenseInfo.ExpiryDate).Value!;
+        var licenseNumberForEntity = LicenseNumber.Create(input.LicenseNumber).Value!;
+        var medicalBoardForEntity = MedicalBoard.Create(input.MedicalBoard).Value!;
+        var expiryDateForEntity = LicenseExpiryDate.Create(input.ExpiryDate).Value!;
 
         var evaluation = Domain.ProviderCredentialing.CredentialEvaluation.Create(
             providerId: providerId,
@@ -139,8 +118,8 @@ public class ProviderCredentialingActivities : IProviderCredentialingActivities
         // Return evaluation result with events
         return new EvaluateComplianceResult(
             EvaluationId: evaluation.Id.ToString(),
-            IsValid: licenseInfo.IsValid,
-            IsCompliant: licenseInfo.IsValid, // Simplified: valid = compliant for now
+            IsValid: input.IsValid,
+            IsCompliant: input.IsValid, // Simplified: valid = compliant for now
             Events: applicationEvents
         );
     }

@@ -11,13 +11,26 @@ public class ProviderCredentialingWorkflow
     public async Task RunAsync(CredentialingInput input)
     {
         // Pass-through: No domain conversion needed - just pass primitives to activities
-        // Step 1: Fetch Medical Board License (External API Read)
+        // Step 1: Get or Create Provider Profile (DB Write)
+        var providerProfileId = await Workflow.ExecuteActivityAsync(
+            (IProviderCredentialingActivities activities) => activities.GetOrCreateProviderProfileAsync(new GetOrCreateProviderProfileInput(
+                input.ProviderId,
+                input.ProviderPublicId,
+                input.FirstName,
+                input.LastName,
+                input.Email,
+                input.Specialty
+            )),
+            new ActivityOptions { StartToCloseTimeout = TimeSpan.FromMinutes(5) }
+        );
+
+        // Step 2: Fetch Medical Board License (External API Read)
         var licenseInfo = await Workflow.ExecuteActivityAsync(
             (IProviderCredentialingActivities activities) => activities.FetchMedicalBoardLicenseAsync(new FetchLicenseInput(input.LicenseNumber, input.MedicalBoard)),
             new ActivityOptions { StartToCloseTimeout = TimeSpan.FromMinutes(5) }
         );
 
-        // Step 2: Evaluate and Save Compliance (DB Write)
+        // Step 3: Evaluate and Save Compliance (DB Write)
         var evaluationResult = await Workflow.ExecuteActivityAsync(
             (IProviderCredentialingActivities activities) => activities.EvaluateAndSaveComplianceAsync(new EvaluateComplianceInput(
                 input.ProviderId,
@@ -26,7 +39,6 @@ public class ProviderCredentialingWorkflow
                 licenseInfo.MedicalBoard,
                 licenseInfo.ExpiryDate,
                 licenseInfo.IsValid,
-                licenseInfo.ProviderId,
                 licenseInfo.Notes
             )),
             new ActivityOptions { StartToCloseTimeout = TimeSpan.FromMinutes(5) }
@@ -41,7 +53,7 @@ public class ProviderCredentialingWorkflow
             );
         }
 
-        // Step 3: Workflow orchestration decision based on evaluation result
+        // Step 4: Workflow orchestration decision based on evaluation result
         if (!licenseInfo.IsValid)
         {
             // Request manual review with workflow ID for correlation
@@ -130,19 +142,6 @@ public class ProviderCredentialingWorkflow
                 );
             }
         }
-
-        // Step 4: Get or Create Provider Profile (DB Write)
-        var providerProfileId = await Workflow.ExecuteActivityAsync(
-            (IProviderCredentialingActivities activities) => activities.GetOrCreateProviderProfileAsync(new GetOrCreateProviderProfileInput(
-                input.ProviderId,
-                input.ProviderPublicId,
-                input.FirstName,
-                input.LastName,
-                input.Email,
-                input.Specialty
-            )),
-            new ActivityOptions { StartToCloseTimeout = TimeSpan.FromMinutes(5) }
-        );
 
         // Step 5: Activate Provider Profile (DB Write)
         await Workflow.ExecuteActivityAsync(
