@@ -111,7 +111,7 @@ public class RebusEventHandlerRegistrationGenerator : IIncrementalGenerator
             {
                 var handlerTypeName = handlerType.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat);
                 var handlerInterfaceName = $"global::TemporalDDD.Application.Messaging.IEventHandler<{eventTypeName}>";
-                sb.AppendLine($"        services.AddScoped<{handlerInterfaceName}, {handlerTypeName}>();");
+                sb.AppendLine($"        services.AddScoped(typeof({handlerInterfaceName}), typeof({handlerTypeName}));");
             }
             
             // Register the adapter with Rebus (once per event type)
