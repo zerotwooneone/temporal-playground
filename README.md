@@ -33,6 +33,43 @@ This project is a proof-of-concept demonstrating how to integrate Temporal into 
 - **TemporalDDD.UI**
   - Blazor UI for workflow management (port 5000/5001)
 
+## High-Level Topology
+
+graph TD
+subgraph UI ["UI Layer (Blazor WASM/Server)"]
+B[Blazor Components]
+end
+
+    subgraph API ["API Process (TemporalDDD.Api)"]
+        H[SignalR Hub]
+        EH[Event Handlers]
+        SG[Source Generator Registrations]
+    end
+
+    subgraph Worker ["Worker Process (TemporalDDD.Worker)"]
+        TA[Temporal Activities]
+    end
+
+    subgraph Broker ["Message Broker"]
+        RMQ((RabbitMQ))
+    end
+
+    %% Flow
+    TA -- "Publishes App Events" --> RMQ
+    RMQ -- "Consumes (temporal-ddd-api)" --> EH
+    EH -- "Transforms & Broadcasts" --> H
+    H -- "Pushes Contract Events (WebSockets)" --> B
+
+    classDef ui fill:#0b5394,stroke:#fff,stroke-width:2px,color:#fff;
+    classDef api fill:#38761d,stroke:#fff,stroke-width:2px,color:#fff;
+    classDef worker fill:#b45f06,stroke:#fff,stroke-width:2px,color:#fff;
+    classDef broker fill:#cc0000,stroke:#fff,stroke-width:2px,color:#fff;
+    
+    class UI,B ui;
+    class API,H,EH,SG api;
+    class Worker,TA worker;
+    class Broker,RMQ broker;
+
 ## Prerequisites
 * .NET 10 SDK
 * Docker Desktop
