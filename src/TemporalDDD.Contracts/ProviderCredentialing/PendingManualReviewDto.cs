@@ -6,4 +6,5 @@ public sealed record PendingManualReviewDto(
     string LicenseNumber,
     string MedicalBoard,
     DateTimeOffset EvaluatedAt,
-    string TrackingToken);
+    string TrackingToken,
+    string? ComplianceNotes);

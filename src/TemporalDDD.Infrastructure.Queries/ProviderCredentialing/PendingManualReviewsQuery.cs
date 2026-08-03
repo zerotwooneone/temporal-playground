@@ -32,7 +32,8 @@ public class PendingManualReviewsQuery : Application.ProviderCredentialing.IPend
                 LicenseNumber: x.evaluation.LicenseNumber,
                 MedicalBoard: x.evaluation.MedicalBoard,
                 EvaluatedAt: DateTimeOffset.FromUnixTimeMilliseconds(x.evaluation.EvaluatedAt),
-                TrackingToken: x.evaluation.WorkflowId!
+                TrackingToken: x.evaluation.WorkflowId!,
+                ComplianceNotes: x.evaluation.ComplianceNotes
             ))
             .ToListAsync(cancellationToken);
 
@@ -57,7 +58,8 @@ public class PendingManualReviewsQuery : Application.ProviderCredentialing.IPend
                 LicenseNumber: x.evaluation.LicenseNumber,
                 MedicalBoard: x.evaluation.MedicalBoard,
                 EvaluatedAt: DateTimeOffset.FromUnixTimeMilliseconds(x.evaluation.EvaluatedAt),
-                TrackingToken: x.evaluation.WorkflowId!
+                TrackingToken: x.evaluation.WorkflowId!,
+                ComplianceNotes: x.evaluation.ComplianceNotes
             ))
             .FirstOrDefaultAsync(cancellationToken);
 
