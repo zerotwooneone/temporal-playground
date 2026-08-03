@@ -160,3 +160,40 @@ sequenceDiagram
     
     note over UI: UI updates (removes spinner, etc.)<br/>Client leaves group
 ```
+
+```mermaid
+sequenceDiagram
+    autonumber
+    actor User
+    participant UI as Blazor Client
+    participant API as API Layer
+    participant Temp as Temporal Engine
+    participant Work as Worker (Activity)
+    participant Dom as Domain (Aggregate)
+    participant DB as Database (Repo)
+    participant Bus as RabbitMQ
+
+    %% THE COMMAND PHASE (WRITE)
+    User->>UI: Clicks "Reject Application"
+    UI->>API: HTTP POST /evaluations/{id}/reject
+    API->>Temp: Signal Workflow: ProcessRejection()
+    API-->>UI: HTTP 202 Accepted (Tracking Token)
+    note over UI: UI shows loading spinner
+    
+    %% THE ORCHESTRATION & DOMAIN PHASE
+    Temp->>Work: Execute Activity: RejectEvaluation
+    Work->>Dom: aggregate.Reject(reason)
+    note over Dom: State Mutated (Status = Rejected)<br/>Domain Event Appended to Collection
+    Work->>DB: SaveAsync(aggregate)
+    note over DB: EF Core Transaction:<br/>1. Updates Evaluation Table<br/>2. Dispatches Events
+    
+    %% THE EVENT PHASE (READ/BROADCAST)
+    DB->>Bus: Publishes CredentialEvaluationRejectedEvent
+    note over Bus: Routes to 'temporal-ddd-api' queue
+    Bus->>API: Consumes Application Event
+    API->>API: Maps to ClientEvaluationRejectedDto
+    API->>UI: SignalR Broadcast (Group: PublicId)
+    
+    %% THE UI RESPONSE
+    UI-->>User: Removes spinner, shows red "Rejected" toast
+```
