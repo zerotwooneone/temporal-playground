@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Mvc;
 using Temporalio.Client;
+using Temporalio.Exceptions;
 using TemporalDDD.Application.ProviderCredentialing;
 using TemporalDDD.Contracts.ProviderCredentialing;
 using TemporalDDD.Domain.ProviderCredentialing;
@@ -55,20 +56,27 @@ public class ProviderCredentialingController : ControllerBase
             request.Specialty
         );
 
-        // Pass the single JSON-friendly object to Temporal
-        await _temporalClient.StartWorkflowAsync(
-            (ProviderCredentialingWorkflow wf) => wf.RunAsync(workflowInput),
-            new WorkflowOptions
-            {
-                Id = workflowId,
-                TaskQueue = "ONBOARDING_TASK_QUEUE",
-                Memo = new Dictionary<string, object>
+        try
+        {
+            // Pass the single JSON-friendly object to Temporal
+            await _temporalClient.StartWorkflowAsync(
+                (ProviderCredentialingWorkflow wf) => wf.RunAsync(workflowInput),
+                new WorkflowOptions
                 {
-                    ["ProviderId"] = providerId.ToString()
-                }
-            });
+                    Id = workflowId,
+                    TaskQueue = "ONBOARDING_TASK_QUEUE",
+                    Memo = new Dictionary<string, object>
+                    {
+                        ["ProviderId"] = providerId.ToString()
+                    }
+                });
 
-        return Ok(new CredentialingStartResponse(workflowId, providerPublicId.ToString(), evaluationPublicId.ToString(), "Provider credentialing workflow started"));
+            return Ok(new CredentialingStartResponse(workflowId, providerPublicId.ToString(), evaluationPublicId.ToString(), "Provider credentialing workflow started"));
+        }
+        catch (Exception ex)
+        {
+            return BadRequest(ex.Message);
+        }
     }
 
     [HttpGet("pending-reviews")]
@@ -92,13 +100,29 @@ public class ProviderCredentialingController : ControllerBase
     [HttpPost("{trackingToken}/manual-review")]
     public async Task<IActionResult> CompleteManualReview(string trackingToken, [FromBody] ManualReviewRequest request)
     {
-        var handle = _temporalClient.GetWorkflowHandle(trackingToken);
-        await handle.SignalAsync(
-            (ProviderCredentialingWorkflow wf) => wf.ManualReviewCompletedAsync(request.IsApproved, request.Notes));
+        // Get the evaluation public ID from the tracking token
+        var pendingReview = await _pendingReviewsQuery.GetPendingReviewsAsync();
+        var review = pendingReview.FirstOrDefault(r => r.TrackingToken == trackingToken);
+        if (review == null)
+        {
+            return Ok(new ManualReviewCompletionResponse.ValidationError("Review not found"));
+        }
 
-        return Ok(new { Message = "Manual review signal sent" });
+        try
+        {
+            var handle = _temporalClient.GetWorkflowHandle(trackingToken);
+            await handle.SignalAsync(
+                (ProviderCredentialingWorkflow wf) => wf.ManualReviewCompletedAsync(request.IsApproved, request.Notes));
+
+            return Ok(new ManualReviewCompletionResponse.Success("Manual review signal sent"));
+        }
+        catch (RpcException ex) when (ex.Message.Contains("workflow execution already completed"))
+        {
+            return Ok(new ManualReviewCompletionResponse.WorkflowAlreadyComplete(review.EvaluationPublicId, "Workflow execution already completed"));
+        }
+        catch (Exception ex)
+        {
+            return Ok(new ManualReviewCompletionResponse.SystemError($"System error: {ex.Message}"));
+        }
     }
-
-    public record StartCredentialingRequest(string LicenseNumber, string MedicalBoard, DateOnly ExpiryDate, string FirstName, string LastName, string Email, string Specialty);
-    public record ManualReviewRequest(bool IsApproved, string? Notes);
 }

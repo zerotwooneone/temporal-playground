@@ -3,6 +3,7 @@ using Moq;
 using Temporalio.Client;
 using TemporalDDD.Api.ProviderCredentialing;
 using TemporalDDD.Application.ProviderCredentialing;
+using TemporalDDD.Contracts.ProviderCredentialing;
 using TemporalDDD.Domain.SharedKernel;
 using TemporalDDD.Domain.Testing;
 
@@ -30,7 +31,7 @@ public class ProviderCredentialingControllerTests
     public async Task StartCredentialing_WhenLicenseNumberIsInvalid_ReturnsBadRequest()
     {
         // Arrange
-        var request = new ProviderCredentialingController.StartCredentialingRequest(
+        var request = new StartCredentialingRequest(
             LicenseNumber: "INVALID@#", // Contains invalid characters
             MedicalBoard: "Medical Board of California",
             ExpiryDate: FixedFutureDate,
@@ -60,7 +61,7 @@ public class ProviderCredentialingControllerTests
     public async Task StartCredentialing_WhenExpiryDateIsDefault_ReturnsBadRequest()
     {
         // Arrange
-        var request = new ProviderCredentialingController.StartCredentialingRequest(
+        var request = new StartCredentialingRequest(
             LicenseNumber: "LICENSE123456",
             MedicalBoard: "Medical Board of California",
             ExpiryDate: default(DateOnly),
