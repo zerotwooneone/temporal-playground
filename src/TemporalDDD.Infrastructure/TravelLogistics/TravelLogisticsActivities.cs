@@ -58,6 +58,7 @@ public class TravelLogisticsActivities : ITravelLogisticsActivities
             .WithLatency(TimeSpan.FromMilliseconds(100), TimeSpan.FromMilliseconds(100))
             .WithFailureRate(0.10, System.Net.HttpStatusCode.InternalServerError)
             .PostAsJsonAsync("https://airline-api.example.com/api/bookings", new { FlightNumber = flightNumber.Value, Origin = origin.Value, Destination = destination.Value, DepartureTime = departureTime.Value, Cost = cost.Amount });
+        response.EnsureSuccessStatusCode();
 
         // Create domain entity using factory
         var booking = Domain.TravelLogistics.FlightBooking.Create(flightNumber, origin, destination, departureTime, cost);
@@ -100,6 +101,7 @@ public class TravelLogisticsActivities : ITravelLogisticsActivities
             .WithLatency(TimeSpan.FromMilliseconds(100), TimeSpan.FromMilliseconds(100))
             .WithFailureRate(0.10, System.Net.HttpStatusCode.InternalServerError)
             .PostAsJsonAsync("https://hotel-booking.example.com/api/reservations", new { HotelName = hotelName.Value, Address = address.ToString(), CheckInDate = stayPeriod.Start, CheckOutDate = stayPeriod.End, Cost = cost.Amount });
+        response.EnsureSuccessStatusCode();
 
         // Create domain entity using factory
         var booking = Domain.TravelLogistics.LodgingBooking.Create(hotelName, address, stayPeriod, cost);
@@ -132,11 +134,11 @@ public class TravelLogisticsActivities : ITravelLogisticsActivities
         await _flightBookingRepository.SaveAsync(booking);
 
         // Simulate external API call to cancel flight with chaos (100ms latency, 10% failure rate)
-        _chaosHttpClient
+        var response = await _chaosHttpClient
             .WithLatency(TimeSpan.FromMilliseconds(100), TimeSpan.FromMilliseconds(100))
-            .WithFailureRate(0.10, System.Net.HttpStatusCode.InternalServerError);
-
-        await _chaosHttpClient.PostAsJsonAsync($"https://airline-api.example.com/api/bookings/{flightBookingId}/cancel", new { });
+            .WithFailureRate(0.10, System.Net.HttpStatusCode.InternalServerError)
+            .PostAsJsonAsync($"https://airline-api.example.com/api/bookings/{flightBookingId}/cancel", new { });
+        response.EnsureSuccessStatusCode();
 
         Console.WriteLine($"[FlightCancellation] Cancelled flight booking {flightBookingId}");
     }
@@ -161,11 +163,11 @@ public class TravelLogisticsActivities : ITravelLogisticsActivities
         await _lodgingBookingRepository.SaveAsync(booking);
 
         // Simulate external API call to cancel lodging with chaos (100ms latency, 10% failure rate)
-        _chaosHttpClient
+        var response = await _chaosHttpClient
             .WithLatency(TimeSpan.FromMilliseconds(100), TimeSpan.FromMilliseconds(100))
-            .WithFailureRate(0.10, System.Net.HttpStatusCode.InternalServerError);
-
-        await _chaosHttpClient.PostAsJsonAsync($"https://hotel-booking.example.com/api/reservations/{lodgingBookingId}/cancel", new { });
+            .WithFailureRate(0.10, System.Net.HttpStatusCode.InternalServerError)
+            .PostAsJsonAsync($"https://hotel-booking.example.com/api/reservations/{lodgingBookingId}/cancel", new { });
+        response.EnsureSuccessStatusCode();
 
         Console.WriteLine($"[LodgingCancellation] Cancelled lodging booking {lodgingBookingId}");
     }
@@ -181,12 +183,12 @@ public class TravelLogisticsActivities : ITravelLogisticsActivities
         var travelerEmail = travelerEmailResult.Value;
 
         // Simulate external notification (email/SMS) with chaos (100ms latency, 10% failure rate)
-        _chaosHttpClient
-            .WithLatency(TimeSpan.FromMilliseconds(100), TimeSpan.FromMilliseconds(100))
-            .WithFailureRate(0.10, System.Net.HttpStatusCode.InternalServerError);
-
         var notificationType = input.IsCancellation ? "cancellation" : "confirmation";
-        await _chaosHttpClient.PostAsJsonAsync($"https://notifications.example.com/api/{notificationType}", new { Email = travelerEmail.Value, Message = input.Message });
+        var response = await _chaosHttpClient
+            .WithLatency(TimeSpan.FromMilliseconds(100), TimeSpan.FromMilliseconds(100))
+            .WithFailureRate(0.10, System.Net.HttpStatusCode.InternalServerError)
+            .PostAsJsonAsync($"https://notifications.example.com/api/{notificationType}", new { Email = travelerEmail.Value, Message = input.Message });
+        response.EnsureSuccessStatusCode();
 
         var notificationTypeDisplay = input.IsCancellation ? "CANCELLATION" : "CONFIRMATION";
         Console.WriteLine($"[TravelerNotification] {notificationTypeDisplay} sent to {travelerEmail.Value}: {input.Message}");

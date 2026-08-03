@@ -33,6 +33,7 @@ public class ComplianceActivities : IComplianceActivities
             .WithLatency(TimeSpan.FromMilliseconds(100), TimeSpan.FromMilliseconds(100))
             .WithFailureRate(0.10, System.Net.HttpStatusCode.InternalServerError)
             .GetAsync($"https://external-medical-board.example.com/api/license/{licenseNumber.Value}");
+        response.EnsureSuccessStatusCode();
 
         var providerIdVo = ProviderId.New(); // Simulated provider ID
         var medicalBoardVo = MedicalBoard.Create("Default").Value!;

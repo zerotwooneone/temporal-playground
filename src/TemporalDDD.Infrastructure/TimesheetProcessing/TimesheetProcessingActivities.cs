@@ -104,6 +104,7 @@ public class TimesheetProcessingActivities : ITimesheetProcessingActivities
             .WithLatency(TimeSpan.FromMilliseconds(100), TimeSpan.FromMilliseconds(100))
             .WithFailureRate(0.10, System.Net.HttpStatusCode.InternalServerError)
             .PostAsJsonAsync("https://payment-gateway.example.com/api/transfer", new { TimesheetId = timesheetId, IdempotencyKey = input.IdempotencyKey });
+        response.EnsureSuccessStatusCode();
 
         // The idempotencyKey ensures that duplicate requests don't result in duplicate payments
         var paymentReference = $"PAY-{DateTime.UtcNow:yyyyMMddHHmmss}-{input.IdempotencyKey.Substring(0, 8)}";
@@ -144,6 +145,7 @@ public class TimesheetProcessingActivities : ITimesheetProcessingActivities
             .WithLatency(TimeSpan.FromMilliseconds(100), TimeSpan.FromMilliseconds(100))
             .WithFailureRate(0.10, System.Net.HttpStatusCode.InternalServerError)
             .PostAsJsonAsync("https://erp-system.example.com/api/invoices", new { TimesheetId = timesheetId, FacilityBillRate = facilityBillRate.Amount });
+        response.EnsureSuccessStatusCode();
 
         var invoiceNumber = $"INV-{DateTime.UtcNow:yyyyMMdd}-{Guid.NewGuid().ToString().Substring(0, 8).ToUpper()}";
 

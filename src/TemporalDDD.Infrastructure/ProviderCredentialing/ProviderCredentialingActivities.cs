@@ -50,6 +50,7 @@ public class ProviderCredentialingActivities : IProviderCredentialingActivities
             .WithLatency(TimeSpan.FromMilliseconds(100), TimeSpan.FromMilliseconds(100))
             .WithFailureRate(0.10, System.Net.HttpStatusCode.InternalServerError)
             .GetAsync($"https://external-medical-board.example.com/api/{medicalBoard.Value}/license/{licenseNumber.Value}");
+        response.EnsureSuccessStatusCode();
 
         // Simulated response - in real implementation, this would call actual medical board API
         var isValid = licenseNumber.Value.Length >= 8;
@@ -150,10 +151,11 @@ public class ProviderCredentialingActivities : IProviderCredentialingActivities
         var applicationEvents = _eventMapper.MapToApplicationEvents(domainEvents);
 
         // Simulate external notification
-        await _chaosHttpClient
+        var response = await _chaosHttpClient
             .WithLatency(TimeSpan.FromMilliseconds(100), TimeSpan.FromMilliseconds(100))
             .WithFailureRate(0.10, System.Net.HttpStatusCode.InternalServerError)
             .PostAsJsonAsync($"https://notifications.example.com/api/manual-review/{evaluationId}", new { });
+        response.EnsureSuccessStatusCode();
 
         Console.WriteLine($"[ManualReview] Request sent for evaluation {evaluationId}, workflow {input.WorkflowId}");
 
