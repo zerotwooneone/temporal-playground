@@ -38,4 +38,29 @@ public class PendingManualReviewsQuery : Application.ProviderCredentialing.IPend
 
         return pendingReviews;
     }
+
+    public async Task<Contracts.ProviderCredentialing.PendingManualReviewDto?> GetPendingReviewByEvaluationPublicIdAsync(string evaluationPublicId, CancellationToken cancellationToken = default)
+    {
+        var manualReviewRequiredStatus = EvaluationStatus.ManualReviewRequired.Value;
+
+        var pendingReview = await _dbContext.CredentialEvaluations
+            .AsNoTracking()
+            .Join(
+                _dbContext.ProviderProfiles,
+                evaluation => evaluation.ProviderId,
+                profile => profile.ProviderId,
+                (evaluation, profile) => new { evaluation, profile })
+            .Where(x => x.evaluation.Status == manualReviewRequiredStatus && x.evaluation.WorkflowId != null && x.evaluation.PublicId == evaluationPublicId)
+            .Select(x => new Contracts.ProviderCredentialing.PendingManualReviewDto(
+                EvaluationPublicId: x.evaluation.PublicId,
+                ProviderPublicId: x.profile.PublicId,
+                LicenseNumber: x.evaluation.LicenseNumber,
+                MedicalBoard: x.evaluation.MedicalBoard,
+                EvaluatedAt: DateTimeOffset.FromUnixTimeMilliseconds(x.evaluation.EvaluatedAt),
+                TrackingToken: x.evaluation.WorkflowId!
+            ))
+            .FirstOrDefaultAsync(cancellationToken);
+
+        return pendingReview;
+    }
 }

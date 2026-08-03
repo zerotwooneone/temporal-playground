@@ -78,6 +78,17 @@ public class ProviderCredentialingController : ControllerBase
         return Ok(pendingReviews);
     }
 
+    [HttpGet("pending-reviews/{evaluationPublicId}")]
+    public async Task<IActionResult> GetPendingReview(string evaluationPublicId)
+    {
+        var pendingReview = await _pendingReviewsQuery.GetPendingReviewByEvaluationPublicIdAsync(evaluationPublicId);
+        if (pendingReview == null)
+        {
+            return NotFound();
+        }
+        return Ok(pendingReview);
+    }
+
     [HttpPost("{trackingToken}/manual-review")]
     public async Task<IActionResult> CompleteManualReview(string trackingToken, [FromBody] ManualReviewRequest request)
     {
