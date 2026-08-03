@@ -25,7 +25,9 @@ builder.Services.AddHostedService<DatabaseInitializationService>();
 builder.Services.AddTesting();
 
 // Add Messaging with RabbitMQ
-builder.Services.AddMessaging("amqp://guest:guest@localhost:5672");
+var rabbitMqConnectionString = builder.Configuration["RabbitMQ:ConnectionString"] ?? throw new InvalidOperationException("RabbitMQ:ConnectionString not found in configuration");
+var rabbitMqInputQueue = builder.Configuration["RabbitMQ:InputQueueName"] ?? throw new InvalidOperationException("RabbitMQ:InputQueueName not found in configuration");
+builder.Services.AddMessaging(rabbitMqConnectionString, rabbitMqInputQueue);
 
 // Register event handlers via source generator
 builder.Services.AddApplicationEventHandlers();

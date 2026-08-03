@@ -1,3 +1,4 @@
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.DependencyInjection;
 using TemporalDDD.Application.ProviderOnboarding;
@@ -15,6 +16,8 @@ using Temporalio.Extensions.Hosting;
 
 var builder = Host.CreateApplicationBuilder(args);
 
+builder.Configuration.AddJsonFile("appsettings.json", optional: false, reloadOnChange: true);
+
 // Add Database
 var localAppData = Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData);
 var dbPath = Path.Combine(localAppData, "TemporalDDD", "temporal_playground.sqlite");
@@ -28,7 +31,9 @@ builder.Services.AddHostedService<DatabaseInitializationService>();
 builder.Services.AddTesting();
 
 // Add Messaging with RabbitMQ
-builder.Services.AddMessaging("amqp://guest:guest@localhost:5672");
+var rabbitMqConnectionString = builder.Configuration["RabbitMQ:ConnectionString"] ?? throw new InvalidOperationException("RabbitMQ:ConnectionString not found in configuration");
+var rabbitMqInputQueue = builder.Configuration["RabbitMQ:InputQueueName"] ?? throw new InvalidOperationException("RabbitMQ:InputQueueName not found in configuration");
+builder.Services.AddMessaging(rabbitMqConnectionString, rabbitMqInputQueue);
 
 // Register activities with DI
 builder.Services.AddScoped<ComplianceActivities>();

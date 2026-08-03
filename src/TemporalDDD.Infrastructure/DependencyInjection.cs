@@ -66,10 +66,10 @@ public static class DependencyInjection
         return services;
     }
 
-    public static IServiceCollection AddMessaging(this IServiceCollection services, string connectionString)
+    public static IServiceCollection AddMessaging(this IServiceCollection services, string connectionString, string inputQueueName)
     {
         services.AddRebus(configure => configure
-            .Transport(t => t.UseRabbitMq(connectionString, "temporal-ddd-events")))
+            .Transport(t => t.UseRabbitMq(connectionString, inputQueueName)))
             ;
         
         services.AddSingleton<IMessagePublisher, RebusMessagePublisher>();
