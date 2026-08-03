@@ -163,37 +163,43 @@ sequenceDiagram
 
 ```mermaid
 sequenceDiagram
-    autonumber
-    actor User
-    participant UI as Blazor Client
-    participant API as API Layer
-    participant Temp as Temporal Engine
-    participant Work as Worker (Activity)
-    participant Dom as Domain (Aggregate)
-    participant DB as Database (Repo)
-    participant Bus as RabbitMQ
+  autonumber
+  actor User
+  participant UI as Blazor Client
+  participant API as API Layer
+  participant Temp as Temporal Engine
+  participant Work as Worker (Activities)
+  participant Dom as Domain (Aggregate)
+  participant DB as Database (Repo)
+  participant Bus as RabbitMQ
 
-    %% THE COMMAND PHASE (WRITE)
-    User->>UI: Clicks "Reject Application"
-    UI->>API: HTTP POST /evaluations/{id}/reject
-    API->>Temp: Signal Workflow: ProcessRejection()
-    API-->>UI: HTTP 202 Accepted (Tracking Token)
-    note over UI: UI shows loading spinner
-    
-    %% THE ORCHESTRATION & DOMAIN PHASE
-    Temp->>Work: Execute Activity: RejectEvaluation
-    Work->>Dom: aggregate.Reject(reason)
-    note over Dom: State Mutated (Status = Rejected)<br/>Domain Event Appended to Collection
-    Work->>DB: SaveAsync(aggregate)
-    note over DB: EF Core Transaction:<br/>1. Updates Evaluation Table<br/>2. Dispatches Events
-    
-    %% THE EVENT PHASE (READ/BROADCAST)
-    DB->>Bus: Publishes CredentialEvaluationRejectedEvent
-    note over Bus: Routes to 'temporal-ddd-api' queue
-    Bus->>API: Consumes Application Event
-    API->>API: Maps to ClientEvaluationRejectedDto
-    API->>UI: SignalR Broadcast (Group: PublicId)
-    
-    %% THE UI RESPONSE
-    UI-->>User: Removes spinner, shows red "Rejected" toast
+%% THE COMMAND PHASE (WRITE)
+  User->>UI: Clicks "Reject Application"
+  UI->>API: HTTP POST /evaluations/{id}/reject
+  API->>Temp: Signal Workflow: ProcessRejection()
+  API-->>UI: HTTP 202 Accepted (Tracking Token)
+  note over UI: UI shows loading spinner
+
+%% ACTIVITY 1: SAVE & MAP
+  Temp->>Work: Execute Activity: SaveEvaluation
+  Work->>Dom: aggregate.Reject(reason)
+  note over Dom: State Mutated (Status = Rejected)<br/>Domain Event Appended
+  Work->>DB: SaveAsync(aggregate)
+  note over DB: EF Core Transaction:<br/>Updates Evaluation Table
+  Work->>Work: Extract & Map Domain Event to Application Event
+  Work-->>Temp: Returns Application Event(s)
+
+%% ACTIVITY 2: PUBLISH
+  Temp->>Work: Execute Activity: PublishEvents(AppEvents)
+  Work->>Bus: Publishes CredentialEvaluationRejectedEvent
+  note over Bus: Routes to 'temporal-ddd-api' queue
+  Work-->>Temp: Activity Complete
+
+%% THE EVENT CONSUMPTION PHASE (READ/BROADCAST)
+  Bus->>API: Consumes Application Event
+  API->>API: Maps to ClientEvaluationRejectedDto
+  API->>UI: SignalR Broadcast (Group: PublicId)
+
+%% THE UI RESPONSE
+  UI-->>User: Removes spinner, shows red "Rejected" toast
 ```
