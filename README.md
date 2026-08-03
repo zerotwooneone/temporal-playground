@@ -129,4 +129,57 @@ All data (application data and message queue) is stored in a single SQLite file 
 ```
 %LocalAppData%\TemporalDDD\temporal_playground.sqlite
 ```
+## Data Pipeline
 
+```mermaid
+sequenceDiagram
+    participant D as Domain (Aggregate)
+    participant Repo as Infrastructure (Repository)
+    participant Map as Event Mapper
+    participant Bus as Rebus (RabbitMQ)
+    participant Api as API Handler
+    participant Hub as SignalR Hub
+    participant UI as Blazor Client
+
+    note over UI, Hub: Client joins SignalR Group (e.g., EvaluationPublicId)
+    
+    D->>D: 1. State changes, Domain Event raised
+    D->>Repo: 2. Aggregate saved
+    Repo->>Repo: Extracts Domain Events
+    Repo->>Map: 3. Passes Domain Event
+    Map-->>Repo: Returns Application Event
+    Repo->>Bus: 4. Publishes Application Event
+    
+    note over Bus: Routes to 'temporal-ddd-api' queue
+    
+    Bus->>Api: 5. Consumes Event
+    Api->>Api: 6. Handles Event
+    Api->>Api: 7. Transforms to Contract Event
+    Api->>Hub: 8. Broadcasts to specific Group
+    Hub->>UI: 9. Pushes real-time update
+    
+    note over UI: UI updates (removes spinner, etc.)<br/>Client leaves group
+```
+## Data Transformation Model
+
+```mermaid
+flowchart LR
+    subgraph Core ["Inner Core (No Dependencies)"]
+        DE([Domain Event])
+    end
+
+    subgraph Infra ["Infrastructure Layer"]
+        AE([Application Event])
+    end
+
+    subgraph Shared ["Contracts Layer (Shared)"]
+        CE([Contract Event])
+    end
+
+    %% Transformations
+    DE -- "Event Mapper" --> AE
+    AE -- "API Handler" --> CE
+
+    classDef event fill:#6fa8dc,stroke:#3d85c6,stroke-width:2px,color:#000;
+    class DE,AE,CE event;
+```
