@@ -35,6 +35,7 @@ This project is a proof-of-concept demonstrating how to integrate Temporal into 
 
 ## High-Level Topology
 
+```mermaid
 graph TD
 subgraph UI ["UI Layer (Blazor WASM/Server)"]
 B[Blazor Components]
@@ -69,6 +70,7 @@ end
     class API,H,EH,SG api;
     class Worker,TA worker;
     class Broker,RMQ broker;
+```
 
 ## Prerequisites
 * .NET 10 SDK
