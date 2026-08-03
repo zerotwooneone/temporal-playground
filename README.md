@@ -160,26 +160,3 @@ sequenceDiagram
     
     note over UI: UI updates (removes spinner, etc.)<br/>Client leaves group
 ```
-## Data Transformation Model
-
-```mermaid
-flowchart LR
-    subgraph Core ["Inner Core (No Dependencies)"]
-        DE([Domain Event])
-    end
-
-    subgraph Infra ["Infrastructure Layer"]
-        AE([Application Event])
-    end
-
-    subgraph Shared ["Contracts Layer (Shared)"]
-        CE([Contract Event])
-    end
-
-    %% Transformations
-    DE -- "Event Mapper" --> AE
-    AE -- "API Handler" --> CE
-
-    classDef event fill:#6fa8dc,stroke:#3d85c6,stroke-width:2px,color:#000;
-    class DE,AE,CE event;
-```
