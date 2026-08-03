@@ -89,7 +89,9 @@ docker-compose up -d
 
 This will start:
 - **Temporal Server** on ports `7233` (gRPC) and `8233` (Web UI)
-- Access the Temporal Web UI at http://localhost:8233
+  - Access the Temporal Web UI at http://localhost:8233
+- **RabbitMQ** on ports `5672` (AMQP) and `15672` (Web UI)
+  - Access the RabbitMQ Web UI at http://localhost:15672
 
 ### 2. Run the Applications
 
@@ -114,10 +116,6 @@ dotnet run
 ```
 
 The UI will be available at https://localhost:5001 (accept the self-signed certificate warning).
-
-### 3. Apply Database Migrations
-
-The application uses SQLite for data storage and messaging. Migrations are automatically applied on startup via the `DatabaseInitializationService`.
 
 ## Architecture Notes
 
