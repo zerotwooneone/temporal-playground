@@ -1,5 +1,6 @@
 using TemporalDDD.Domain.IdentityAndAccess;
 using TemporalDDD.Domain.WorkflowOrchestration.Events;
+using TemporalDDD.Domain.WorkflowOrchestration.Nodes;
 using TemporalDDD.Domain.SeedWork;
 
 namespace TemporalDDD.Domain.WorkflowOrchestration;
@@ -12,6 +13,9 @@ public sealed class WorkflowDefinition : AggregateRoot
     public string Name { get; private set; }
     public WorkflowStatus Status { get; private set; }
     public string FlowJson { get; private set; }
+
+    private readonly List<WorkflowNode> _nodes = new();
+    public IReadOnlyCollection<WorkflowNode> Nodes => _nodes.AsReadOnly();
 
     private WorkflowDefinition() { }
 
@@ -76,8 +80,21 @@ public sealed class WorkflowDefinition : AggregateRoot
         if (Status != WorkflowStatus.PendingReview)
             throw new InvalidOperationException("Cannot approve workflow when status is not PendingReview");
 
+        if (_nodes.Any(n => !n.IsConfigured))
+            throw new InvalidOperationException("Cannot approve workflow: One or more nodes are missing technical configuration.");
+
         Status = WorkflowStatus.Approved;
         RaiseDomainEvent(new WorkflowApproved(Id, reviewerId));
+    }
+
+    public void AddApiNodeStub(string name, string? businessNotes)
+    {
+        _nodes.Add(ApiWorkflowNode.CreateStub(name, businessNotes));
+    }
+
+    public void AddNotificationNodeStub(string name, string? businessNotes)
+    {
+        _nodes.Add(NotificationWorkflowNode.CreateStub(name, businessNotes));
     }
 
     public void Reject(UserId reviewerId, string reason)
