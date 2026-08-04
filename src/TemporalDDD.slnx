@@ -27,6 +27,7 @@
   <Folder Name="/04 - Web Ui/">
     <Project Path="TemporalDDD.UI.Tests/TemporalDDD.UI.Tests.csproj" />
     <Project Path="TemporalDDD.UI/TemporalDDD.UI.csproj" />
+    <Project Path="TemporalDDD.React.UI/TemporalDDD.React.UI.csproj" />
   </Folder>
   <Folder Name="/04 - Worker/">
     <Project Path="TemporalDDD.Worker/TemporalDDD.Worker.csproj" />

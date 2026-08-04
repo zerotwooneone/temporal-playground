@@ -50,6 +50,12 @@ if (app.Environment.IsDevelopment())
 app.UseHttpsRedirection();
 await app.SubscribeToApplicationEventsAsync();
 
+// Serve React static files
+app.UseStaticFiles();
+
+// SPA routing for React app
+app.MapFallbackToFile("/react/index.html");
+
 app.MapControllers();
 app.MapHub<ApplicationEventHub>("/hubs/applicationevents");
 
