@@ -11,6 +11,19 @@ public sealed class NotificationWorkflowNode : WorkflowNode
     {
     }
 
+    // Internal constructor for infrastructure rehydration
+    internal NotificationWorkflowNode(
+        WorkflowNodeId id,
+        string name,
+        string? businessNotes,
+        bool isConfigured,
+        string? messageTemplate)
+        : base(id, NodeType.Notification, name, businessNotes)
+    {
+        IsConfigured = isConfigured;
+        MessageTemplate = messageTemplate;
+    }
+
     internal static NotificationWorkflowNode CreateStub(string name, string? businessNotes)
     {
         return new NotificationWorkflowNode(WorkflowNodeId.New(), name, businessNotes);

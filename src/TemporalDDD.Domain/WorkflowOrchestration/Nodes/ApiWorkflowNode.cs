@@ -16,6 +16,25 @@ public sealed class ApiWorkflowNode : WorkflowNode
     {
     }
 
+    // Internal constructor for infrastructure rehydration
+    internal ApiWorkflowNode(
+        WorkflowNodeId id,
+        string name,
+        string? businessNotes,
+        bool isConfigured,
+        string? endpointUrl,
+        string? authToken,
+        RetryPolicy? retryPolicy,
+        ContractMapping? contractMapping)
+        : base(id, NodeType.Api, name, businessNotes)
+    {
+        IsConfigured = isConfigured;
+        EndpointUrl = endpointUrl;
+        AuthToken = authToken;
+        RetryPolicy = retryPolicy;
+        ContractMapping = contractMapping;
+    }
+
     internal static ApiWorkflowNode CreateStub(string name, string? businessNotes)
     {
         return new ApiWorkflowNode(WorkflowNodeId.New(), name, businessNotes);
