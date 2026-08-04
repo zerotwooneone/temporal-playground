@@ -1,8 +1,10 @@
 using Microsoft.EntityFrameworkCore;
+using TemporalDDD.Infrastructure.IdentityAndAccess;
 using TemporalDDD.Infrastructure.PlacementMatching;
 using TemporalDDD.Infrastructure.ProviderCredentialing;
 using TemporalDDD.Infrastructure.TimesheetProcessing;
 using TemporalDDD.Infrastructure.TravelLogistics;
+using TemporalDDD.Infrastructure.WorkflowOrchestration;
 
 namespace TemporalDDD.Infrastructure.Persistence;
 
@@ -20,6 +22,10 @@ public class ApplicationDbContext : DbContext
     public DbSet<FlightBookingDbo> FlightBookings => Set<FlightBookingDbo>();
     public DbSet<LodgingBookingDbo> LodgingBookings => Set<LodgingBookingDbo>();
     public DbSet<FacilityDbo> Facilities => Set<FacilityDbo>();
+    public DbSet<UserDbo> Users => Set<UserDbo>();
+    public DbSet<RoleDbo> Roles => Set<RoleDbo>();
+    public DbSet<WorkflowDefinitionDbo> WorkflowDefinitions => Set<WorkflowDefinitionDbo>();
+    public DbSet<WorkflowNodeDbo> WorkflowNodes => Set<WorkflowNodeDbo>();
 
     protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
     {
