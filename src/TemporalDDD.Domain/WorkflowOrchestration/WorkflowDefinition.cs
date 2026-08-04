@@ -99,6 +99,13 @@ public sealed class WorkflowDefinition : AggregateRoot
         _nodes.Add(NotificationWorkflowNode.CreateStub(name, businessNotes));
     }
 
+    public WorkflowDefinition UpdateNodes(IEnumerable<WorkflowNode> nodes)
+    {
+        _nodes.Clear();
+        _nodes.AddRange(nodes);
+        return this;
+    }
+
     public void Reject(UserId reviewerId, string reason)
     {
         if (Status != WorkflowStatus.PendingReview)

@@ -35,7 +35,7 @@ public sealed class ApiWorkflowNode : WorkflowNode
         ContractMapping = contractMapping;
     }
 
-    internal static ApiWorkflowNode CreateStub(string name, string? businessNotes)
+    public static ApiWorkflowNode CreateStub(string name, string? businessNotes)
     {
         return new ApiWorkflowNode(WorkflowNodeId.New(), name, businessNotes);
     }

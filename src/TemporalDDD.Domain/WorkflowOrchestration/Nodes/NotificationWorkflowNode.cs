@@ -24,7 +24,7 @@ public sealed class NotificationWorkflowNode : WorkflowNode
         MessageTemplate = messageTemplate;
     }
 
-    internal static NotificationWorkflowNode CreateStub(string name, string? businessNotes)
+    public static NotificationWorkflowNode CreateStub(string name, string? businessNotes)
     {
         return new NotificationWorkflowNode(WorkflowNodeId.New(), name, businessNotes);
     }
