@@ -26,11 +26,44 @@ export default function NodePropertiesPanel() {
   const { selectedNodeId, nodes, updateNodeData, setSelectedNodeId } = useWorkflowStore();
   const selectedNode = nodes.find((n) => n.id === selectedNodeId);
 
-  if (!selectedNode || !selectedNodeId) return null;
-
-  const nodeType = selectedNode.data.nodeType as number;
+  const nodeType = selectedNode?.data.nodeType as number | undefined;
 
   const handleClose = () => setSelectedNodeId(null);
+
+  // API Node Form
+  const apiForm = useForm<ApiNodeFormData>({
+    resolver: zodResolver(apiNodeSchema),
+    defaultValues: {
+      name: (selectedNode?.data.name as string) || '',
+      endpointUrl: (selectedNode?.data.endpointUrl as string) || '',
+      retryPolicyMaxAttempts: (selectedNode?.data.retryPolicyMaxAttempts as number) || 3,
+      businessNotes: (selectedNode?.data.businessNotes as string) || '',
+    },
+  });
+
+  const apiOnSubmit = (data: ApiNodeFormData) => {
+    if (selectedNodeId) {
+      updateNodeData(selectedNodeId, { ...data, isConfigured: true });
+    }
+  };
+
+  // Notification Node Form
+  const notificationForm = useForm<NotificationNodeFormData>({
+    resolver: zodResolver(notificationNodeSchema),
+    defaultValues: {
+      name: (selectedNode?.data.name as string) || '',
+      messageTemplate: (selectedNode?.data.messageTemplate as string) || '',
+      businessNotes: (selectedNode?.data.businessNotes as string) || '',
+    },
+  });
+
+  const notificationOnSubmit = (data: NotificationNodeFormData) => {
+    if (selectedNodeId) {
+      updateNodeData(selectedNodeId, { ...data, isConfigured: true });
+    }
+  };
+
+  if (!selectedNode || !selectedNodeId) return null;
 
   // API Node Form
   if (nodeType === 1) {
@@ -38,19 +71,7 @@ export default function NodePropertiesPanel() {
       register,
       handleSubmit,
       formState: { errors },
-    } = useForm<ApiNodeFormData>({
-      resolver: zodResolver(apiNodeSchema),
-      defaultValues: {
-        name: (selectedNode.data.name as string) || '',
-        endpointUrl: (selectedNode.data.endpointUrl as string) || '',
-        retryPolicyMaxAttempts: (selectedNode.data.retryPolicyMaxAttempts as number) || 3,
-        businessNotes: (selectedNode.data.businessNotes as string) || '',
-      },
-    });
-
-    const onSubmit = (data: ApiNodeFormData) => {
-      updateNodeData(selectedNodeId, { ...data, isConfigured: true });
-    };
+    } = apiForm;
 
     return (
       <div className="fixed right-0 top-0 h-full w-96 bg-white border-l border-gray-200 shadow-xl z-10 overflow-y-auto">
@@ -64,7 +85,7 @@ export default function NodePropertiesPanel() {
           </button>
         </div>
 
-        <form onSubmit={handleSubmit(onSubmit)} className="p-4 space-y-4">
+        <form onSubmit={handleSubmit(apiOnSubmit)} className="p-4 space-y-4">
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">Name</label>
             <input
@@ -132,18 +153,7 @@ export default function NodePropertiesPanel() {
       register,
       handleSubmit,
       formState: { errors },
-    } = useForm<NotificationNodeFormData>({
-      resolver: zodResolver(notificationNodeSchema),
-      defaultValues: {
-        name: (selectedNode.data.name as string) || '',
-        messageTemplate: (selectedNode.data.messageTemplate as string) || '',
-        businessNotes: (selectedNode.data.businessNotes as string) || '',
-      },
-    });
-
-    const onSubmit = (data: NotificationNodeFormData) => {
-      updateNodeData(selectedNodeId, { ...data, isConfigured: true });
-    };
+    } = notificationForm;
 
     return (
       <div className="fixed right-0 top-0 h-full w-96 bg-white border-l border-gray-200 shadow-xl z-10 overflow-y-auto">
@@ -157,7 +167,7 @@ export default function NodePropertiesPanel() {
           </button>
         </div>
 
-        <form onSubmit={handleSubmit(onSubmit)} className="p-4 space-y-4">
+        <form onSubmit={handleSubmit(notificationOnSubmit)} className="p-4 space-y-4">
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">Name</label>
             <input
