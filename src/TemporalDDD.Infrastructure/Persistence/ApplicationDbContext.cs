@@ -26,6 +26,7 @@ public class ApplicationDbContext : DbContext
     public DbSet<RoleDbo> Roles => Set<RoleDbo>();
     public DbSet<WorkflowDefinitionDbo> WorkflowDefinitions => Set<WorkflowDefinitionDbo>();
     public DbSet<WorkflowNodeDbo> WorkflowNodes => Set<WorkflowNodeDbo>();
+    public DbSet<WorkflowInstanceDbo> WorkflowInstances => Set<WorkflowInstanceDbo>();
 
     protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
     {

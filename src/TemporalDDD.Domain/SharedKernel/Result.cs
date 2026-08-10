@@ -1,5 +1,28 @@
 namespace TemporalDDD.Domain.SharedKernel;
 
+public sealed record Result
+{
+    public bool IsSuccess { get; }
+    public bool IsFailure => !IsSuccess;
+    public string? Error { get; }
+
+    private Result(bool isSuccess, string? error)
+    {
+        IsSuccess = isSuccess;
+        Error = error;
+    }
+
+    public static Result Success() => new(true, null);
+    public static Result Failure(string error) => new(false, error);
+
+    public TResult Match<TResult>(
+        Func<TResult> onSuccess,
+        Func<string, TResult> onFailure)
+    {
+        return IsSuccess ? onSuccess() : onFailure(Error!);
+    }
+}
+
 public sealed record Result<T>
 {
     public bool IsSuccess { get; }

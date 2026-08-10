@@ -35,7 +35,8 @@ public class WorkflowNodeConfiguration : IEntityTypeConfiguration<WorkflowNodeDb
         // Table-Per-Hierarchy (TPH) using NodeType as discriminator
         builder.HasDiscriminator(x => x.NodeType)
             .HasValue<ApiWorkflowNodeDbo>(1)  // NodeType.Api
-            .HasValue<NotificationWorkflowNodeDbo>(2);  // NodeType.Notification
+            .HasValue<NotificationWorkflowNodeDbo>(2)  // NodeType.Notification
+            .HasValue<HumanTaskWorkflowNodeDbo>(3);  // NodeType.HumanTask
     }
 }
 
@@ -78,6 +79,27 @@ public class NotificationWorkflowNodeConfiguration : IEntityTypeConfiguration<No
     {
         // Configure NotificationWorkflowNodeDbo specific properties
         builder.Property(x => x.MessageTemplate)
+            .IsRequired(false);
+    }
+}
+
+public class HumanTaskWorkflowNodeConfiguration : IEntityTypeConfiguration<HumanTaskWorkflowNodeDbo>
+{
+    public void Configure(EntityTypeBuilder<HumanTaskWorkflowNodeDbo> builder)
+    {
+        // Configure HumanTaskWorkflowNodeDbo specific properties
+        // Flattened Value Objects
+        builder.Property(x => x.RequiredRole)
+            .IsRequired(false);
+
+        builder.Property(x => x.SignalName)
+            .IsRequired(false);
+
+        builder.Property(x => x.TimeoutInMinutes)
+            .IsRequired(false);
+
+        // Additional properties
+        builder.Property(x => x.UIFormSchema)
             .IsRequired(false);
     }
 }

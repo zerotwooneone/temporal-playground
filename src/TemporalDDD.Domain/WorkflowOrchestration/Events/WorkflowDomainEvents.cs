@@ -38,3 +38,10 @@ public sealed record WorkflowNodesUpdated(
 {
     public DateTimeOffset OccurredOn { get; } = DateTimeOffset.UtcNow;
 }
+
+public sealed record WorkflowInstanceStarted(
+    WorkflowInstancePublicId WorkflowInstancePublicId,
+    BusinessReferenceId BusinessReferenceId) : IDomainEvent
+{
+    public DateTimeOffset OccurredOn { get; } = DateTimeOffset.UtcNow;
+}
