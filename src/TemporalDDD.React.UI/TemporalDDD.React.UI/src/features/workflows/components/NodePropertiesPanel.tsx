@@ -3,6 +3,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { useWorkflowStore } from '../../../store/workflowStore';
 import { X } from 'lucide-react';
+import { useEffect } from 'react';
 
 // API Node Schema
 const apiNodeSchema = z.object({
@@ -34,12 +35,24 @@ export default function NodePropertiesPanel() {
   const apiForm = useForm<ApiNodeFormData>({
     resolver: zodResolver(apiNodeSchema),
     defaultValues: {
-      name: (selectedNode?.data.name as string) || '',
-      endpointUrl: (selectedNode?.data.endpointUrl as string) || '',
-      retryPolicyMaxAttempts: (selectedNode?.data.retryPolicyMaxAttempts as number) || 3,
-      businessNotes: (selectedNode?.data.businessNotes as string) || '',
+      name: '',
+      endpointUrl: '',
+      retryPolicyMaxAttempts: 3,
+      businessNotes: '',
     },
   });
+
+  // Reset form when selected node changes
+  useEffect(() => {
+    if (selectedNode && nodeType === 1) {
+      apiForm.reset({
+        name: (selectedNode.data.name as string) || '',
+        endpointUrl: (selectedNode.data.endpointUrl as string) || '',
+        retryPolicyMaxAttempts: (selectedNode.data.retryPolicyMaxAttempts as number) || 3,
+        businessNotes: (selectedNode.data.businessNotes as string) || '',
+      });
+    }
+  }, [selectedNode, nodeType, apiForm]);
 
   const apiOnSubmit = (data: ApiNodeFormData) => {
     if (selectedNodeId) {
@@ -51,11 +64,22 @@ export default function NodePropertiesPanel() {
   const notificationForm = useForm<NotificationNodeFormData>({
     resolver: zodResolver(notificationNodeSchema),
     defaultValues: {
-      name: (selectedNode?.data.name as string) || '',
-      messageTemplate: (selectedNode?.data.messageTemplate as string) || '',
-      businessNotes: (selectedNode?.data.businessNotes as string) || '',
+      name: '',
+      messageTemplate: '',
+      businessNotes: '',
     },
   });
+
+  // Reset form when selected node changes
+  useEffect(() => {
+    if (selectedNode && nodeType === 2) {
+      notificationForm.reset({
+        name: (selectedNode.data.name as string) || '',
+        messageTemplate: (selectedNode.data.messageTemplate as string) || '',
+        businessNotes: (selectedNode.data.businessNotes as string) || '',
+      });
+    }
+  }, [selectedNode, nodeType, notificationForm]);
 
   const notificationOnSubmit = (data: NotificationNodeFormData) => {
     if (selectedNodeId) {
