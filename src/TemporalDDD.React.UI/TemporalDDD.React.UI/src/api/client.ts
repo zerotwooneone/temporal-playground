@@ -15,3 +15,13 @@ apiClient.interceptors.response.use(
     return Promise.reject(error);
   }
 );
+
+export const createWorkflow = async (name: string, creatorId: string) => {
+  const response = await apiClient.post('/workflows', { name, creatorId });
+  return response.data; // Returns CreateWorkflowResponse with workflowId
+};
+
+export const getWorkflows = async () => {
+  const response = await apiClient.get('/workflows');
+  return response.data;
+};

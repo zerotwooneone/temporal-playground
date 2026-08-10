@@ -34,11 +34,11 @@ public class WorkflowOrchestrationController : ControllerBase
         if (creatorIdResult.IsFailure)
             return BadRequest(creatorIdResult.Error);
 
-        // Validate Name is not empty 
+        // Validate Name is not empty
         if (string.IsNullOrWhiteSpace(request.Name))
             return BadRequest("Name is required and cannot be empty.");
 
-        var workflowId = $"workflow-draft-{Guid.NewGuid():N}";
+        var workflowId = $"WFLId{Guid.NewGuid()}";
 
         var workflowInput = new CreateWorkflowDraftInput(
             CreatorId: request.CreatorId,

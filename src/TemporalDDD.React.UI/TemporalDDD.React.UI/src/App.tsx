@@ -1,6 +1,7 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { ReactFlowProvider } from '@xyflow/react';
+import WorkflowDashboard from './features/workflows/pages/WorkflowDashboard';
 import WorkflowDesigner from './features/workflows/pages/WorkflowDesigner';
 
 const queryClient = new QueryClient();
@@ -12,7 +13,7 @@ function App() {
         <BrowserRouter>
           <Routes>
             <Route path="/" element={<Navigate to="/workflows" replace />} />
-            <Route path="/workflows" element={<WorkflowDesigner />} />
+            <Route path="/workflows" element={<WorkflowDashboard />} />
             <Route path="/workflows/:id" element={<WorkflowDesigner />} />
           </Routes>
         </BrowserRouter>
