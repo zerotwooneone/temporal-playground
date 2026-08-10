@@ -3,9 +3,6 @@ using Temporalio.Client;
 using TemporalDDD.Application.WorkflowOrchestration;
 using TemporalDDD.Domain.IdentityAndAccess;
 using TemporalDDD.Domain.WorkflowOrchestration;
-using TemporalDDD.Domain.WorkflowOrchestration.Nodes;
-using TemporalDDD.Domain.WorkflowOrchestration.ValueObjects;
-using TemporalDDD.Infrastructure.WorkflowOrchestration;
 
 namespace TemporalDDD.Api.WorkflowOrchestration;
 
@@ -15,13 +12,11 @@ public class WorkflowOrchestrationController : ControllerBase
 {
     private readonly ITemporalClient _temporalClient;
     private readonly IWorkflowDefinitionQuery _query;
-    private readonly IWorkflowDefinitionRepository _repository;
 
-    public WorkflowOrchestrationController(ITemporalClient temporalClient, IWorkflowDefinitionQuery query, IWorkflowDefinitionRepository repository)
+    public WorkflowOrchestrationController(ITemporalClient temporalClient, IWorkflowDefinitionQuery query)
     {
         _temporalClient = temporalClient;
         _query = query;
-        _repository = repository;
     }
 
     [HttpGet]
@@ -34,10 +29,14 @@ public class WorkflowOrchestrationController : ControllerBase
     [HttpPost]
     public async Task<IActionResult> CreateWorkflowDraft([FromBody] CreateWorkflowRequest request, CancellationToken cancellationToken = default)
     {
-        // Validate CreatorId at the edge
+        // Validate CreatorId at the edge using domain value type
         var creatorIdResult = UserId.Create(request.CreatorId);
         if (creatorIdResult.IsFailure)
             return BadRequest(creatorIdResult.Error);
+
+        // Validate Name is not empty 
+        if (string.IsNullOrWhiteSpace(request.Name))
+            return BadRequest("Name is required and cannot be empty.");
 
         var workflowId = $"workflow-draft-{Guid.NewGuid():N}";
 
@@ -71,77 +70,63 @@ public class WorkflowOrchestrationController : ControllerBase
     [HttpPut("{id}/nodes")]
     public async Task<IActionResult> UpdateWorkflowNodes(string id, [FromBody] UpdateWorkflowNodesRequest request, CancellationToken cancellationToken = default)
     {
-        // Validate workflow exists
+        // Validate workflow ID using domain value type
         var workflowIdResult = WorkflowDefinitionId.Create(id);
         if (workflowIdResult.IsFailure)
             return BadRequest(workflowIdResult.Error);
 
-        var workflow = await _repository.GetByIdAsync(workflowIdResult.Value, cancellationToken);
-        if (workflow == null)
-            return NotFound($"Workflow with ID {id} not found");
-
-        // Map DTOs to domain nodes
-        var domainNodes = new List<WorkflowNode>();
-        foreach (var nodeDto in request.Nodes)
+        // Validate each node's ID and NodeType using domain value types (lightweight in-memory checks)
+        foreach (var node in request.Nodes)
         {
-            var nodeTypeResult = NodeType.FromValue(nodeDto.NodeType);
-            if (nodeTypeResult.IsFailure)
-                return BadRequest($"Invalid NodeType for node {nodeDto.Id}: {nodeTypeResult.Error}");
-
-            var nodeIdResult = WorkflowNodeId.Create(nodeDto.Id);
+            var nodeIdResult = WorkflowNodeId.Create(node.Id);
             if (nodeIdResult.IsFailure)
-                return BadRequest($"Invalid NodeId for node {nodeDto.Id}: {nodeIdResult.Error}");
+                return BadRequest($"Invalid node ID '{node.Id}': {nodeIdResult.Error}");
 
-            WorkflowNode domainNode = nodeTypeResult.Value.Value switch
-            {
-                1 => ApiWorkflowNode.CreateStub(nodeDto.Name, nodeDto.BusinessNotes),
-                2 => NotificationWorkflowNode.CreateStub(nodeDto.Name, nodeDto.BusinessNotes),
-                _ => throw new InvalidOperationException($"Unsupported NodeType: {nodeTypeResult.Value.Name}")
-            };
-
-            // Update business intent if provided
-            if (nodeDto.BusinessNotes != null || nodeDto.Name != null)
-            {
-                domainNode.UpdateBusinessIntent(nodeDto.Name, nodeDto.BusinessNotes);
-            }
-
-            // Configure API node specifics
-            if (nodeTypeResult.Value.Value == 1 && domainNode is ApiWorkflowNode apiNode)
-            {
-                var retryPolicy = RetryPolicy.Create(
-                    nodeDto.RetryPolicyMaxAttempts ?? 3,
-                    nodeDto.RetryPolicyBackoffCoefficient ?? 2
-                ).Value;
-
-                var contractMapping = ContractMapping.Create(
-                    nodeDto.ContractMappingConvertXmlToJson ?? false,
-                    nodeDto.ContractMappingQueryParameters ?? string.Empty,
-                    nodeDto.ContractMappingRequestMapping ?? string.Empty,
-                    nodeDto.ContractMappingResponseMapping ?? string.Empty
-                ).Value;
-
-                apiNode.ConfigureTechnicalDetails(
-                    nodeDto.EndpointUrl ?? string.Empty,
-                    nodeDto.AuthToken,
-                    retryPolicy,
-                    contractMapping
-                );
-            }
-
-            // Configure notification node specifics
-            if (nodeTypeResult.Value.Value == 2 && domainNode is NotificationWorkflowNode notificationNode)
-            {
-                notificationNode.ConfigureTechnicalDetails(nodeDto.MessageTemplate ?? string.Empty);
-            }
-
-            domainNodes.Add(domainNode);
+            var nodeTypeResult = NodeType.FromValue(node.NodeType);
+            if (nodeTypeResult.IsFailure)
+                return BadRequest($"Invalid NodeType {node.NodeType} for node '{node.Id}': {nodeTypeResult.Error}");
         }
 
-        // Update workflow with new nodes
-        var updatedWorkflow = workflow.UpdateNodes(domainNodes);
-        await _repository.SaveAsync(updatedWorkflow, cancellationToken);
+        // Map API DTOs to Application DTOs
+        var applicationNodeDtos = request.Nodes.Select(node => new Application.WorkflowOrchestration.WorkflowNodeDto(
+            Id: node.Id,
+            NodeType: node.NodeType,
+            Name: node.Name,
+            BusinessNotes: node.BusinessNotes,
+            IsConfigured: node.IsConfigured,
+            EndpointUrl: node.EndpointUrl,
+            AuthToken: node.AuthToken,
+            RetryPolicyMaxAttempts: node.RetryPolicyMaxAttempts,
+            RetryPolicyBackoffCoefficient: node.RetryPolicyBackoffCoefficient,
+            ContractMappingConvertXmlToJson: node.ContractMappingConvertXmlToJson,
+            ContractMappingQueryParameters: node.ContractMappingQueryParameters,
+            ContractMappingRequestMapping: node.ContractMappingRequestMapping,
+            ContractMappingResponseMapping: node.ContractMappingResponseMapping,
+            MessageTemplate: node.MessageTemplate
+        )).ToList();
 
-        return Ok(new { message = "Workflow nodes saved successfully" });
+        var input = new UpdateWorkflowNodesInput(id, applicationNodeDtos);
+
+        try
+        {
+            await _temporalClient.StartWorkflowAsync(
+                (UpdateWorkflowNodesWorkflow wf) => wf.RunAsync(input),
+                new WorkflowOptions
+                {
+                    Id = $"update-nodes-{id}-{Guid.NewGuid():N}",
+                    TaskQueue = "WORKFLOW_ORCHESTRATION_TASK_QUEUE",
+                    Memo = new Dictionary<string, object>
+                    {
+                        ["WorkflowId"] = id
+                    }
+                });
+
+            return Ok(new { message = "Workflow update started" });
+        }
+        catch (Exception ex)
+        {
+            return BadRequest(ex.Message);
+        }
     }
 }
 

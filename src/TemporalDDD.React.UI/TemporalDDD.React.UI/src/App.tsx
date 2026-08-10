@@ -13,6 +13,7 @@ function App() {
           <Routes>
             <Route path="/" element={<Navigate to="/workflows" replace />} />
             <Route path="/workflows" element={<WorkflowDesigner />} />
+            <Route path="/workflows/:id" element={<WorkflowDesigner />} />
           </Routes>
         </BrowserRouter>
       </ReactFlowProvider>

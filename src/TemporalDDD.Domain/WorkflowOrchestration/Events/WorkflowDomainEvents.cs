@@ -32,3 +32,9 @@ public sealed record WorkflowRejected(
 {
     public DateTimeOffset OccurredOn { get; } = DateTimeOffset.UtcNow;
 }
+
+public sealed record WorkflowNodesUpdated(
+    WorkflowDefinitionId WorkflowId) : IDomainEvent
+{
+    public DateTimeOffset OccurredOn { get; } = DateTimeOffset.UtcNow;
+}

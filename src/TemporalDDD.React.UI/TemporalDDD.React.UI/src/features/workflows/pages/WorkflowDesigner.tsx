@@ -1,5 +1,6 @@
 import '@xyflow/react/dist/style.css';
 import { ReactFlow, Background, Controls, type Node } from '@xyflow/react';
+import { useParams } from 'react-router-dom';
 import { useWorkflowStore } from '../../../store/workflowStore';
 import ApiNode from '../components/nodes/ApiNode';
 import NotificationNode from '../components/nodes/NotificationNode';
@@ -12,6 +13,7 @@ const nodeTypes = {
 };
 
 export default function WorkflowDesigner() {
+  const { id } = useParams<{ id: string }>();
   const { nodes, edges, onNodesChange, onEdgesChange, onConnect, setSelectedNodeId } = useWorkflowStore();
 
   const onNodeClick = (_: React.MouseEvent, node: Node) => {
@@ -24,7 +26,7 @@ export default function WorkflowDesigner() {
 
   return (
     <div className="flex flex-col h-full">
-      <WorkflowToolbar />
+      <WorkflowToolbar workflowId={id || 'workflow-draft-123'} />
       
       <div className="flex-1 relative">
         <ReactFlow

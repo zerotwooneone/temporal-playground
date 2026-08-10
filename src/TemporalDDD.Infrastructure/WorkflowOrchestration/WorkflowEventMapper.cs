@@ -18,6 +18,10 @@ public class WorkflowEventMapper : IWorkflowEventMapper
                     CreatorId: e.CreatorId.ToString(),
                     Name: e.Name),
 
+            Domain.WorkflowOrchestration.Events.WorkflowNodesUpdated e =>
+                new Application.WorkflowOrchestration.WorkflowNodesUpdatedEvent(
+                    WorkflowId: e.WorkflowId.ToString()),
+
             Domain.WorkflowOrchestration.Events.WorkflowSubmittedForReview e =>
                 new Application.Messaging.UnknownTypeEvent(
                     new InvalidOperationException($"WorkflowSubmittedForReview event not yet mapped to application event").ToString()),

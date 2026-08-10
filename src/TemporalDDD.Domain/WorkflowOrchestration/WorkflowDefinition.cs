@@ -103,6 +103,7 @@ public sealed class WorkflowDefinition : AggregateRoot
     {
         _nodes.Clear();
         _nodes.AddRange(nodes);
+        RaiseDomainEvent(new WorkflowNodesUpdated(Id));
         return this;
     }
 

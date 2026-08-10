@@ -3,13 +3,17 @@ import { Plus, Save } from 'lucide-react';
 import { useMutation } from '@tanstack/react-query';
 import { apiClient } from '../../../api/client';
 
-export default function WorkflowToolbar() {
+interface WorkflowToolbarProps {
+  workflowId: string;
+}
+
+export default function WorkflowToolbar({ workflowId }: WorkflowToolbarProps) {
   const { addNode, nodes } = useWorkflowStore();
 
   const saveMutation = useMutation({
     mutationFn: async () => {
       const payload = {
-        workflowId: 'workflow-draft-123', // TODO: Get from route or context
+        workflowId: workflowId,
         nodes: nodes.map((node) => ({
           id: node.id,
           nodeType: node.data.nodeType,
@@ -30,7 +34,7 @@ export default function WorkflowToolbar() {
         })),
       };
 
-      const response = await apiClient.put('/workflows/workflow-draft-123/nodes', payload);
+      const response = await apiClient.put(`/workflows/${workflowId}/nodes`, payload);
       return response.data;
     },
     onSuccess: () => {
@@ -46,7 +50,7 @@ export default function WorkflowToolbar() {
     <div className="bg-white border-b border-gray-200 px-4 py-3 flex items-center justify-between shadow-sm">
       <div className="flex items-center gap-4">
         <h1 className="text-lg font-semibold text-gray-900">Workflow Designer</h1>
-        <span className="text-sm text-gray-500">ID: workflow-draft-123</span>
+        <span className="text-sm text-gray-500">ID: {workflowId}</span>
       </div>
 
       <div className="flex items-center gap-2">

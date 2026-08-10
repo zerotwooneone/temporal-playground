@@ -8,5 +8,8 @@ public interface IWorkflowOrchestrationActivities
     Task<SaveWorkflowResult> CreateDraftAndSaveAsync(CreateWorkflowDraftInput input);
 
     [Activity]
+    Task<SaveWorkflowResult> UpdateNodesAndSaveAsync(UpdateWorkflowNodesInput input);
+
+    [Activity]
     Task PublishApplicationEventsAsync(PublishEventsInput input);
 }

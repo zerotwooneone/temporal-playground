@@ -7,3 +7,6 @@ public sealed record WorkflowDraftCreatedEvent(
     string PublicId,
     string CreatorId,
     string Name) : IApplicationEvent;
+
+public sealed record WorkflowNodesUpdatedEvent(
+    string WorkflowId) : IApplicationEvent;

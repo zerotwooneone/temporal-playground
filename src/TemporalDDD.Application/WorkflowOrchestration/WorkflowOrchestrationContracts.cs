@@ -6,6 +6,29 @@ public record CreateWorkflowDraftInput(
     string CreatorId,
     string Name);
 
+public record UpdateWorkflowNodesInput(
+    string WorkflowId,
+    IReadOnlyList<WorkflowNodeDto> Nodes);
+
+public record WorkflowNodeDto(
+    string Id,
+    int NodeType,
+    string Name,
+    string? BusinessNotes,
+    bool IsConfigured,
+    // Api Node properties
+    string? EndpointUrl,
+    string? AuthToken,
+    int? RetryPolicyMaxAttempts,
+    int? RetryPolicyBackoffCoefficient,
+    bool? ContractMappingConvertXmlToJson,
+    string? ContractMappingQueryParameters,
+    string? ContractMappingRequestMapping,
+    string? ContractMappingResponseMapping,
+    // Notification Node properties
+    string? MessageTemplate
+);
+
 public record SaveWorkflowResult(
     string WorkflowId,
     IReadOnlyList<IApplicationEvent> Events);
