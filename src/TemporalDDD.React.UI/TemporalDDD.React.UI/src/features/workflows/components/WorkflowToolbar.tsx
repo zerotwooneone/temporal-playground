@@ -37,9 +37,7 @@ export default function WorkflowToolbar({ workflowId }: WorkflowToolbarProps) {
       const response = await apiClient.put(`/workflows/${workflowId}/nodes`, payload);
       return response.data;
     },
-    onSuccess: () => {
-      alert('Workflow saved successfully!');
-    },
+    onSuccess: () => {},
     onError: (error) => {
       console.error('Failed to save workflow:', error);
       alert('Failed to save workflow. Please try again.');

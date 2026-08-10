@@ -45,8 +45,9 @@ export const useWorkflowStore = create<WorkflowStore>((set) => ({
   setSelectedNodeId: (id) => set({ selectedNodeId: id }),
   addNode: (type) =>
     set((state) => {
+      const guid = crypto.randomUUID();
       const newNode: Node = {
-        id: `node-${Date.now()}`,
+        id: `WFNId${guid}`,
         type,
         position: { x: 250, y: 150 },
         data: {
