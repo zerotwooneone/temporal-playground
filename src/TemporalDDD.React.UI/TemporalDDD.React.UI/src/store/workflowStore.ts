@@ -22,6 +22,8 @@ interface WorkflowStore {
   setSelectedNodeId: (id: string | null) => void;
   addNode: (type: 'apiNode' | 'notificationNode') => void;
   updateNodeData: (id: string, data: Record<string, any>) => void;
+  loadWorkflow: (workflowData: any) => void;
+  clearWorkflow: () => void;
 }
 
 export const useWorkflowStore = create<WorkflowStore>((set) => ({
@@ -65,5 +67,47 @@ export const useWorkflowStore = create<WorkflowStore>((set) => ({
           ? { ...node, data: { ...node.data, ...data } }
           : node
       ),
+    })),
+  loadWorkflow: (workflowData) =>
+    set(() => {
+      const nodes = workflowData.nodes.map((node: any) => ({
+        id: node.id,
+        type: node.nodeType === 1 ? 'apiNode' : 'notificationNode',
+        position: { x: 250, y: 150 }, // Default position, could be stored in DB later
+        data: {
+          name: node.name,
+          nodeType: node.nodeType,
+          businessNotes: node.businessNotes,
+          isConfigured: node.isConfigured,
+          endpointUrl: node.endpointUrl,
+          authToken: node.authToken,
+          retryPolicyMaxAttempts: node.retryPolicyMaxAttempts,
+          retryPolicyBackoffCoefficient: node.retryPolicyBackoffCoefficient,
+          contractMappingConvertXmlToJson: node.contractMappingConvertXmlToJson,
+          contractMappingQueryParameters: node.contractMappingQueryParameters,
+          contractMappingRequestMapping: node.contractMappingRequestMapping,
+          contractMappingResponseMapping: node.contractMappingResponseMapping,
+          messageTemplate: node.messageTemplate,
+        },
+      }));
+
+      // Parse flowJson to get edges if available
+      let edges: Edge[] = [];
+      if (workflowData.flowJson) {
+        try {
+          const flowData = JSON.parse(workflowData.flowJson);
+          edges = flowData.edges || [];
+        } catch (e) {
+          console.error('Failed to parse flowJson:', e);
+        }
+      }
+
+      return { nodes, edges, selectedNodeId: null };
+    }),
+  clearWorkflow: () =>
+    set(() => ({
+      nodes: [],
+      edges: [],
+      selectedNodeId: null,
     })),
 }));

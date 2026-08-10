@@ -25,3 +25,8 @@ export const getWorkflows = async () => {
   const response = await apiClient.get('/workflows');
   return response.data;
 };
+
+export const getWorkflowById = async (id: string) => {
+  const response = await apiClient.get(`/workflows/${id}`);
+  return response.data;
+};

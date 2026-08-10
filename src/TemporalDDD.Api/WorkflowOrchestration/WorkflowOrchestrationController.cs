@@ -26,6 +26,15 @@ public class WorkflowOrchestrationController : ControllerBase
         return Ok(workflows);
     }
 
+    [HttpGet("{id}")]
+    public async Task<IActionResult> GetWorkflowById(string id, CancellationToken cancellationToken = default)
+    {
+        var workflow = await _query.GetWorkflowByIdAsync(id, cancellationToken);
+        if (workflow == null)
+            return NotFound($"Workflow with ID '{id}' not found");
+        return Ok(workflow);
+    }
+
     [HttpPost]
     public async Task<IActionResult> CreateWorkflowDraft([FromBody] CreateWorkflowRequest request, CancellationToken cancellationToken = default)
     {

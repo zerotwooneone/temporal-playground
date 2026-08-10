@@ -43,4 +43,95 @@ public class WorkflowDefinitionQuery : IWorkflowDefinitionQuery
 
         return result.AsReadOnly();
     }
+
+    public async Task<WorkflowDetailDto?> GetWorkflowByIdAsync(string id, CancellationToken cancellationToken = default)
+    {
+        var workflow = await _dbContext.WorkflowDefinitions
+            .AsNoTracking()
+            .FirstOrDefaultAsync(w => w.Id == id, cancellationToken);
+
+        if (workflow == null)
+            return null;
+
+        var statusResult = WorkflowStatus.FromValue(workflow.Status);
+        if (statusResult.IsFailure)
+            return null;
+
+        var nodes = await _dbContext.WorkflowNodes
+            .AsNoTracking()
+            .Where(n => n.WorkflowDefinitionId == workflow.Id)
+            .ToListAsync(cancellationToken);
+
+        var nodeDtos = nodes.Select(n =>
+        {
+            // Handle polymorphic node types
+            if (n is ApiWorkflowNodeDbo apiNode)
+            {
+                return new WorkflowNodeDetailDto(
+                    Id: n.Id,
+                    NodeType: n.NodeType,
+                    Name: n.Name,
+                    BusinessNotes: n.BusinessNotes,
+                    IsConfigured: n.IsConfigured,
+                    EndpointUrl: apiNode.EndpointUrl,
+                    AuthToken: apiNode.AuthToken,
+                    RetryPolicyMaxAttempts: apiNode.RetryPolicyMaxAttempts,
+                    RetryPolicyBackoffCoefficient: apiNode.RetryPolicyBackoffCoefficient,
+                    ContractMappingConvertXmlToJson: apiNode.ContractMappingConvertXmlToJson,
+                    ContractMappingQueryParameters: apiNode.ContractMappingQueryParameters,
+                    ContractMappingRequestMapping: apiNode.ContractMappingRequestMapping,
+                    ContractMappingResponseMapping: apiNode.ContractMappingResponseMapping,
+                    MessageTemplate: null
+                );
+            }
+            else if (n is NotificationWorkflowNodeDbo notificationNode)
+            {
+                return new WorkflowNodeDetailDto(
+                    Id: n.Id,
+                    NodeType: n.NodeType,
+                    Name: n.Name,
+                    BusinessNotes: n.BusinessNotes,
+                    IsConfigured: n.IsConfigured,
+                    EndpointUrl: null,
+                    AuthToken: null,
+                    RetryPolicyMaxAttempts: null,
+                    RetryPolicyBackoffCoefficient: null,
+                    ContractMappingConvertXmlToJson: null,
+                    ContractMappingQueryParameters: null,
+                    ContractMappingRequestMapping: null,
+                    ContractMappingResponseMapping: null,
+                    MessageTemplate: notificationNode.MessageTemplate
+                );
+            }
+            else
+            {
+                // Base WorkflowNodeDbo (shouldn't happen in practice)
+                return new WorkflowNodeDetailDto(
+                    Id: n.Id,
+                    NodeType: n.NodeType,
+                    Name: n.Name,
+                    BusinessNotes: n.BusinessNotes,
+                    IsConfigured: n.IsConfigured,
+                    EndpointUrl: null,
+                    AuthToken: null,
+                    RetryPolicyMaxAttempts: null,
+                    RetryPolicyBackoffCoefficient: null,
+                    ContractMappingConvertXmlToJson: null,
+                    ContractMappingQueryParameters: null,
+                    ContractMappingRequestMapping: null,
+                    ContractMappingResponseMapping: null,
+                    MessageTemplate: null
+                );
+            }
+        }).ToList();
+
+        return new WorkflowDetailDto(
+            Id: workflow.Id,
+            PublicId: workflow.PublicId,
+            Name: workflow.Name,
+            Status: statusResult.Value.Name,
+            FlowJson: workflow.FlowJson ?? string.Empty,
+            Nodes: nodeDtos
+        );
+    }
 }
