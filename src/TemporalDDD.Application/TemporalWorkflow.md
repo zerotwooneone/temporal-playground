@@ -201,7 +201,53 @@ public async Task RunAsync(CredentialingInput input)
 **Summary:**
 Never throw an `ApplicationFailureException` for a Domain validation failure (`IsFailure`) at the entry point of a workflow. Domain validation failures at the workflow boundary imply corrupted system state, which requires an `InvalidOperationException` to safely pause the workflow via a Task Failure. Reserve `ApplicationFailureException` strictly for explicit business process terminations.
 
-### 3. Keep Workflows Orchestrated, Not Operational
+### 3. Workflows Cannot Use Constructor Injection
+**Critical Constraint:** Temporal workflows do not support dependency injection via constructors. Workflows must be deterministic and self-contained with a lifetime controlled by Temporal. Attempting to inject dependencies will cause a runtime error: "Workflow named X is not instantiable."
+
+**❌ Bad (Constructor injection):**
+```csharp
+[Workflow]
+public class CreateWorkflowDraftWorkflow
+{
+    private readonly IWorkflowOrchestrationActivities _activities;
+
+    public CreateWorkflowDraftWorkflow(IWorkflowOrchestrationActivities activities)
+    {
+        _activities = activities;
+    }
+
+    [WorkflowRun]
+    public async Task RunAsync(CreateWorkflowDraftInput input)
+    {
+        await Workflow.ExecuteActivityAsync(
+            () => _activities.CreateDraftAndSaveAsync(input),
+            activityOptions);
+    }
+}
+```
+
+**✅ Good (Lambda with interface parameter):**
+```csharp
+[Workflow]
+public class CreateWorkflowDraftWorkflow
+{
+    [WorkflowRun]
+    public async Task RunAsync(CreateWorkflowDraftInput input)
+    {
+        await Workflow.ExecuteActivityAsync(
+            (IWorkflowOrchestrationActivities activities) => activities.CreateDraftAndSaveAsync(input),
+            activityOptions);
+    }
+}
+```
+
+**Why this matters:**
+- Temporal serializes and reconstructs workflow instances during replay and history replay
+- Constructor injection breaks the deterministic reconstruction process
+- Activities are resolved via DI at execution time when using the lambda pattern
+- This pattern matches how existing workflows like `ProviderCredentialingWorkflow` are implemented
+
+### 4. Keep Workflows Orchestrated, Not Operational
 Workflows should orchestrate activities, not contain business logic. Business logic belongs in activities or domain entities.
 
 **❌ Bad:**
@@ -237,7 +283,7 @@ public async Task RunAsync(uint providerId)
 }
 ```
 
-### 3. Use Signals for External Events
+### 5. Use Signals for External Events
 Use workflow signals to handle external events that occur asynchronously (e.g., manual review completion, offer acceptance).
 
 ```csharp
@@ -248,7 +294,7 @@ public async Task ManualReviewCompletedAsync(bool approved, string? notes = null
 }
 ```
 
-### 4. Implement Idempotency
+### 6. Implement Idempotency
 Workflows should be idempotent. Use workflow IDs as idempotency keys for external operations (e.g., payment gateways).
 
 ```csharp
@@ -256,7 +302,7 @@ var idempotencyKey = Workflow.Info.WorkflowId;
 await ExecuteActivityAsync((a) => a.SubmitPayment(amount, idempotencyKey));
 ```
 
-### 5. Handle Compensation in Sagas
+### 7. Handle Compensation in Sagas
 For multi-step operations that need rollback, implement compensating transactions in exception handlers.
 
 ```csharp
@@ -275,7 +321,7 @@ catch (Exception ex)
 }
 ```
 
-### 6. Use WaitCondition for Synchronization
+### 8. Use WaitCondition for Synchronization
 Use `Workflow.WaitConditionAsync` to wait for signals or other conditions, avoiding busy-waiting.
 
 ```csharp
@@ -285,7 +331,7 @@ await Workflow.WaitConditionAsync(() =>
 );
 ```
 
-### 7. Set Appropriate Timeouts
+### 9. Set Appropriate Timeouts
 Always set `StartToCloseTimeout` for activities to prevent hanging workflows.
 
 ```csharp
@@ -295,7 +341,7 @@ await ExecuteActivityAsync(
 );
 ```
 
-### 8. Keep Workflow State Minimal
+### 10. Keep Workflow State Minimal
 Store only necessary state in workflow instance variables. Use primitive types for workflow state to ensure serializability. Avoid storing large objects or domain types.
 
 ```csharp
@@ -307,7 +353,7 @@ private Assignment? _assignment;
 private AssignmentId? _assignmentId;
 ```
 
-### 9. Use Descriptive Workflow IDs
+### 11. Use Descriptive Workflow IDs
 Generate workflow IDs that are both human-readable and unique.
 
 ```csharp
