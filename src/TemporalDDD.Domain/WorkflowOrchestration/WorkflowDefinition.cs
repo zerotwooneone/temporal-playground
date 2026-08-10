@@ -1,6 +1,7 @@
 using TemporalDDD.Domain.IdentityAndAccess;
 using TemporalDDD.Domain.WorkflowOrchestration.Events;
 using TemporalDDD.Domain.WorkflowOrchestration.Nodes;
+using TemporalDDD.Domain.WorkflowOrchestration.ValueObjects;
 using TemporalDDD.Domain.SeedWork;
 using TemporalDDD.Domain.SharedKernel;
 
@@ -12,6 +13,7 @@ public sealed class WorkflowDefinition : AggregateRoot
     public WorkflowDefinitionPublicId PublicId { get; private set; }
     public UserId CreatorId { get; private set; }
     public string Name { get; private set; }
+    public WorkflowClassName ClassName { get; private set; }
     public WorkflowStatus Status { get; private set; }
     public string FlowJson { get; private set; }
 
@@ -29,6 +31,7 @@ public sealed class WorkflowDefinition : AggregateRoot
         WorkflowDefinitionPublicId publicId,
         UserId creatorId,
         string name,
+        WorkflowClassName className,
         WorkflowStatus status,
         string flowJson,
         IEnumerable<WorkflowNode> nodes)
@@ -37,6 +40,7 @@ public sealed class WorkflowDefinition : AggregateRoot
         PublicId = publicId;
         CreatorId = creatorId;
         Name = name;
+        ClassName = className;
         Status = status;
         FlowJson = flowJson;
         _nodes.AddRange(nodes);
@@ -45,12 +49,19 @@ public sealed class WorkflowDefinition : AggregateRoot
     // Factory for creating new workflow definition
     public static WorkflowDefinition Create(UserId creatorId, string name, string initialJson)
     {
+        var publicId = WorkflowDefinitionPublicId.New();
+        var classNameResult = WorkflowClassName.Create(name, publicId);
+
+        if (classNameResult.IsFailure)
+            throw new ArgumentException(classNameResult.Error);
+
         var workflow = new WorkflowDefinition
         {
             Id = WorkflowDefinitionId.New(),
-            PublicId = WorkflowDefinitionPublicId.New(),
+            PublicId = publicId,
             CreatorId = creatorId,
             Name = name,
+            ClassName = classNameResult.Value,
             Status = WorkflowStatus.Draft,
             FlowJson = initialJson
         };
@@ -70,6 +81,19 @@ public sealed class WorkflowDefinition : AggregateRoot
             throw new InvalidOperationException("Cannot update flow JSON when status is not Draft or Rejected");
 
         FlowJson = flowJson;
+    }
+
+    public void UpdateName(string newName)
+    {
+        if (Status != WorkflowStatus.Draft && Status != WorkflowStatus.Rejected)
+            throw new InvalidOperationException("Cannot update name when status is not Draft or Rejected");
+
+        var classNameResult = WorkflowClassName.Create(newName, PublicId);
+        if (classNameResult.IsFailure)
+            throw new ArgumentException(classNameResult.Error);
+
+        Name = newName;
+        ClassName = classNameResult.Value;
     }
 
     public void SubmitForReview()

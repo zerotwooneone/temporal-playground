@@ -29,6 +29,13 @@ public class WorkflowDefinitionConfiguration : IEntityTypeConfiguration<Workflow
         builder.Property(x => x.Name)
             .IsRequired();
 
+        // WorkflowClassName - stored as string with Unique Index
+        builder.Property(x => x.ClassName)
+            .IsRequired();
+
+        builder.HasIndex(x => x.ClassName)
+            .IsUnique();
+
         // Smart Enum - stored as int
         builder.Property(x => x.Status)
             .IsRequired();
