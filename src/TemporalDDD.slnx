@@ -16,6 +16,8 @@
     <Project Path="TemporalDDD.Application.IntegrationTests/TemporalDDD.Application.IntegrationTests.csproj" />
   </Folder>
   <Folder Name="/03 - Infrastructure/">
+    <Project Path="TemporalDDD.Infrastructure.Generators.Tests/TemporalDDD.Infrastructure.Generators.Tests.csproj" />
+    <Project Path="TemporalDDD.Infrastructure.Generators/TemporalDDD.Infrastructure.Generators.csproj" />
     <Project Path="TemporalDDD.Infrastructure.Queries/TemporalDDD.Infrastructure.Queries.csproj" />
     <Project Path="TemporalDDD.Infrastructure.Tests/TemporalDDD.Infrastructure.Tests.csproj" />
     <Project Path="TemporalDDD.Infrastructure/TemporalDDD.Infrastructure.csproj" />

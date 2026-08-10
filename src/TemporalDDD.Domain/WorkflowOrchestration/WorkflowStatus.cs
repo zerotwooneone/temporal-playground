@@ -17,8 +17,9 @@ public sealed record WorkflowStatus
     public static readonly WorkflowStatus PendingReview = new(1, "PendingReview");
     public static readonly WorkflowStatus Approved = new(2, "Approved");
     public static readonly WorkflowStatus Rejected = new(3, "Rejected");
+    public static readonly WorkflowStatus Published = new(4, "Published");
 
-    private static readonly WorkflowStatus[] AllStatuses = { Draft, PendingReview, Approved, Rejected };
+    private static readonly WorkflowStatus[] AllStatuses = { Draft, PendingReview, Approved, Rejected, Published };
 
     public static Result<WorkflowStatus> FromValue(int value)
     {

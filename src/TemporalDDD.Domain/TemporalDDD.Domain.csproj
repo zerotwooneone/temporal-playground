@@ -8,6 +8,7 @@
 
   <ItemGroup>
     <InternalsVisibleTo Include="TemporalDDD.Infrastructure" />
+    <InternalsVisibleTo Include="TemporalDDD.Infrastructure.Generators.Tests" />
   </ItemGroup>
 
 </Project>

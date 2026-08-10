@@ -3,6 +3,7 @@ using Temporalio.Client;
 using TemporalDDD.Application.WorkflowOrchestration;
 using TemporalDDD.Domain.IdentityAndAccess;
 using TemporalDDD.Domain.WorkflowOrchestration;
+using TemporalDDD.Infrastructure.Generators;
 
 namespace TemporalDDD.Api.WorkflowOrchestration;
 
@@ -12,11 +13,22 @@ public class WorkflowOrchestrationController : ControllerBase
 {
     private readonly ITemporalClient _temporalClient;
     private readonly IWorkflowDefinitionQuery _query;
+    private readonly IWorkflowCodeGeneratorService _codeGeneratorService;
+    private readonly IConfiguration _configuration;
+    private readonly IWorkflowDefinitionRepository _repository;
 
-    public WorkflowOrchestrationController(ITemporalClient temporalClient, IWorkflowDefinitionQuery query)
+    public WorkflowOrchestrationController(
+        ITemporalClient temporalClient,
+        IWorkflowDefinitionQuery query,
+        IWorkflowCodeGeneratorService codeGeneratorService,
+        IConfiguration configuration,
+        IWorkflowDefinitionRepository repository)
     {
         _temporalClient = temporalClient;
         _query = query;
+        _codeGeneratorService = codeGeneratorService;
+        _configuration = configuration;
+        _repository = repository;
     }
 
     [HttpGet]
@@ -131,6 +143,45 @@ public class WorkflowOrchestrationController : ControllerBase
                 });
 
             return Ok(new { message = "Workflow update started" });
+        }
+        catch (Exception ex)
+        {
+            return BadRequest(ex.Message);
+        }
+    }
+
+    [HttpPost("{id}/publish")]
+    public async Task<IActionResult> PublishWorkflow(string id, CancellationToken cancellationToken = default)
+    {
+        // Validate workflow ID using domain value type
+        var workflowIdResult = WorkflowDefinitionId.Create(id);
+        if (workflowIdResult.IsFailure)
+            return BadRequest(workflowIdResult.Error);
+
+        // Retrieve the workflow definition from the database
+        var workflowDefinition = await _repository.GetByIdAsync(workflowIdResult.Value, cancellationToken);
+        if (workflowDefinition == null)
+            return NotFound($"Workflow with ID '{id}' not found");
+
+        // Check if workflow is in Approved status
+        if (workflowDefinition.Status != WorkflowStatus.Approved)
+            return BadRequest($"Workflow must be in Approved status before publishing. Current status: {workflowDefinition.Status}");
+
+        // Get the worker project path from configuration
+        var workerProjectPath = _configuration["WorkerProjectPath"];
+        if (string.IsNullOrWhiteSpace(workerProjectPath))
+            return BadRequest("WorkerProjectPath is not configured in appsettings.json");
+
+        try
+        {
+            // Generate the workflow class
+            await _codeGeneratorService.GenerateWorkflowClassAsync(workflowDefinition, workerProjectPath);
+
+            // Update the workflow status to Published
+            workflowDefinition.Publish();
+            await _repository.SaveAsync(workflowDefinition, cancellationToken);
+
+            return Ok(new { message = "Workflow published successfully", className = workflowDefinition.ClassName.Value });
         }
         catch (Exception ex)
         {

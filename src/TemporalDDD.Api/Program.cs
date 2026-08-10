@@ -3,6 +3,8 @@ using Temporalio.Client;
 using TemporalDDD.Infrastructure;
 using TemporalDDD.Infrastructure.Queries;
 using TemporalDDD.Api.Messaging;
+using TemporalDDD.Application.WorkflowOrchestration;
+using TemporalDDD.Infrastructure.Generators;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -33,11 +35,14 @@ builder.Services.AddMessaging(rabbitMqConnectionString, rabbitMqInputQueue);
 builder.Services.AddApplicationEventHandlers();
 
 // Add Temporal Client
-builder.Services.AddSingleton<ITemporalClient>(sp => 
+builder.Services.AddSingleton<ITemporalClient>(sp =>
 {
     var client = TemporalClient.ConnectAsync(new("localhost:7233")).GetAwaiter().GetResult();
     return client;
 });
+
+// Add Workflow Code Generator Service
+builder.Services.AddScoped<IWorkflowCodeGeneratorService, RoslynWorkflowCodeGeneratorService>();
 
 var app = builder.Build();
 

@@ -260,4 +260,12 @@ public sealed class WorkflowDefinition : AggregateRoot
         Status = WorkflowStatus.Rejected;
         RaiseDomainEvent(new WorkflowRejected(Id, reviewerId, reason));
     }
+
+    public void Publish()
+    {
+        if (Status != WorkflowStatus.Approved)
+            throw new InvalidOperationException("Cannot publish workflow when status is not Approved");
+
+        Status = WorkflowStatus.Published;
+    }
 }

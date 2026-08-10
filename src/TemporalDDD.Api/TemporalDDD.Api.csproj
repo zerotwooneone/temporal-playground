@@ -24,6 +24,7 @@
     <ProjectReference Include="..\TemporalDDD.Infrastructure\TemporalDDD.Infrastructure.csproj" />
     <ProjectReference Include="..\TemporalDDD.Contracts\TemporalDDD.Contracts.csproj" />
     <ProjectReference Include="..\TemporalDDD.Infrastructure.Queries\TemporalDDD.Infrastructure.Queries.csproj" />
+    <ProjectReference Include="..\TemporalDDD.Infrastructure.Generators\TemporalDDD.Infrastructure.Generators.csproj" />
   </ItemGroup>
 
   <ItemGroup>
