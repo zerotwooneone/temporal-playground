@@ -6,11 +6,13 @@ using TemporalDDD.Application.ProviderCredentialing;
 using TemporalDDD.Application.PlacementMatching;
 using TemporalDDD.Application.TimesheetProcessing;
 using TemporalDDD.Application.TravelLogistics;
+using TemporalDDD.Application.WorkflowOrchestration;
 using TemporalDDD.Infrastructure.ProviderOnboarding;
 using TemporalDDD.Infrastructure.ProviderCredentialing;
 using TemporalDDD.Infrastructure.PlacementMatching;
 using TemporalDDD.Infrastructure.TimesheetProcessing;
 using TemporalDDD.Infrastructure.TravelLogistics;
+using TemporalDDD.Infrastructure.WorkflowOrchestration;
 using TemporalDDD.Infrastructure;
 using Temporalio.Extensions.Hosting;
 
@@ -42,8 +44,9 @@ builder.Services.AddScoped<ProviderCredentialingActivities>();
 builder.Services.AddScoped<PlacementMatchingActivities>();
 builder.Services.AddScoped<TimesheetProcessingActivities>();
 builder.Services.AddScoped<TravelLogisticsActivities>();
+builder.Services.AddScoped<WorkflowOrchestrationActivities>();
 
-// Register the Temporal Worker Service
+// Register the Temporal Worker Service for Onboarding
 builder.Services.AddHostedTemporalWorker("localhost:7233", "default", "ONBOARDING_TASK_QUEUE")
     .ConfigureOptions(options =>
     {
@@ -61,6 +64,17 @@ builder.Services.AddHostedTemporalWorker("localhost:7233", "default", "ONBOARDIN
     .AddScopedActivities<PlacementMatchingActivities>()
     .AddScopedActivities<TimesheetProcessingActivities>()
     .AddScopedActivities<TravelLogisticsActivities>();
+
+// Register the Temporal Worker Service for Workflow Orchestration
+builder.Services.AddHostedTemporalWorker("localhost:7233", "default", "WORKFLOW_ORCHESTRATION_TASK_QUEUE")
+    .ConfigureOptions(options =>
+    {
+        // Register the Workflows
+        options.AddWorkflow<CreateWorkflowDraftWorkflow>();
+        options.AddWorkflow<UpdateWorkflowNodesWorkflow>();
+    })
+    // Register all Activities using DI
+    .AddScopedActivities<WorkflowOrchestrationActivities>();
 
 var app = builder.Build();
 
