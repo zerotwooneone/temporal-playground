@@ -81,9 +81,9 @@ export default function WorkflowDesigner() {
           <Background />
           <Controls />
         </ReactFlow>
-
-        <NodePropertiesPanel />
       </div>
+
+      <NodePropertiesPanel />
     </div>
   );
 }
