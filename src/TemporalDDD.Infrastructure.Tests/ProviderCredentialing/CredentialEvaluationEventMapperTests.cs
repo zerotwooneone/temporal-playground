@@ -1,3 +1,4 @@
+using TemporalDDD.Application.Messaging;
 using TemporalDDD.Application.ProviderCredentialing;
 using TemporalDDD.Domain.ProviderCredentialing;
 using TemporalDDD.Domain.ProviderCredentialing.ValueObjects;
@@ -99,11 +100,14 @@ public class CredentialEvaluationEventMapperTests
         var unknownEvent = new UnknownDomainEvent();
 
         // Act
-        var act = () => _mapper.MapToApplicationEvent(unknownEvent);
+        var applicationEvent = _mapper.MapToApplicationEvent(unknownEvent);
 
         // Assert
-        act.Should().Throw<InvalidOperationException>()
-            .WithMessage("*Unknown domain event type*");
+        applicationEvent.Should().BeOfType<UnknownTypeEvent>();
+        var unknownTypeEvent = applicationEvent as UnknownTypeEvent;
+        unknownTypeEvent.Should().NotBeNull();
+
+        unknownTypeEvent.Exception.Should().NotBeEmpty();
     }
     #endregion
 
