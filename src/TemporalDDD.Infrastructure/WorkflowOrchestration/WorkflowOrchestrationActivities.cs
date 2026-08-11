@@ -32,13 +32,13 @@ public class WorkflowOrchestrationActivities : IWorkflowOrchestrationActivities
         var workflowDefinitionRepository = scope.ServiceProvider.GetRequiredService<IWorkflowDefinitionRepository>();
 
         // Validate workflow exists
-        var workflowIdResult = WorkflowDefinitionId.Create(input.WorkflowId);
+        var workflowIdResult = WorkflowDefinitionId.Create(input.WorkflowDefinitionId);
         if (workflowIdResult.IsFailure)
-            throw new InvalidOperationException($"Invalid WorkflowId: {workflowIdResult.Error}");
+            throw new InvalidOperationException($"Invalid WorkflowDefinitionId: {workflowIdResult.Error}");
 
         var workflow = await workflowDefinitionRepository.GetByIdAsync(workflowIdResult.Value);
         if (workflow == null)
-            throw new InvalidOperationException($"Workflow with ID {input.WorkflowId} not found");
+            throw new InvalidOperationException($"Workflow with WorkflowDefinitionId {input.WorkflowDefinitionId} not found");
 
         // Map DTOs to domain nodes
         var domainNodes = new List<WorkflowNode>();
@@ -54,8 +54,10 @@ public class WorkflowOrchestrationActivities : IWorkflowOrchestrationActivities
 
             WorkflowNode domainNode = nodeTypeResult.Value.Value switch
             {
+                0 => StartWorkflowNode.CreateStub(nodeDto.Name, nodeDto.BusinessNotes),
                 1 => ApiWorkflowNode.CreateStub(nodeDto.Name, nodeDto.BusinessNotes),
                 2 => NotificationWorkflowNode.CreateStub(nodeDto.Name, nodeDto.BusinessNotes),
+                99 => EndWorkflowNode.CreateStub(nodeDto.Name, nodeDto.BusinessNotes),
                 _ => throw new InvalidOperationException($"Unsupported NodeType: {nodeTypeResult.Value.Name}")
             };
 

@@ -132,4 +132,20 @@ public class WorkflowDefinitionQuery : IWorkflowDefinitionQuery
             Nodes: nodeDtos
         );
     }
+
+    public async Task<WorkflowDefinitionId?> GetWorkflowDefinitionIdByPublicIdAsync(WorkflowDefinitionPublicId publicId, CancellationToken cancellationToken = default)
+    {
+        var workflow = await _dbContext.WorkflowDefinitions
+            .AsNoTracking()
+            .FirstOrDefaultAsync(w => w.PublicId == publicId.ToString(), cancellationToken);
+
+        if (workflow == null)
+            return null;
+
+        var idResult = WorkflowDefinitionId.Create(workflow.Id);
+        if (idResult.IsFailure)
+            return null;
+
+        return idResult.Value;
+    }
 }

@@ -64,7 +64,7 @@ export default function WorkflowDesigner() {
 
   return (
     <div className="flex flex-col h-full">
-      <WorkflowToolbar workflowId={id || `WFLId${crypto.randomUUID()}`} />
+      <WorkflowToolbar publicId={id || `WFLId${crypto.randomUUID()}`} />
 
       <div className="flex-1 relative">
         <ReactFlow

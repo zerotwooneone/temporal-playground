@@ -56,6 +56,9 @@ public sealed class WorkflowDefinition : AggregateRoot
         if (classNameResult.IsFailure)
             throw new ArgumentException(classNameResult.Error);
 
+        var startNode = StartWorkflowNode.CreateStub("Start", "Entry point of the workflow");
+        var endNode = EndWorkflowNode.CreateStub("End", "Successful completion");
+
         var workflow = new WorkflowDefinition
         {
             Id = WorkflowDefinitionId.New(),
@@ -66,6 +69,9 @@ public sealed class WorkflowDefinition : AggregateRoot
             Status = WorkflowStatus.Draft,
             FlowJson = initialJson
         };
+
+        workflow._nodes.Add(startNode);
+        workflow._nodes.Add(endNode);
 
         return workflow;
     }

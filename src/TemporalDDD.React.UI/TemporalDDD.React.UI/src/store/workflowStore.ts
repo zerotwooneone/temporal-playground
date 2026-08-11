@@ -70,36 +70,66 @@ export const useWorkflowStore = create<WorkflowStore>((set) => ({
     })),
   loadWorkflow: (workflowData) =>
     set(() => {
-      const nodes = workflowData.nodes.map((node: any) => ({
-        id: node.id,
-        type: node.nodeType === 1 ? 'apiNode' : 'notificationNode',
-        position: { x: 250, y: 150 }, // Default position, could be stored in DB later
-        data: {
-          name: node.name,
-          nodeType: node.nodeType,
-          businessNotes: node.businessNotes,
-          isConfigured: node.isConfigured,
-          endpointUrl: node.endpointUrl,
-          authToken: node.authToken,
-          retryPolicyMaxAttempts: node.retryPolicyMaxAttempts,
-          retryPolicyBackoffCoefficient: node.retryPolicyBackoffCoefficient,
-          contractMappingConvertXmlToJson: node.contractMappingConvertXmlToJson,
-          contractMappingQueryParameters: node.contractMappingQueryParameters,
-          contractMappingRequestMapping: node.contractMappingRequestMapping,
-          contractMappingResponseMapping: node.contractMappingResponseMapping,
-          messageTemplate: node.messageTemplate,
-        },
-      }));
-
-      // Parse flowJson to get edges if available
+      let nodes: Node[] = [];
       let edges: Edge[] = [];
+
+      // Check if flowJson exists and has saved canvas state
       if (workflowData.flowJson) {
         try {
           const flowData = JSON.parse(workflowData.flowJson);
+          nodes = flowData.nodes || [];
           edges = flowData.edges || [];
         } catch (e) {
           console.error('Failed to parse flowJson:', e);
         }
+      }
+
+      // If no saved canvas state, auto-generate from backend nodes
+      if (nodes.length === 0 && workflowData.nodes.length > 0) {
+        nodes = workflowData.nodes.map((node: any) => {
+          let nodeType: string;
+          let position: { x: number; y: number };
+
+          // Map node types to React Flow types and assign default positions
+          if (node.nodeType === 0) {
+            nodeType = 'start';
+            position = { x: 100, y: 300 };
+          } else if (node.nodeType === 99) {
+            nodeType = 'end';
+            position = { x: 800, y: 300 };
+          } else if (node.nodeType === 1) {
+            nodeType = 'apiNode';
+            position = { x: 250, y: 150 };
+          } else if (node.nodeType === 2) {
+            nodeType = 'notificationNode';
+            position = { x: 250, y: 150 };
+          } else {
+            nodeType = 'custom';
+            position = { x: 250, y: 150 };
+          }
+
+          return {
+            id: node.id,
+            type: nodeType,
+            position,
+            data: {
+              label: node.name,
+              name: node.name,
+              nodeType: node.nodeType,
+              businessNotes: node.businessNotes,
+              isConfigured: node.isConfigured,
+              endpointUrl: node.endpointUrl,
+              authToken: node.authToken,
+              retryPolicyMaxAttempts: node.retryPolicyMaxAttempts,
+              retryPolicyBackoffCoefficient: node.retryPolicyBackoffCoefficient,
+              contractMappingConvertXmlToJson: node.contractMappingConvertXmlToJson,
+              contractMappingQueryParameters: node.contractMappingQueryParameters,
+              contractMappingRequestMapping: node.contractMappingRequestMapping,
+              contractMappingResponseMapping: node.contractMappingResponseMapping,
+              messageTemplate: node.messageTemplate,
+            },
+          };
+        });
       }
 
       return { nodes, edges, selectedNodeId: null };

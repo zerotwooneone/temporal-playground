@@ -128,7 +128,7 @@ public class WorkflowDefinitionRepository : IWorkflowDefinitionRepository
     private WorkflowNode MapDboToNode(WorkflowNodeDbo dbo)
     {
         var nodeId = WorkflowNodeId.Create(dbo.Id).Value ?? throw new InvalidOperationException($"Invalid WorkflowNodeId in database: {dbo.Id}");
-        
+
         var nodeTypeResult = NodeType.FromValue(dbo.NodeType);
         if (nodeTypeResult.IsFailure)
             throw new InvalidOperationException($"Invalid NodeType in database: {dbo.NodeType}. {nodeTypeResult.Error}");
@@ -136,6 +136,8 @@ public class WorkflowDefinitionRepository : IWorkflowDefinitionRepository
 
         return nodeType switch
         {
+            var t when t == NodeType.Start => new StartWorkflowNode(nodeId, dbo.Name, dbo.BusinessNotes, dbo.IsConfigured),
+            var t when t == NodeType.End => new EndWorkflowNode(nodeId, dbo.Name, dbo.BusinessNotes, dbo.IsConfigured),
             var t when t == NodeType.Api => MapApiNode(dbo, nodeId),
             var t when t == NodeType.Notification => MapNotificationNode(dbo, nodeId),
             _ => throw new InvalidOperationException($"Unsupported NodeType in database: {dbo.NodeType}")
@@ -210,6 +212,24 @@ public class WorkflowDefinitionRepository : IWorkflowDefinitionRepository
     {
         return node switch
         {
+            StartWorkflowNode startNode => new StartWorkflowNodeDbo
+            {
+                Id = startNode.Id.ToString(),
+                WorkflowDefinitionId = workflowDefinitionId,
+                NodeType = startNode.Type.Value,
+                Name = startNode.Name,
+                BusinessNotes = startNode.BusinessNotes,
+                IsConfigured = startNode.IsConfigured
+            },
+            EndWorkflowNode endNode => new EndWorkflowNodeDbo
+            {
+                Id = endNode.Id.ToString(),
+                WorkflowDefinitionId = workflowDefinitionId,
+                NodeType = endNode.Type.Value,
+                Name = endNode.Name,
+                BusinessNotes = endNode.BusinessNotes,
+                IsConfigured = endNode.IsConfigured
+            },
             ApiWorkflowNode apiNode => MapApiNodeToDbo(apiNode, workflowDefinitionId),
             NotificationWorkflowNode notificationNode => MapNotificationNodeToDbo(notificationNode, workflowDefinitionId),
             _ => throw new InvalidOperationException($"Unsupported WorkflowNode type: {node.GetType().Name}")

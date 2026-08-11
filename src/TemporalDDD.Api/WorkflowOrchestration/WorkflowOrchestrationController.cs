@@ -82,9 +82,14 @@ public class WorkflowOrchestrationController : ControllerBase
     public async Task<IActionResult> UpdateWorkflowNodes(string id, [FromBody] UpdateWorkflowNodesRequest request, CancellationToken cancellationToken = default)
     {
         // Validate workflow ID using domain value type
-        var workflowIdResult = WorkflowDefinitionId.Create(id);
-        if (workflowIdResult.IsFailure)
-            return BadRequest(workflowIdResult.Error);
+        var publicIdResult = WorkflowDefinitionPublicId.Create(id);
+        if (publicIdResult.IsFailure)
+            return BadRequest(publicIdResult.Error);
+
+        // Resolve WorkflowDefinitionId from PublicId
+        var workflowDefinitionId = await _query.GetWorkflowDefinitionIdByPublicIdAsync(publicIdResult.Value, cancellationToken);
+        if (workflowDefinitionId == null)
+            return NotFound($"Workflow with PublicId '{id}' not found");
 
         // Validate each node's ID and NodeType using domain value types (lightweight in-memory checks)
         foreach (var node in request.Nodes)
@@ -121,7 +126,7 @@ public class WorkflowOrchestrationController : ControllerBase
             TargetNodeId: t.TargetNodeId
         )).ToList();
 
-        var input = new UpdateWorkflowNodesInput(id, applicationNodeDtos, applicationTransitionDtos);
+        var input = new UpdateWorkflowNodesInput(workflowDefinitionId.ToString(), applicationNodeDtos, applicationTransitionDtos);
 
         try
         {
@@ -145,18 +150,23 @@ public class WorkflowOrchestrationController : ControllerBase
         }
     }
 
-    [HttpPost("{id}/publish")]
-    public async Task<IActionResult> PublishWorkflow(string id, CancellationToken cancellationToken = default)
+    [HttpPost("{publicId}/publish")]
+    public async Task<IActionResult> PublishWorkflow(string publicId, CancellationToken cancellationToken = default)
     {
         // Validate workflow ID using domain value type
-        var workflowIdResult = WorkflowDefinitionId.Create(id);
-        if (workflowIdResult.IsFailure)
-            return BadRequest(workflowIdResult.Error);
+        var publicIdResult = WorkflowDefinitionPublicId.Create(publicId);
+        if (publicIdResult.IsFailure)
+            return BadRequest(publicIdResult.Error);
+
+        // Resolve WorkflowDefinitionId from PublicId
+        var workflowDefinitionId = await _query.GetWorkflowDefinitionIdByPublicIdAsync(publicIdResult.Value, cancellationToken);
+        if (workflowDefinitionId == null)
+            return NotFound($"Workflow with PublicId '{publicId}' not found");
 
         // Retrieve the workflow definition from the database
-        var workflowDefinition = await _repository.GetByIdAsync(workflowIdResult.Value, cancellationToken);
+        var workflowDefinition = await _repository.GetByIdAsync(workflowDefinitionId, cancellationToken);
         if (workflowDefinition == null)
-            return NotFound($"Workflow with ID '{id}' not found");
+            return NotFound($"Workflow with ID '{publicId}' not found");
 
         // Check if workflow is in Approved status
         if (workflowDefinition.Status != WorkflowStatus.Approved)
@@ -189,10 +199,6 @@ public record CreateWorkflowRequest(
     string CreatorId,
     string Name);
 
-public record CreateWorkflowResponse(
-    string WorkflowId,
-    string Message);
-
 public record WorkflowNodeDto(
     string Id,
     int NodeType,
@@ -217,6 +223,5 @@ public record WorkflowTransitionDto(
     string TargetNodeId);
 
 public record UpdateWorkflowNodesRequest(
-    string WorkflowId,
     List<WorkflowNodeDto> Nodes,
     List<WorkflowTransitionDto> Transitions);

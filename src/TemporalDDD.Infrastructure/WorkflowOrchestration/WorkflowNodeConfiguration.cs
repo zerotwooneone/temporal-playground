@@ -34,9 +34,11 @@ public class WorkflowNodeConfiguration : IEntityTypeConfiguration<WorkflowNodeDb
 
         // Table-Per-Hierarchy (TPH) using NodeType as discriminator
         builder.HasDiscriminator(x => x.NodeType)
+            .HasValue<StartWorkflowNodeDbo>(0)  // NodeType.Start
             .HasValue<ApiWorkflowNodeDbo>(1)  // NodeType.Api
             .HasValue<NotificationWorkflowNodeDbo>(2)  // NodeType.Notification
-            .HasValue<HumanTaskWorkflowNodeDbo>(3);  // NodeType.HumanTask
+            .HasValue<HumanTaskWorkflowNodeDbo>(3)  // NodeType.HumanTask
+            .HasValue<EndWorkflowNodeDbo>(99);  // NodeType.End
     }
 }
 

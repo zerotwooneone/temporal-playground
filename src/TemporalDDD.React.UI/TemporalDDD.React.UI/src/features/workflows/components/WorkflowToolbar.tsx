@@ -4,16 +4,15 @@ import { useMutation } from '@tanstack/react-query';
 import { apiClient } from '../../../api/client';
 
 interface WorkflowToolbarProps {
-  workflowId: string;
+  publicId: string;
 }
 
-export default function WorkflowToolbar({ workflowId }: WorkflowToolbarProps) {
-  const { addNode, nodes } = useWorkflowStore();
+export default function WorkflowToolbar({ publicId }: WorkflowToolbarProps) {
+  const { addNode, nodes, edges } = useWorkflowStore();
 
   const saveMutation = useMutation({
     mutationFn: async () => {
       const payload = {
-        workflowId: workflowId,
         nodes: nodes.map((node) => ({
           id: node.id,
           nodeType: node.data.nodeType,
@@ -32,9 +31,13 @@ export default function WorkflowToolbar({ workflowId }: WorkflowToolbarProps) {
           // Notification Node properties
           messageTemplate: node.data.messageTemplate,
         })),
+        transitions: edges.map((edge) => ({
+          sourceNodeId: edge.source,
+          targetNodeId: edge.target,
+        })),
       };
 
-      const response = await apiClient.put(`/workflows/${workflowId}/nodes`, payload);
+      const response = await apiClient.put(`/workflows/${publicId}/nodes`, payload);
       return response.data;
     },
     onSuccess: () => {},
@@ -48,7 +51,7 @@ export default function WorkflowToolbar({ workflowId }: WorkflowToolbarProps) {
     <div className="bg-white border-b border-gray-200 px-4 py-3 flex items-center justify-between shadow-sm">
       <div className="flex items-center gap-4">
         <h1 className="text-lg font-semibold text-gray-900">Workflow Designer</h1>
-        <span className="text-sm text-gray-500">ID: {workflowId}</span>
+        <span className="text-sm text-gray-500">ID: {publicId}</span>
       </div>
 
       <div className="flex items-center gap-2">

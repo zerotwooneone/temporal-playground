@@ -3,7 +3,7 @@ using TemporalDDD.Application.Messaging;
 namespace TemporalDDD.Application.WorkflowOrchestration;
 
 public record UpdateWorkflowNodesInput(
-    string WorkflowId,
+    string WorkflowDefinitionId,
     IReadOnlyList<WorkflowNodeDto> Nodes,
     IReadOnlyList<WorkflowTransitionDto> Transitions);
 
