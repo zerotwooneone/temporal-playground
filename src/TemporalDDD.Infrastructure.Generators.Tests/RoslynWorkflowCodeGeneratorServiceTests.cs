@@ -5,8 +5,6 @@ using TemporalDDD.Domain.IdentityAndAccess;
 using TemporalDDD.Domain.WorkflowOrchestration;
 using TemporalDDD.Domain.WorkflowOrchestration.Nodes;
 using TemporalDDD.Domain.WorkflowOrchestration.ValueObjects;
-using TemporalDDD.Infrastructure.Generators;
-using Xunit;
 
 namespace TemporalDDD.Infrastructure.Generators.Tests;
 
@@ -57,13 +55,8 @@ public class RoslynWorkflowCodeGeneratorServiceTests
             className,
             WorkflowStatus.Draft,
             "{}",
-            new List<WorkflowNode> { startNode, apiNode, humanTaskNode, endNode });
-
-        // Update the workflow with transitions
-        workflowDefinition.UpdateNodes(
             new List<WorkflowNode> { startNode, apiNode, humanTaskNode, endNode },
-            transitions,
-            "{}");
+            transitions);
 
         var tempDirectory = Path.Combine(Path.GetTempPath(), Guid.NewGuid().ToString());
         Directory.CreateDirectory(tempDirectory);
