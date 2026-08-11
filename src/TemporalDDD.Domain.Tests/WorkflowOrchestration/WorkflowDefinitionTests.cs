@@ -280,4 +280,69 @@ public class WorkflowDefinitionTests
         nodes.Should().BeAssignableTo<System.Collections.Generic.IReadOnlyCollection<WorkflowNode>>();
     }
     #endregion
+
+    #region UpdateNodes Tests
+    [Fact]
+    public void UpdateNodes_WithFlowJson_UpdatesFlowJsonProperty()
+    {
+        // ARRANGE
+        var publicId = WorkflowDefinitionPublicId.New();
+        var workflow = WorkflowDefinition.Create(UserId.New(), "Test", "{}", publicId);
+        var newFlowJson = "{\"nodes\":[],\"edges\":[]}";
+        var nodes = workflow.Nodes.ToList();
+        var transitions = workflow.Transitions.ToList();
+
+        // ACT
+        workflow.UpdateNodes(nodes, transitions, newFlowJson);
+
+        // ASSERT
+        workflow.FlowJson.Should().Be(newFlowJson);
+    }
+
+    [Fact]
+    public void UpdateNodes_WithNullFlowJson_DoesNotChangeFlowJsonProperty()
+    {
+        // ARRANGE
+        var publicId = WorkflowDefinitionPublicId.New();
+        var initialJson = "{\"initial\": true}";
+        var workflow = WorkflowDefinition.Create(UserId.New(), "Test", initialJson, publicId);
+        var nodes = workflow.Nodes.ToList();
+        var transitions = workflow.Transitions.ToList();
+
+        // ACT
+        workflow.UpdateNodes(nodes, transitions, null);
+
+        // ASSERT
+        workflow.FlowJson.Should().Be(initialJson);
+    }
+
+    [Fact]
+    public void UpdateNodes_ReplacesExistingNodesAndTransitions()
+    {
+        // ARRANGE
+        var publicId = WorkflowDefinitionPublicId.New();
+        var workflow = WorkflowDefinition.Create(UserId.New(), "Test", "{}", publicId);
+        var initialNodeCount = workflow.Nodes.Count;
+        var initialTransitionCount = workflow.Transitions.Count;
+
+        var newNodes = new List<WorkflowNode>
+        {
+            StartWorkflowNode.CreateStub("New Start", "New start node"),
+            EndWorkflowNode.CreateStub("New End", "New end node")
+        };
+        var newTransitions = new List<WorkflowTransition>
+        {
+            new WorkflowTransition(newNodes[0].Id, newNodes[1].Id)
+        };
+
+        // ACT
+        workflow.UpdateNodes(newNodes, newTransitions, null);
+
+        // ASSERT
+        workflow.Nodes.Should().HaveCount(2);
+        workflow.Transitions.Should().HaveCount(1);
+        workflow.Nodes.Should().NotContain(n => n.Name == "Start");
+        workflow.Nodes.Should().Contain(n => n.Name == "New Start");
+    }
+    #endregion
 }
