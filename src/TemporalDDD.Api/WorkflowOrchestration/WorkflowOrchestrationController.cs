@@ -59,11 +59,13 @@ public class WorkflowOrchestrationController : ControllerBase
         if (string.IsNullOrWhiteSpace(request.Name))
             return BadRequest("Name is required and cannot be empty.");
 
-        var workflowId = $"WFLId{Guid.NewGuid()}";
+        var workflowId = WorkflowDefinitionId.New().ToString();
+        var publicId = WorkflowDefinitionPublicId.New().ToString();
 
         var workflowInput = new CreateWorkflowDraftInput(
             CreatorId: request.CreatorId,
-            Name: request.Name
+            Name: request.Name,
+            PublicId: publicId
         );
 
         try

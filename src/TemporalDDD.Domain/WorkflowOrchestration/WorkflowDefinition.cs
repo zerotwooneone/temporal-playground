@@ -49,9 +49,8 @@ public sealed class WorkflowDefinition : AggregateRoot
     }
 
     // Factory for creating new workflow definition
-    public static WorkflowDefinition Create(UserId creatorId, string name, string initialJson)
+    public static WorkflowDefinition Create(UserId creatorId, string name, string initialJson, WorkflowDefinitionPublicId publicId)
     {
-        var publicId = WorkflowDefinitionPublicId.New();
         var classNameResult = WorkflowClassName.Create(name, publicId);
 
         if (classNameResult.IsFailure)

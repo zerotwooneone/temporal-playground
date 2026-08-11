@@ -4,7 +4,8 @@ namespace TemporalDDD.Application.WorkflowOrchestration;
 
 public record CreateWorkflowDraftInput(
     string CreatorId,
-    string Name);
+    string Name,
+    string PublicId);
 
 public record UpdateWorkflowNodesInput(
     string WorkflowId,

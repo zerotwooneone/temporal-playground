@@ -36,13 +36,19 @@ public class WorkflowOrchestrationActivities : IWorkflowOrchestrationActivities
         if (creatorIdResult.IsFailure)
             throw new InvalidOperationException($"Internal Corruption: Invalid UserId. {creatorIdResult.Error}");
 
+        var publicIdResult = WorkflowDefinitionPublicId.Create(input.PublicId);
+        if (publicIdResult.IsFailure)
+            throw new InvalidOperationException($"Internal Corruption: Invalid PublicId. {publicIdResult.Error}");
+
         var creatorId = creatorIdResult.Value;
+        var publicId = publicIdResult.Value;
 
         // Create domain entity using factory
         var workflow = WorkflowDefinition.Create(
             creatorId: creatorId,
             name: input.Name,
-            initialJson: "{}");
+            initialJson: "{}",
+            publicId: publicId);
 
         // Save to database using repository
         await workflowDefinitionRepository.SaveAsync(workflow);
