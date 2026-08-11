@@ -126,7 +126,12 @@ public class WorkflowOrchestrationController : ControllerBase
             MessageTemplate: node.MessageTemplate
         )).ToList();
 
-        var input = new UpdateWorkflowNodesInput(id, applicationNodeDtos);
+        var applicationTransitionDtos = request.Transitions.Select(t => new Application.WorkflowOrchestration.WorkflowTransitionDto(
+            SourceNodeId: t.SourceNodeId,
+            TargetNodeId: t.TargetNodeId
+        )).ToList();
+
+        var input = new UpdateWorkflowNodesInput(id, applicationNodeDtos, applicationTransitionDtos);
 
         try
         {
@@ -217,6 +222,11 @@ public record WorkflowNodeDto(
     string? MessageTemplate
 );
 
+public record WorkflowTransitionDto(
+    string SourceNodeId,
+    string TargetNodeId);
+
 public record UpdateWorkflowNodesRequest(
     string WorkflowId,
-    List<WorkflowNodeDto> Nodes);
+    List<WorkflowNodeDto> Nodes,
+    List<WorkflowTransitionDto> Transitions);

@@ -34,7 +34,8 @@ public sealed class WorkflowDefinition : AggregateRoot
         WorkflowClassName className,
         WorkflowStatus status,
         string flowJson,
-        IEnumerable<WorkflowNode> nodes)
+        IEnumerable<WorkflowNode> nodes,
+        IEnumerable<WorkflowTransition> transitions)
     {
         Id = id;
         PublicId = publicId;
@@ -44,6 +45,7 @@ public sealed class WorkflowDefinition : AggregateRoot
         Status = status;
         FlowJson = flowJson;
         _nodes.AddRange(nodes);
+        _transitions.AddRange(transitions);
     }
 
     // Factory for creating new workflow definition

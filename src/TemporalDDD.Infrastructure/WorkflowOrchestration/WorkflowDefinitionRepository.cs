@@ -29,7 +29,12 @@ public class WorkflowDefinitionRepository : IWorkflowDefinitionRepository
             .Where(n => n.WorkflowDefinitionId == dbo.Id)
             .ToListAsync(cancellationToken);
 
-        return MapToDomain(dbo, nodeDbos);
+        var transitionDbos = await _dbContext.WorkflowTransitions
+            .AsNoTracking()
+            .Where(t => t.WorkflowDefinitionId == dbo.Id)
+            .ToListAsync(cancellationToken);
+
+        return MapToDomain(dbo, nodeDbos, transitionDbos);
     }
 
     public async Task SaveAsync(WorkflowDefinition aggregate, CancellationToken cancellationToken = default)
@@ -62,10 +67,28 @@ public class WorkflowDefinitionRepository : IWorkflowDefinitionRepository
             _dbContext.WorkflowNodes.Add(nodeDbo);
         }
 
+        // Handle transitions - delete existing and add new
+        var existingTransitions = await _dbContext.WorkflowTransitions
+            .Where(t => t.WorkflowDefinitionId == id)
+            .ToListAsync(cancellationToken);
+
+        _dbContext.WorkflowTransitions.RemoveRange(existingTransitions);
+
+        foreach (var transition in aggregate.Transitions)
+        {
+            var transitionDbo = new WorkflowTransitionDbo
+            {
+                WorkflowDefinitionId = id,
+                SourceNodeId = transition.SourceNodeId.ToString(),
+                TargetNodeId = transition.TargetNodeId.ToString()
+            };
+            _dbContext.WorkflowTransitions.Add(transitionDbo);
+        }
+
         await _dbContext.SaveChangesAsync(cancellationToken);
     }
 
-    private WorkflowDefinition MapToDomain(WorkflowDefinitionDbo dbo, List<WorkflowNodeDbo> nodeDbos)
+    private WorkflowDefinition MapToDomain(WorkflowDefinitionDbo dbo, List<WorkflowNodeDbo> nodeDbos, List<WorkflowTransitionDbo> transitionDbos)
     {
         var id = WorkflowDefinitionId.Create(dbo.Id).Value ?? throw new InvalidOperationException($"Invalid WorkflowDefinitionId in database: {dbo.Id}");
         var publicId = WorkflowDefinitionPublicId.Create(dbo.PublicId).Value ?? throw new InvalidOperationException($"Invalid WorkflowDefinitionPublicId in database: {dbo.PublicId}");
@@ -77,6 +100,13 @@ public class WorkflowDefinitionRepository : IWorkflowDefinitionRepository
         var status = statusResult.Value;
 
         var nodes = nodeDbos.Select(MapDboToNode).ToList();
+
+        var transitions = transitionDbos.Select(t =>
+        {
+            var sourceNodeId = WorkflowNodeId.Create(t.SourceNodeId).Value ?? throw new InvalidOperationException($"Invalid SourceNodeId in database: {t.SourceNodeId}");
+            var targetNodeId = WorkflowNodeId.Create(t.TargetNodeId).Value ?? throw new InvalidOperationException($"Invalid TargetNodeId in database: {t.TargetNodeId}");
+            return new WorkflowTransition(sourceNodeId, targetNodeId);
+        }).ToList();
 
         // Parse ClassName from database
         var className = WorkflowClassName.Create(dbo.Name, publicId).Value;
@@ -90,7 +120,8 @@ public class WorkflowDefinitionRepository : IWorkflowDefinitionRepository
             className: className,
             status: status,
             flowJson: dbo.FlowJson,
-            nodes: nodes
+            nodes: nodes,
+            transitions: transitions
         );
     }
 
@@ -170,6 +201,7 @@ public class WorkflowDefinitionRepository : IWorkflowDefinitionRepository
         dbo.PublicId = workflow.PublicId.ToString();
         dbo.CreatorId = workflow.CreatorId.ToString();
         dbo.Name = workflow.Name;
+        dbo.ClassName = workflow.ClassName.Value;
         dbo.Status = workflow.Status.Value;
         dbo.FlowJson = workflow.FlowJson;
     }

@@ -8,7 +8,12 @@ public record CreateWorkflowDraftInput(
 
 public record UpdateWorkflowNodesInput(
     string WorkflowId,
-    IReadOnlyList<WorkflowNodeDto> Nodes);
+    IReadOnlyList<WorkflowNodeDto> Nodes,
+    IReadOnlyList<WorkflowTransitionDto> Transitions);
+
+public record WorkflowTransitionDto(
+    string SourceNodeId,
+    string TargetNodeId);
 
 public record WorkflowNodeDto(
     string Id,

@@ -48,5 +48,11 @@ public class WorkflowDefinitionConfiguration : IEntityTypeConfiguration<Workflow
             .WithOne()
             .HasForeignKey(x => x.WorkflowDefinitionId)
             .OnDelete(DeleteBehavior.Cascade);
+
+        // Relationship to WorkflowTransitions
+        builder.HasMany<WorkflowTransitionDbo>()
+            .WithOne()
+            .HasForeignKey(x => x.WorkflowDefinitionId)
+            .OnDelete(DeleteBehavior.Cascade);
     }
 }

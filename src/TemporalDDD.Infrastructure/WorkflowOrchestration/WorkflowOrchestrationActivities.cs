@@ -132,8 +132,23 @@ public class WorkflowOrchestrationActivities : IWorkflowOrchestrationActivities
             domainNodes.Add(domainNode);
         }
 
-        // Update workflow with new nodes and empty transitions (will be updated by UI)
-        workflow.UpdateNodes(domainNodes, new List<WorkflowTransition>(), null);
+        // Map transition DTOs to domain transitions
+        var domainTransitions = new List<WorkflowTransition>();
+        foreach (var transitionDto in input.Transitions)
+        {
+            var sourceNodeIdResult = WorkflowNodeId.Create(transitionDto.SourceNodeId);
+            if (sourceNodeIdResult.IsFailure)
+                throw new InvalidOperationException($"Invalid SourceNodeId: {sourceNodeIdResult.Error}");
+
+            var targetNodeIdResult = WorkflowNodeId.Create(transitionDto.TargetNodeId);
+            if (targetNodeIdResult.IsFailure)
+                throw new InvalidOperationException($"Invalid TargetNodeId: {targetNodeIdResult.Error}");
+
+            domainTransitions.Add(new WorkflowTransition(sourceNodeIdResult.Value, targetNodeIdResult.Value));
+        }
+
+        // Update workflow with new nodes and transitions
+        workflow.UpdateNodes(domainNodes, domainTransitions, null);
         await workflowDefinitionRepository.SaveAsync(workflow);
 
         // Map domain events to application events
