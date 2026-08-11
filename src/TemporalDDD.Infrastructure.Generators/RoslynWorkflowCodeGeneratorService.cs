@@ -31,9 +31,13 @@ public class RoslynWorkflowCodeGeneratorService : IWorkflowCodeGeneratorService
 
         // Build raw C# code using StringBuilder
         var sb = new StringBuilder();
+        sb.AppendLine("using System;");
+        sb.AppendLine("using System.Threading.Tasks;");
         sb.AppendLine("using Temporalio.Workflows;");
         sb.AppendLine("using Temporalio.Activities;");
         sb.AppendLine("using TemporalDDD.Infrastructure.WorkflowOrchestration.Activities;");
+        sb.AppendLine("using TemporalDDD.Domain.IdentityAndAccess;");
+        sb.AppendLine("using TemporalDDD.Domain.WorkflowOrchestration;");
         sb.AppendLine("using System.Text.Json;");
         sb.AppendLine();
         sb.AppendLine($"[Workflow]");
@@ -127,10 +131,10 @@ public class RoslynWorkflowCodeGeneratorService : IWorkflowCodeGeneratorService
                     var apiNode = (ApiWorkflowNode)currentNode;
                     var nodeIdStr = nodeId.Value.ToString();
                     sb.AppendLine($"{indent}var apiInput_{SanitizeIdentifier(nodeIdStr)} = new ExecuteApiInput(");
-                    sb.AppendLine($"{indent}    nodeId: \"{nodeIdStr}\",");
-                    sb.AppendLine($"{indent}    endpointUrl: \"{apiNode.EndpointUrl}\",");
-                    sb.AppendLine($"{indent}    authToken: \"{apiNode.AuthToken}\",");
-                    sb.AppendLine($"{indent}    mapping: null);");
+                    sb.AppendLine($"{indent}    NodeId: \"{nodeIdStr}\",");
+                    sb.AppendLine($"{indent}    EndpointUrl: \"{apiNode.EndpointUrl}\",");
+                    sb.AppendLine($"{indent}    AuthToken: \"{apiNode.AuthToken}\",");
+                    sb.AppendLine($"{indent}    Mapping: null);");
                     sb.AppendLine($"{indent}await Workflow.ExecuteActivityAsync(");
                     sb.AppendLine($"{indent}    (IWorkflowExecutionActivities act) => act.ExecuteApiCallAsync(apiInput_{SanitizeIdentifier(nodeIdStr)}),");
                     sb.AppendLine($"{indent}    new ActivityOptions {{ ScheduleToCloseTimeout = TimeSpan.FromMinutes(5) }});");
@@ -142,8 +146,8 @@ public class RoslynWorkflowCodeGeneratorService : IWorkflowCodeGeneratorService
                     var notificationNode = (NotificationWorkflowNode)currentNode;
                     var nodeIdStr = nodeId.Value.ToString();
                     sb.AppendLine($"{indent}var notificationInput_{SanitizeIdentifier(nodeIdStr)} = new SendNotificationInput(");
-                    sb.AppendLine($"{indent}    nodeId: \"{nodeIdStr}\",");
-                    sb.AppendLine($"{indent}    messageTemplate: \"{notificationNode.MessageTemplate}\");");
+                    sb.AppendLine($"{indent}    NodeId: \"{nodeIdStr}\",");
+                    sb.AppendLine($"{indent}    MessageTemplate: \"{notificationNode.MessageTemplate}\");");
                     sb.AppendLine($"{indent}await Workflow.ExecuteActivityAsync(");
                     sb.AppendLine($"{indent}    (IWorkflowExecutionActivities act) => act.SendNotificationAsync(notificationInput_{SanitizeIdentifier(nodeIdStr)}),");
                     sb.AppendLine($"{indent}    new ActivityOptions {{ ScheduleToCloseTimeout = TimeSpan.FromMinutes(5) }});");
