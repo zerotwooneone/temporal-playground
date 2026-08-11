@@ -24,12 +24,13 @@ type ApiNodeFormData = z.infer<typeof apiNodeSchema>;
 type NotificationNodeFormData = z.infer<typeof notificationNodeSchema>;
 
 export default function NodePropertiesPanel() {
-  const { selectedNodeId, nodes, updateNodeData, setSelectedNodeId } = useWorkflowStore();
+  const { selectedNodeIds, nodes, updateNodeData, setSelectedNodeIds } = useWorkflowStore();
+  const selectedNodeId = selectedNodeIds[0] || null;
   const selectedNode = nodes.find((n) => n.id === selectedNodeId);
 
   const nodeType = selectedNode?.data.nodeType as number | undefined;
 
-  const handleClose = () => setSelectedNodeId(null);
+  const handleClose = () => setSelectedNodeIds([]);
 
   // API Node Form
   const apiForm = useForm<ApiNodeFormData>({

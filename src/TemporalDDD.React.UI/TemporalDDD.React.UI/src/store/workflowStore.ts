@@ -13,15 +13,20 @@ import {
 interface WorkflowStore {
   nodes: Node[];
   edges: Edge[];
-  selectedNodeId: string | null;
+  selectedNodeIds: string[];
+  selectedEdgeIds: string[];
   onNodesChange: OnNodesChange;
   onEdgesChange: OnEdgesChange;
   onConnect: OnConnect;
   setNodes: (nodes: Node[]) => void;
   setEdges: (edges: Edge[]) => void;
-  setSelectedNodeId: (id: string | null) => void;
+  setSelectedNodeIds: (ids: string[]) => void;
+  setSelectedEdgeIds: (ids: string[]) => void;
+  toggleNodeSelection: (id: string, isMultiSelect: boolean) => void;
+  toggleEdgeSelection: (id: string, isMultiSelect: boolean) => void;
   addNode: (type: 'apiNode' | 'notificationNode') => void;
   updateNodeData: (id: string, data: Record<string, any>) => void;
+  deleteSelectedEdges: () => void;
   loadWorkflow: (workflowData: any) => void;
   clearWorkflow: () => void;
 }
@@ -29,7 +34,8 @@ interface WorkflowStore {
 export const useWorkflowStore = create<WorkflowStore>((set) => ({
   nodes: [],
   edges: [],
-  selectedNodeId: null,
+  selectedNodeIds: [],
+  selectedEdgeIds: [],
   onNodesChange: (changes) =>
     set((state) => ({
       nodes: applyNodeChanges(changes, state.nodes),
@@ -44,7 +50,36 @@ export const useWorkflowStore = create<WorkflowStore>((set) => ({
     })),
   setNodes: (nodes) => set({ nodes }),
   setEdges: (edges) => set({ edges }),
-  setSelectedNodeId: (id) => set({ selectedNodeId: id }),
+  setSelectedNodeIds: (ids) => set({ selectedNodeIds: ids }),
+  setSelectedEdgeIds: (ids) => set({ selectedEdgeIds: ids }),
+  toggleNodeSelection: (id, isMultiSelect) =>
+    set((state) => {
+      if (isMultiSelect) {
+        // Toggle selection: add if not selected, remove if selected
+        if (state.selectedNodeIds.includes(id)) {
+          return { selectedNodeIds: state.selectedNodeIds.filter((selectedId) => selectedId !== id) };
+        } else {
+          return { selectedNodeIds: [...state.selectedNodeIds, id] };
+        }
+      } else {
+        // Single select: clear all and select only this one
+        return { selectedNodeIds: [id] };
+      }
+    }),
+  toggleEdgeSelection: (id, isMultiSelect) =>
+    set((state) => {
+      if (isMultiSelect) {
+        // Toggle selection: add if not selected, remove if selected
+        if (state.selectedEdgeIds.includes(id)) {
+          return { selectedEdgeIds: state.selectedEdgeIds.filter((selectedId) => selectedId !== id) };
+        } else {
+          return { selectedEdgeIds: [...state.selectedEdgeIds, id] };
+        }
+      } else {
+        // Single select: clear all and select only this one
+        return { selectedEdgeIds: [id] };
+      }
+    }),
   addNode: (type) =>
     set((state) => {
       const guid = crypto.randomUUID();
@@ -68,6 +103,14 @@ export const useWorkflowStore = create<WorkflowStore>((set) => ({
           : node
       ),
     })),
+  deleteSelectedEdges: () =>
+    set((state) => {
+      if (state.selectedEdgeIds.length === 0) return state;
+      return {
+        edges: state.edges.filter((edge) => !state.selectedEdgeIds.includes(edge.id)),
+        selectedEdgeIds: [],
+      };
+    }),
   loadWorkflow: (workflowData) =>
     set(() => {
       let nodes: Node[] = [];
@@ -132,12 +175,13 @@ export const useWorkflowStore = create<WorkflowStore>((set) => ({
         });
       }
 
-      return { nodes, edges, selectedNodeId: null };
+      return { nodes, edges, selectedNodeIds: [], selectedEdgeIds: [] };
     }),
   clearWorkflow: () =>
     set(() => ({
       nodes: [],
       edges: [],
-      selectedNodeId: null,
+      selectedNodeIds: [],
+      selectedEdgeIds: [],
     })),
 }));

@@ -1,5 +1,5 @@
 import '@xyflow/react/dist/style.css';
-import { ReactFlow, Background, Controls, type Node } from '@xyflow/react';
+import { ReactFlow, Background, Controls, type Node, type Edge } from '@xyflow/react';
 import { useParams } from 'react-router-dom';
 import { useEffect } from 'react';
 import { useQuery } from '@tanstack/react-query';
@@ -17,7 +17,7 @@ const nodeTypes = {
 
 export default function WorkflowDesigner() {
   const { id } = useParams<{ id: string }>();
-  const { nodes, edges, onNodesChange, onEdgesChange, onConnect, setSelectedNodeId, loadWorkflow, clearWorkflow } = useWorkflowStore();
+  const { nodes, edges, onNodesChange, onEdgesChange, onConnect, setSelectedNodeIds, setSelectedEdgeIds, toggleNodeSelection, toggleEdgeSelection, deleteSelectedEdges, loadWorkflow, clearWorkflow } = useWorkflowStore();
 
   const { data: workflowData, isLoading, error } = useQuery({
     queryKey: ['workflow', id],
@@ -38,12 +38,31 @@ export default function WorkflowDesigner() {
     }
   }, [id, clearWorkflow]);
 
-  const onNodeClick = (_: React.MouseEvent, node: Node) => {
-    setSelectedNodeId(node.id);
+  const onNodeClick = (event: React.MouseEvent, node: Node) => {
+    const isMultiSelect = event.shiftKey || event.ctrlKey || event.metaKey;
+    toggleNodeSelection(node.id, isMultiSelect);
+    if (!isMultiSelect) {
+      setSelectedEdgeIds([]);
+    }
+  };
+
+  const onEdgeClick = (event: React.MouseEvent, edge: Edge) => {
+    const isMultiSelect = event.shiftKey || event.ctrlKey || event.metaKey;
+    toggleEdgeSelection(edge.id, isMultiSelect);
+    if (!isMultiSelect) {
+      setSelectedNodeIds([]);
+    }
   };
 
   const onPaneClick = () => {
-    setSelectedNodeId(null);
+    setSelectedNodeIds([]);
+    setSelectedEdgeIds([]);
+  };
+
+  const onKeyDown = (event: React.KeyboardEvent) => {
+    if (event.key === 'Delete' || event.key === 'Backspace') {
+      deleteSelectedEdges();
+    }
   };
 
   if (isLoading) {
@@ -74,7 +93,9 @@ export default function WorkflowDesigner() {
           onEdgesChange={onEdgesChange}
           onConnect={onConnect}
           onNodeClick={onNodeClick}
+          onEdgeClick={onEdgeClick}
           onPaneClick={onPaneClick}
+          onKeyDown={onKeyDown}
           nodeTypes={nodeTypes}
           fitView
         >
