@@ -161,4 +161,306 @@ public class RoslynWorkflowCodeGeneratorServiceTests
             }
         }
     }
+
+    [Fact]
+    public async Task GenerateWorkflowClassAsync_WhenNoStartNode_ThrowsInvalidOperationException()
+    {
+        // ARRANGE
+        var service = new RoslynWorkflowCodeGeneratorService();
+        var userId = UserId.New();
+        var publicId = WorkflowDefinitionPublicId.New();
+        var className = WorkflowClassName.Create("TestWorkflow", publicId).Value;
+        
+        // Create nodes without a Start node
+        var apiNode = ApiWorkflowNode.CreateStub("API Node", null);
+        var endNode = EndWorkflowNode.CreateStub("End", null);
+
+        var transitions = new List<WorkflowTransition>
+        {
+            new WorkflowTransition(apiNode.Id, endNode.Id)
+        };
+
+        var workflowDefinition = new WorkflowDefinition(
+            WorkflowDefinitionId.New(),
+            publicId,
+            userId,
+            "Test Workflow",
+            className,
+            WorkflowStatus.Draft,
+            "{}",
+            new List<WorkflowNode> { apiNode, endNode },
+            transitions);
+
+        var tempDirectory = Path.Combine(Path.GetTempPath(), Guid.NewGuid().ToString());
+        Directory.CreateDirectory(tempDirectory);
+
+        try
+        {
+            // ACT
+            var action = async () => await service.GenerateWorkflowClassAsync(workflowDefinition, tempDirectory);
+
+            // ASSERT
+            await Assert.ThrowsAsync<InvalidOperationException>(action);
+        }
+        finally
+        {
+            // Cleanup
+            if (Directory.Exists(tempDirectory))
+            {
+                Directory.Delete(tempDirectory, true);
+            }
+        }
+    }
+
+    #region SanitizeIdentifier Tests
+    [Theory]
+    [InlineData("ValidName", "ValidName")]
+    [InlineData("Valid_Name_123", "Valid_Name_123")]
+    [InlineData("Invalid@Name", "InvalidName")]
+    [InlineData("Invalid#Name", "InvalidName")]
+    [InlineData("Invalid Name", "InvalidName")]
+    [InlineData("123Invalid", "_123Invalid")]
+    [InlineData("", "_")]
+    [InlineData("a", "a")]
+    [InlineData("_", "_")]
+    [InlineData("___", "___")]
+    public void SanitizeIdentifier_WithVariousInputs_ReturnsValidCSharpIdentifier(string input, string expected)
+    {
+        // ACT
+        var result = RoslynWorkflowCodeGeneratorService.SanitizeIdentifier(input);
+
+        // ASSERT
+        Assert.Equal(expected, result);
+    }
+    #endregion
+
+    [Fact]
+    public async Task GenerateWorkflowClassAsync_WithParallelBranches_GeneratesTaskWhenAll()
+    {
+        // ARRANGE
+        var service = new RoslynWorkflowCodeGeneratorService();
+        var userId = UserId.New();
+        var publicId = WorkflowDefinitionPublicId.New();
+        var className = WorkflowClassName.Create("ParallelWorkflow", publicId).Value;
+        
+        // Create nodes with parallel branches: Start -> (API1, API2) -> End
+        var startNode = StartWorkflowNode.CreateStub("Start", null);
+        var apiNode1 = ApiWorkflowNode.CreateStub("API 1", null);
+        var apiNode2 = ApiWorkflowNode.CreateStub("API 2", null);
+        var endNode = EndWorkflowNode.CreateStub("End", null);
+
+        // Configure API nodes
+        apiNode1.ConfigureTechnicalDetails(
+            "https://api1.example.com",
+            "token1",
+            RetryPolicy.Create(3, 2).Value,
+            ContractMapping.Create(false, null, null, null).Value);
+        apiNode2.ConfigureTechnicalDetails(
+            "https://api2.example.com",
+            "token2",
+            RetryPolicy.Create(3, 2).Value,
+            ContractMapping.Create(false, null, null, null).Value);
+
+        // Create transitions with parallel branches
+        var transitions = new List<WorkflowTransition>
+        {
+            new WorkflowTransition(startNode.Id, apiNode1.Id),
+            new WorkflowTransition(startNode.Id, apiNode2.Id),
+            new WorkflowTransition(apiNode1.Id, endNode.Id),
+            new WorkflowTransition(apiNode2.Id, endNode.Id)
+        };
+
+        var workflowDefinition = new WorkflowDefinition(
+            WorkflowDefinitionId.New(),
+            publicId,
+            userId,
+            "Parallel Workflow",
+            className,
+            WorkflowStatus.Draft,
+            "{}",
+            new List<WorkflowNode> { startNode, apiNode1, apiNode2, endNode },
+            transitions);
+
+        var tempDirectory = Path.Combine(Path.GetTempPath(), Guid.NewGuid().ToString());
+        Directory.CreateDirectory(tempDirectory);
+
+        try
+        {
+            // ACT
+            var generatedCode = await service.GenerateWorkflowClassAsync(workflowDefinition, tempDirectory);
+
+            // ASSERT
+            Assert.Contains("Task.WhenAll", generatedCode);
+        }
+        finally
+        {
+            // Cleanup
+            if (Directory.Exists(tempDirectory))
+            {
+                Directory.Delete(tempDirectory, true);
+            }
+        }
+    }
+
+    [Fact]
+    public async Task GenerateWorkflowClassAsync_WithApiNode_GeneratesExecuteApiCall()
+    {
+        // ARRANGE
+        var service = new RoslynWorkflowCodeGeneratorService();
+        var userId = UserId.New();
+        var publicId = WorkflowDefinitionPublicId.New();
+        var className = WorkflowClassName.Create("ApiWorkflow", publicId).Value;
+        
+        var startNode = StartWorkflowNode.CreateStub("Start", null);
+        var apiNode = ApiWorkflowNode.CreateStub("API Node", null);
+        var endNode = EndWorkflowNode.CreateStub("End", null);
+
+        apiNode.ConfigureTechnicalDetails(
+            "https://api.example.com",
+            "token",
+            RetryPolicy.Create(3, 2).Value,
+            ContractMapping.Create(false, null, null, null).Value);
+
+        var transitions = new List<WorkflowTransition>
+        {
+            new WorkflowTransition(startNode.Id, apiNode.Id),
+            new WorkflowTransition(apiNode.Id, endNode.Id)
+        };
+
+        var workflowDefinition = new WorkflowDefinition(
+            WorkflowDefinitionId.New(),
+            publicId,
+            userId,
+            "API Workflow",
+            className,
+            WorkflowStatus.Draft,
+            "{}",
+            new List<WorkflowNode> { startNode, apiNode, endNode },
+            transitions);
+
+        var tempDirectory = Path.Combine(Path.GetTempPath(), Guid.NewGuid().ToString());
+        Directory.CreateDirectory(tempDirectory);
+
+        try
+        {
+            // ACT
+            var generatedCode = await service.GenerateWorkflowClassAsync(workflowDefinition, tempDirectory);
+
+            // ASSERT
+            Assert.Contains("ExecuteApiCallAsync", generatedCode);
+            Assert.Contains("ExecuteApiInput", generatedCode);
+        }
+        finally
+        {
+            // Cleanup
+            if (Directory.Exists(tempDirectory))
+            {
+                Directory.Delete(tempDirectory, true);
+            }
+        }
+    }
+
+    [Fact]
+    public async Task GenerateWorkflowClassAsync_WithNotificationNode_GeneratesSendNotification()
+    {
+        // ARRANGE
+        var service = new RoslynWorkflowCodeGeneratorService();
+        var userId = UserId.New();
+        var publicId = WorkflowDefinitionPublicId.New();
+        var className = WorkflowClassName.Create("NotificationWorkflow", publicId).Value;
+        
+        var startNode = StartWorkflowNode.CreateStub("Start", null);
+        var notificationNode = NotificationWorkflowNode.CreateStub("Notification", null);
+        var endNode = EndWorkflowNode.CreateStub("End", null);
+
+        notificationNode.ConfigureTechnicalDetails("Hello {name}");
+
+        var transitions = new List<WorkflowTransition>
+        {
+            new WorkflowTransition(startNode.Id, notificationNode.Id),
+            new WorkflowTransition(notificationNode.Id, endNode.Id)
+        };
+
+        var workflowDefinition = new WorkflowDefinition(
+            WorkflowDefinitionId.New(),
+            publicId,
+            userId,
+            "Notification Workflow",
+            className,
+            WorkflowStatus.Draft,
+            "{}",
+            new List<WorkflowNode> { startNode, notificationNode, endNode },
+            transitions);
+
+        var tempDirectory = Path.Combine(Path.GetTempPath(), Guid.NewGuid().ToString());
+        Directory.CreateDirectory(tempDirectory);
+
+        try
+        {
+            // ACT
+            var generatedCode = await service.GenerateWorkflowClassAsync(workflowDefinition, tempDirectory);
+
+            // ASSERT
+            Assert.Contains("SendNotificationAsync", generatedCode);
+            Assert.Contains("SendNotificationInput", generatedCode);
+        }
+        finally
+        {
+            // Cleanup
+            if (Directory.Exists(tempDirectory))
+            {
+                Directory.Delete(tempDirectory, true);
+            }
+        }
+    }
+
+    [Fact]
+    public async Task GenerateWorkflowClassAsync_WritesFileWithCorrectName()
+    {
+        // ARRANGE
+        var service = new RoslynWorkflowCodeGeneratorService();
+        var userId = UserId.New();
+        var publicId = WorkflowDefinitionPublicId.New();
+        var className = WorkflowClassName.Create("FileOutputTest", publicId).Value;
+        
+        var startNode = StartWorkflowNode.CreateStub("Start", null);
+        var endNode = EndWorkflowNode.CreateStub("End", null);
+
+        var transitions = new List<WorkflowTransition>
+        {
+            new WorkflowTransition(startNode.Id, endNode.Id)
+        };
+
+        var workflowDefinition = new WorkflowDefinition(
+            WorkflowDefinitionId.New(),
+            publicId,
+            userId,
+            "File Output Test",
+            className,
+            WorkflowStatus.Draft,
+            "{}",
+            new List<WorkflowNode> { startNode, endNode },
+            transitions);
+
+        var tempDirectory = Path.Combine(Path.GetTempPath(), Guid.NewGuid().ToString());
+        Directory.CreateDirectory(tempDirectory);
+
+        try
+        {
+            // ACT
+            await service.GenerateWorkflowClassAsync(workflowDefinition, tempDirectory);
+
+            // ASSERT
+            var expectedFilePath = Path.Combine(tempDirectory, $"{className.Value}.cs");
+            Assert.True(File.Exists(expectedFilePath));
+        }
+        finally
+        {
+            // Cleanup
+            if (Directory.Exists(tempDirectory))
+            {
+                Directory.Delete(tempDirectory, true);
+            }
+        }
+    }
 }

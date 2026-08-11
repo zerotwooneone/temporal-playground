@@ -199,7 +199,7 @@ public class RoslynWorkflowCodeGeneratorService : IWorkflowCodeGeneratorService
         }
     }
 
-    private static string SanitizeIdentifier(string identifier)
+    public static string SanitizeIdentifier(string identifier)
     {
         // Remove invalid characters and ensure it's a valid C# identifier
         var sanitized = new string(identifier.Where(c => char.IsLetterOrDigit(c) || c == '_').ToArray());
