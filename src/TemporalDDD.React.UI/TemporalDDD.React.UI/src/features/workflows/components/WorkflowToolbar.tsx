@@ -12,7 +12,10 @@ export default function WorkflowToolbar({ publicId }: WorkflowToolbarProps) {
 
   const saveMutation = useMutation({
     mutationFn: async () => {
+      const flowJson = JSON.stringify({ nodes, edges });
+
       const payload = {
+        flowJson,
         nodes: nodes.map((node) => ({
           id: node.id,
           nodeType: node.data.nodeType,

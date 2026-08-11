@@ -4,6 +4,7 @@ namespace TemporalDDD.Application.WorkflowOrchestration;
 
 public record UpdateWorkflowNodesInput(
     string WorkflowDefinitionId,
+    string FlowJson,
     IReadOnlyList<WorkflowNodeDto> Nodes,
     IReadOnlyList<WorkflowTransitionDto> Transitions);
 

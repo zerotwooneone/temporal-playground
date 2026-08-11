@@ -13,7 +13,7 @@ public class WorkflowNodeService : IWorkflowNodeService
         _workflowDefinitionRepository = workflowDefinitionRepository;
     }
 
-    public async Task UpdateNodesAsync(WorkflowDefinitionId workflowDefinitionId, UpdateWorkflowNodesInput input, CancellationToken cancellationToken = default)
+    public async Task UpdateNodesAsync(WorkflowDefinitionId workflowDefinitionId, string flowJson, UpdateWorkflowNodesInput input, CancellationToken cancellationToken = default)
     {
         // Validate workflow exists
         var workflow = await _workflowDefinitionRepository.GetByIdAsync(workflowDefinitionId, cancellationToken);
@@ -95,7 +95,7 @@ public class WorkflowNodeService : IWorkflowNodeService
         }
 
         // Update workflow with new nodes and transitions
-        workflow.UpdateNodes(domainNodes, domainTransitions, null);
+        workflow.UpdateNodes(domainNodes, domainTransitions, flowJson);
         await _workflowDefinitionRepository.SaveAsync(workflow, cancellationToken);
     }
 }

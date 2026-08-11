@@ -4,5 +4,5 @@ namespace TemporalDDD.Application.WorkflowOrchestration;
 
 public interface IWorkflowNodeService
 {
-    Task UpdateNodesAsync(WorkflowDefinitionId workflowDefinitionId, UpdateWorkflowNodesInput input, CancellationToken cancellationToken = default);
+    Task UpdateNodesAsync(WorkflowDefinitionId workflowDefinitionId, string flowJson, UpdateWorkflowNodesInput input, CancellationToken cancellationToken = default);
 }

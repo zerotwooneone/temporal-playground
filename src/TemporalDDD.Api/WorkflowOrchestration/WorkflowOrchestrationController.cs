@@ -89,6 +89,28 @@ public class WorkflowOrchestrationController : ControllerBase
         if (workflowDefinitionId == null)
             return NotFound($"Workflow with PublicId '{id}' not found");
 
+        // Validate flowJson - lightweight sanity checks
+        if (string.IsNullOrWhiteSpace(request.FlowJson))
+            return BadRequest("FlowJson is required");
+
+        // Check string length to prevent excessively large payloads
+        const int maxFlowJsonLength = 1_048_576; // 1MB
+        if (request.FlowJson.Length > maxFlowJsonLength)
+            return BadRequest($"FlowJson exceeds maximum length of {maxFlowJsonLength} characters");
+
+        try
+        {
+            var flowData = System.Text.Json.JsonDocument.Parse(request.FlowJson);
+            if (!flowData.RootElement.TryGetProperty("nodes", out _))
+                return BadRequest("FlowJson must contain a 'nodes' array");
+            if (!flowData.RootElement.TryGetProperty("edges", out _))
+                return BadRequest("FlowJson must contain an 'edges' array");
+        }
+        catch (System.Text.Json.JsonException)
+        {
+            return BadRequest("FlowJson is not valid JSON");
+        }
+
         // Validate each node's ID and NodeType using domain value types (lightweight in-memory checks)
         foreach (var node in request.Nodes)
         {
@@ -124,11 +146,11 @@ public class WorkflowOrchestrationController : ControllerBase
             TargetNodeId: t.TargetNodeId
         )).ToList();
 
-        var input = new UpdateWorkflowNodesInput(workflowDefinitionId.ToString(), applicationNodeDtos, applicationTransitionDtos);
+        var input = new UpdateWorkflowNodesInput(workflowDefinitionId.ToString(), request.FlowJson, applicationNodeDtos, applicationTransitionDtos);
 
         try
         {
-            await _workflowNodeService.UpdateNodesAsync(workflowDefinitionId, input, cancellationToken);
+            await _workflowNodeService.UpdateNodesAsync(workflowDefinitionId, request.FlowJson, input, cancellationToken);
             return Ok(new { message = "Workflow updated successfully" });
         }
         catch (Exception ex)
@@ -210,5 +232,6 @@ public record WorkflowTransitionDto(
     string TargetNodeId);
 
 public record UpdateWorkflowNodesRequest(
+    string FlowJson,
     List<WorkflowNodeDto> Nodes,
     List<WorkflowTransitionDto> Transitions);
