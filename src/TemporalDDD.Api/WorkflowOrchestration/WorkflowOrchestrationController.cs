@@ -175,7 +175,7 @@ public class WorkflowOrchestrationController : ControllerBase
         try
         {
             // Generate the workflow class
-            await _codeGeneratorService.GenerateWorkflowClassAsync(workflowDefinition, workerProjectPath);
+            var code = await _codeGeneratorService.GenerateWorkflowClassAsync(workflowDefinition, workerProjectPath);
 
             // Update the workflow status to Published
             workflowDefinition.Publish();
