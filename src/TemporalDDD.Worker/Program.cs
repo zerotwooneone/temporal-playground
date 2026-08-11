@@ -45,7 +45,6 @@ builder.Services.AddScoped<ProviderCredentialingActivities>();
 builder.Services.AddScoped<PlacementMatchingActivities>();
 builder.Services.AddScoped<TimesheetProcessingActivities>();
 builder.Services.AddScoped<TravelLogisticsActivities>();
-builder.Services.AddScoped<WorkflowOrchestrationActivities>();
 builder.Services.AddScoped<WorkflowExecutionActivities>();
 
 // Register the Temporal Worker Service for Onboarding
@@ -72,10 +71,9 @@ builder.Services.AddHostedTemporalWorker("localhost:7233", "default", "WORKFLOW_
     .ConfigureOptions(options =>
     {
         // Register the Workflows
-        options.AddWorkflow<UpdateWorkflowNodesWorkflow>();
+        //options.AddWorkflow<UpdateWorkflowNodesWorkflow>();
     })
     // Register all Activities using DI
-    .AddScopedActivities<WorkflowOrchestrationActivities>()
     .AddScopedActivities<WorkflowExecutionActivities>();
 
 var app = builder.Build();
