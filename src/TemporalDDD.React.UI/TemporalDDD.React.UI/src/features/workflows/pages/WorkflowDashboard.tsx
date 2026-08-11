@@ -4,14 +4,14 @@ import { useNavigate } from 'react-router-dom';
 import { createWorkflow, getWorkflows } from '../../../api/client';
 
 interface Workflow {
-  id: string;
+  publicId: string;
   name: string;
   status: string;
   createdAt: string;
 }
 
 interface CreateWorkflowResponse {
-  workflowId: string;
+  publicId: string;
   message: string;
 }
 
@@ -33,7 +33,7 @@ export default function WorkflowDashboard() {
       queryClient.invalidateQueries({ queryKey: ['workflows'] });
       setIsCreateModalOpen(false);
       setWorkflowName('');
-      navigate(`/workflows/${data.workflowId}`);
+      navigate(`/workflows/${data.publicId}`);
     },
     onError: (error) => {
       console.error('Failed to create workflow:', error);
@@ -82,13 +82,13 @@ export default function WorkflowDashboard() {
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {workflows.map((workflow) => (
               <div
-                key={workflow.id}
-                onClick={() => navigate(`/workflows/${workflow.id}`)}
+                key={workflow.publicId}
+                onClick={() => navigate(`/workflows/${workflow.publicId}`)}
                 className="bg-white rounded-lg shadow-md p-6 cursor-pointer hover:shadow-lg transition-shadow"
               >
                 <h2 className="text-xl font-semibold text-gray-900 mb-2">{workflow.name}</h2>
                 <div className="text-sm text-gray-600">
-                  <p>ID: {workflow.id}</p>
+                  <p>ID: {workflow.publicId}</p>
                   <p>Status: {workflow.status}</p>
                   <p>Created: {new Date(workflow.createdAt).toLocaleDateString()}</p>
                 </div>

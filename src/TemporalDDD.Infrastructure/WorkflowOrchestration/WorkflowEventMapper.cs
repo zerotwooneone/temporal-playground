@@ -11,17 +11,6 @@ public class WorkflowEventMapper : IWorkflowEventMapper
     {
         return domainEvent switch
         {
-            Domain.WorkflowOrchestration.Events.WorkflowDraftCreated e =>
-                new Application.WorkflowOrchestration.WorkflowDraftCreatedEvent(
-                    WorkflowId: e.WorkflowDefinitionId.ToString(),
-                    PublicId: e.WorkflowDefinitionPublicId.ToString(),
-                    CreatorId: e.CreatorId.ToString(),
-                    Name: e.Name),
-
-            Domain.WorkflowOrchestration.Events.WorkflowNodesUpdated e =>
-                new Application.WorkflowOrchestration.WorkflowNodesUpdatedEvent(
-                    WorkflowId: e.WorkflowId.ToString()),
-
             Domain.WorkflowOrchestration.Events.WorkflowSubmittedForReview e =>
                 new Application.Messaging.UnknownTypeEvent(
                     new InvalidOperationException($"WorkflowSubmittedForReview event not yet mapped to application event").ToString()),

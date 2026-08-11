@@ -67,12 +67,6 @@ public sealed class WorkflowDefinition : AggregateRoot
             FlowJson = initialJson
         };
 
-        workflow.RaiseDomainEvent(new WorkflowDraftCreated(
-            workflow.Id,
-            workflow.PublicId,
-            workflow.CreatorId,
-            workflow.Name));
-
         return workflow;
     }
 
@@ -142,7 +136,6 @@ public sealed class WorkflowDefinition : AggregateRoot
         {
             FlowJson = flowJson;
         }
-        RaiseDomainEvent(new WorkflowNodesUpdated(Id));
     }
 
     public Result ValidateTopology()

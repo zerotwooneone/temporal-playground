@@ -5,9 +5,6 @@ namespace TemporalDDD.Application.WorkflowOrchestration;
 public interface IWorkflowOrchestrationActivities
 {
     [Activity]
-    Task<SaveWorkflowResult> CreateDraftAndSaveAsync(CreateWorkflowDraftInput input);
-
-    [Activity]
     Task<SaveWorkflowResult> UpdateNodesAndSaveAsync(UpdateWorkflowNodesInput input);
 
     [Activity]

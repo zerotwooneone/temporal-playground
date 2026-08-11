@@ -33,7 +33,6 @@ public class WorkflowDefinitionQuery : IWorkflowDefinitionQuery
                 .CountAsync(n => n.WorkflowDefinitionId == dbo.Id, cancellationToken);
 
             result.Add(new WorkflowDefinitionDto(
-                Id: dbo.Id,
                 PublicId: dbo.PublicId,
                 Name: dbo.Name,
                 Status: statusResult.Value.Name,
@@ -44,11 +43,11 @@ public class WorkflowDefinitionQuery : IWorkflowDefinitionQuery
         return result.AsReadOnly();
     }
 
-    public async Task<WorkflowDetailDto?> GetWorkflowByIdAsync(string id, CancellationToken cancellationToken = default)
+    public async Task<WorkflowDetailDto?> GetWorkflowByPublicIdAsync(WorkflowDefinitionPublicId publicId, CancellationToken cancellationToken = default)
     {
         var workflow = await _dbContext.WorkflowDefinitions
             .AsNoTracking()
-            .FirstOrDefaultAsync(w => w.Id == id, cancellationToken);
+            .FirstOrDefaultAsync(w => w.PublicId == publicId.ToString(), cancellationToken);
 
         if (workflow == null)
             return null;
@@ -126,7 +125,6 @@ public class WorkflowDefinitionQuery : IWorkflowDefinitionQuery
         }).ToList();
 
         return new WorkflowDetailDto(
-            Id: workflow.Id,
             PublicId: workflow.PublicId,
             Name: workflow.Name,
             Status: statusResult.Value.Name,

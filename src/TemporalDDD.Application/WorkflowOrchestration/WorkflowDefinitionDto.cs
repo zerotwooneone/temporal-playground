@@ -1,7 +1,6 @@
 namespace TemporalDDD.Application.WorkflowOrchestration;
 
 public record WorkflowDefinitionDto(
-    string Id,
     string PublicId,
     string Name,
     string Status,
@@ -9,7 +8,6 @@ public record WorkflowDefinitionDto(
 );
 
 public record WorkflowDetailDto(
-    string Id,
     string PublicId,
     string Name,
     string Status,

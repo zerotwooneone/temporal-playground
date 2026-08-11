@@ -41,7 +41,11 @@ public class WorkflowOrchestrationController : ControllerBase
     [HttpGet("{id}")]
     public async Task<IActionResult> GetWorkflowById(string id, CancellationToken cancellationToken = default)
     {
-        var workflow = await _query.GetWorkflowByIdAsync(id, cancellationToken);
+        var publicIdResult = WorkflowDefinitionPublicId.Create(id);
+        if (publicIdResult.IsFailure)
+            return BadRequest(publicIdResult.Error);
+
+        var workflow = await _query.GetWorkflowByPublicIdAsync(publicIdResult.Value, cancellationToken);
         if (workflow == null)
             return NotFound($"Workflow with ID '{id}' not found");
         return Ok(workflow);
@@ -59,35 +63,19 @@ public class WorkflowOrchestrationController : ControllerBase
         if (string.IsNullOrWhiteSpace(request.Name))
             return BadRequest("Name is required and cannot be empty.");
 
-        var workflowId = WorkflowDefinitionId.New().ToString();
-        var publicId = WorkflowDefinitionPublicId.New().ToString();
+        var publicId = WorkflowDefinitionPublicId.New();
 
-        var workflowInput = new CreateWorkflowDraftInput(
-            CreatorId: request.CreatorId,
-            Name: request.Name,
-            PublicId: publicId
-        );
+        // Create domain entity using factory
+        var workflow = WorkflowDefinition.Create(
+            creatorId: creatorIdResult.Value,
+            name: request.Name,
+            initialJson: "{}",
+            publicId: publicId);
 
-        try
-        {
-            await _temporalClient.StartWorkflowAsync(
-                (CreateWorkflowDraftWorkflow wf) => wf.RunAsync(workflowInput),
-                new WorkflowOptions
-                {
-                    Id = workflowId,
-                    TaskQueue = "WORKFLOW_ORCHESTRATION_TASK_QUEUE",
-                    Memo = new Dictionary<string, object>
-                    {
-                        ["CreatorId"] = request.CreatorId
-                    }
-                });
+        // Save to database using repository
+        await _repository.SaveAsync(workflow, cancellationToken);
 
-            return Ok(new CreateWorkflowResponse(workflowId, "Workflow draft creation started"));
-        }
-        catch (Exception ex)
-        {
-            return BadRequest(ex.Message);
-        }
+        return Ok(new { publicId = publicId.ToString() });
     }
 
     [HttpPut("{id}/nodes")]

@@ -72,7 +72,6 @@ builder.Services.AddHostedTemporalWorker("localhost:7233", "default", "WORKFLOW_
     .ConfigureOptions(options =>
     {
         // Register the Workflows
-        options.AddWorkflow<CreateWorkflowDraftWorkflow>();
         options.AddWorkflow<UpdateWorkflowNodesWorkflow>();
     })
     // Register all Activities using DI

@@ -26,47 +26,6 @@ public class WorkflowOrchestrationActivities : IWorkflowOrchestrationActivities
     }
 
     [Activity]
-    public async Task<SaveWorkflowResult> CreateDraftAndSaveAsync(CreateWorkflowDraftInput input)
-    {
-        using var scope = _scopeFactory.CreateScope();
-        var workflowDefinitionRepository = scope.ServiceProvider.GetRequiredService<IWorkflowDefinitionRepository>();
-
-        // Convert primitive DTO to Domain types with fail-fast validation
-        var creatorIdResult = UserId.Create(input.CreatorId);
-        if (creatorIdResult.IsFailure)
-            throw new InvalidOperationException($"Internal Corruption: Invalid UserId. {creatorIdResult.Error}");
-
-        var publicIdResult = WorkflowDefinitionPublicId.Create(input.PublicId);
-        if (publicIdResult.IsFailure)
-            throw new InvalidOperationException($"Internal Corruption: Invalid PublicId. {publicIdResult.Error}");
-
-        var creatorId = creatorIdResult.Value;
-        var publicId = publicIdResult.Value;
-
-        // Create domain entity using factory
-        var workflow = WorkflowDefinition.Create(
-            creatorId: creatorId,
-            name: input.Name,
-            initialJson: "{}",
-            publicId: publicId);
-
-        // Save to database using repository
-        await workflowDefinitionRepository.SaveAsync(workflow);
-
-        // Map domain events to application events
-        var domainEvents = workflow.DomainEvents;
-        var applicationEvents = domainEvents
-            .Select(e => _eventMapper.MapToApplicationEvent(e))
-            .ToList();
-
-        // Return result with events
-        return new SaveWorkflowResult(
-            WorkflowId: workflow.Id.ToString(),
-            Events: applicationEvents
-        );
-    }
-
-    [Activity]
     public async Task<SaveWorkflowResult> UpdateNodesAndSaveAsync(UpdateWorkflowNodesInput input)
     {
         using var scope = _scopeFactory.CreateScope();
