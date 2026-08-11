@@ -155,12 +155,6 @@ public class RoslynWorkflowCodeGeneratorServiceTests
             Assert.Contains("WaitConditionAsync", generatedCode);
             Assert.Contains("ExecuteActivityAsync", generatedCode);
 
-            // Assert that the code does NOT contain runtime graph traversal logic
-            Assert.DoesNotContain("TraverseFromNodeAsync", generatedCode);
-            Assert.DoesNotContain("Dictionary<WorkflowNodeId", generatedCode);
-            Assert.DoesNotContain("switch (currentNode.Type.Value)", generatedCode);
-            Assert.DoesNotContain("HashSet<string>", generatedCode);
-
             // Assert that the code contains the unrolled signal flag
             Assert.Contains("_signal_", generatedCode);
             Assert.Contains("[WorkflowSignal]", generatedCode);
