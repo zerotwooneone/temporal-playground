@@ -78,12 +78,16 @@ public class WorkflowDefinitionRepository : IWorkflowDefinitionRepository
 
         var nodes = nodeDbos.Select(MapDboToNode).ToList();
 
+        // Parse ClassName from database
+        var className = WorkflowClassName.Create(dbo.Name, publicId).Value;
+
         // Use internal constructor for rehydration
         return new WorkflowDefinition(
             id: id,
             publicId: publicId,
             creatorId: creatorId,
             name: dbo.Name,
+            className: className,
             status: status,
             flowJson: dbo.FlowJson,
             nodes: nodes

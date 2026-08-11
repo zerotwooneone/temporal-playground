@@ -20,7 +20,34 @@ public class RoslynWorkflowCodeGeneratorServiceTests
         var publicId = WorkflowDefinitionPublicId.New();
         var className = WorkflowClassName.Create("CandidateOnboarding", publicId).Value;
         
-        // Create workflow definition with Start, Api, HumanTask, and End nodes
+        // Create nodes
+        var startNode = StartWorkflowNode.CreateStub("Start", null);
+        var apiNode = ApiWorkflowNode.CreateStub("Verify Credentials", "Call external API to verify credentials");
+        var humanTaskNode = HumanTaskWorkflowNode.CreateStub("Manager Approval", "Requires manager approval");
+        var endNode = EndWorkflowNode.CreateStub("End", null);
+
+        // Configure the nodes with technical details
+        apiNode.ConfigureTechnicalDetails(
+            "https://api.example.com/verify",
+            "token123",
+            RetryPolicy.Create(3, 2).Value,
+            ContractMapping.Create(true, "param1", "requestMapping", "responseMapping").Value);
+        
+        humanTaskNode.ConfigureTechnicalDetails(
+            TaskRole.Create("Manager").Value,
+            TemporalSignalName.Create("ManagerApprovalSignal").Value,
+            TaskTimeout.Create(60).Value,
+            "{ \"schema\": \"approval-form\" }");
+
+        // Create transitions: Start -> Api -> HumanTask -> End
+        var transitions = new List<WorkflowTransition>
+        {
+            new WorkflowTransition(startNode.Id, apiNode.Id),
+            new WorkflowTransition(apiNode.Id, humanTaskNode.Id),
+            new WorkflowTransition(humanTaskNode.Id, endNode.Id)
+        };
+
+        // Create workflow definition with nodes and transitions
         var workflowDefinition = new WorkflowDefinition(
             WorkflowDefinitionId.New(),
             publicId,
@@ -29,41 +56,13 @@ public class RoslynWorkflowCodeGeneratorServiceTests
             className,
             WorkflowStatus.Draft,
             "{}",
-            new List<WorkflowNode>
-            {
-                // Start node
-                StartWorkflowNode.CreateStub("Start", null),
-                
-                // API node - using stub and configuring technical details
-                ApiWorkflowNode.CreateStub("Verify Credentials", "Call external API to verify credentials"),
-                
-                // Human Task node - using stub
-                HumanTaskWorkflowNode.CreateStub("Manager Approval", "Requires manager approval"),
-                
-                // End node
-                EndWorkflowNode.CreateStub("End", null)
-            });
+            new List<WorkflowNode> { startNode, apiNode, humanTaskNode, endNode });
 
-        // Configure the nodes with technical details
-        var startNode = workflowDefinition.Nodes.First(n => n.Name == "Start");
-        startNode.UpdateBusinessIntent("Start", null);
-        
-        var apiNode = (ApiWorkflowNode)workflowDefinition.Nodes.First(n => n.Name == "Verify Credentials");
-        apiNode.ConfigureTechnicalDetails(
-            "https://api.example.com/verify",
-            "token123",
-            RetryPolicy.Create(3, 2).Value,
-            ContractMapping.Create(true, "param1", "requestMapping", "responseMapping").Value);
-        
-        var humanTaskNode = (HumanTaskWorkflowNode)workflowDefinition.Nodes.First(n => n.Name == "Manager Approval");
-        humanTaskNode.ConfigureTechnicalDetails(
-            TaskRole.Create("Manager").Value,
-            TemporalSignalName.Create("ManagerApprovalSignal").Value,
-            TaskTimeout.Create(60).Value,
-            "{ \"schema\": \"approval-form\" }");
-        
-        var endNode = workflowDefinition.Nodes.First(n => n.Name == "End");
-        endNode.UpdateBusinessIntent("End", null);
+        // Update the workflow with transitions
+        workflowDefinition.UpdateNodes(
+            new List<WorkflowNode> { startNode, apiNode, humanTaskNode, endNode },
+            transitions,
+            "{}");
 
         var tempDirectory = Path.Combine(Path.GetTempPath(), Guid.NewGuid().ToString());
         Directory.CreateDirectory(tempDirectory);
@@ -81,10 +80,13 @@ public class RoslynWorkflowCodeGeneratorServiceTests
             Assert.DoesNotContain(diagnostics, d => d.Severity == DiagnosticSeverity.Error);
             Assert.DoesNotContain(diagnostics, d => d.Severity == DiagnosticSeverity.Warning);
 
-            // Assert that the code contains the expected attributes
+            // Assert that the code contains the expected attributes and method calls
             Assert.Contains("[Workflow]", generatedCode);
             Assert.Contains("[WorkflowRun]", generatedCode);
             Assert.Contains("CandidateOnboarding", generatedCode);
+            Assert.Contains("ExecuteApiCallAsync", generatedCode);
+            Assert.Contains("WaitConditionAsync", generatedCode);
+            Assert.Contains("ExecuteActivityAsync", generatedCode);
         }
         finally
         {

@@ -17,8 +17,7 @@ public class WorkflowInstanceConfiguration : IEntityTypeConfiguration<WorkflowIn
         // Public ID - Alternate Key (V4 Guid) for API lookups
         builder.HasAlternateKey(x => x.PublicId);
         builder.Property(x => x.PublicId)
-            .IsRequired()
-            .HasIndex();
+            .IsRequired();
 
         // Foreign Key to WorkflowDefinition
         builder.Property(x => x.WorkflowDefinitionId)

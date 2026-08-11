@@ -132,19 +132,19 @@ public class WorkflowOrchestrationActivities : IWorkflowOrchestrationActivities
             domainNodes.Add(domainNode);
         }
 
-        // Update workflow with new nodes
-        var updatedWorkflow = workflow.UpdateNodes(domainNodes);
-        await workflowDefinitionRepository.SaveAsync(updatedWorkflow);
+        // Update workflow with new nodes and empty transitions (will be updated by UI)
+        workflow.UpdateNodes(domainNodes, new List<WorkflowTransition>(), null);
+        await workflowDefinitionRepository.SaveAsync(workflow);
 
         // Map domain events to application events
-        var domainEvents = updatedWorkflow.DomainEvents;
+        var domainEvents = workflow.DomainEvents;
         var applicationEvents = domainEvents
             .Select(e => _eventMapper.MapToApplicationEvent(e))
             .ToList();
 
         // Return result with events
         return new SaveWorkflowResult(
-            WorkflowId: updatedWorkflow.Id.ToString(),
+            WorkflowId: workflow.Id.ToString(),
             Events: applicationEvents
         );
     }

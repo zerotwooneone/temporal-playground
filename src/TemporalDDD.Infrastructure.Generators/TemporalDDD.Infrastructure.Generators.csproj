@@ -14,6 +14,7 @@
   <ItemGroup>
     <ProjectReference Include="..\TemporalDDD.Domain\TemporalDDD.Domain.csproj" />
     <ProjectReference Include="..\TemporalDDD.Application\TemporalDDD.Application.csproj" />
+    <ProjectReference Include="..\TemporalDDD.Infrastructure\TemporalDDD.Infrastructure.csproj" />
   </ItemGroup>
 
 </Project>
