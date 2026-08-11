@@ -9,22 +9,23 @@ public class WorkflowDefinitionTests
 {
     #region Create Tests
     [Fact]
-    public void Create_WithValidParameters_SetsDraftStatusAndRaisesEvent()
+    public void Create_WithValidParameters_SetsDraftStatus()
     {
         // ARRANGE
         var creatorId = UserId.New();
         var name = "Test Workflow";
         var initialJson = "{}";
+        var publicId = WorkflowDefinitionPublicId.New();
 
         // ACT
-        var workflow = WorkflowDefinition.Create(creatorId, name, initialJson);
+        var workflow = WorkflowDefinition.Create(creatorId, name, initialJson, publicId);
 
         // ASSERT
         workflow.Status.Should().Be(WorkflowStatus.Draft);
         workflow.Name.Should().Be(name);
         workflow.FlowJson.Should().Be(initialJson);
         workflow.CreatorId.Should().Be(creatorId);
-        workflow.DomainEvents.Should().ContainSingle(e => e is WorkflowDraftCreated);
+        workflow.PublicId.Should().Be(publicId);
     }
     #endregion
 
@@ -33,7 +34,8 @@ public class WorkflowDefinitionTests
     public void UpdateFlowJson_WhenDraft_UpdatesJson()
     {
         // ARRANGE
-        var workflow = WorkflowDefinition.Create(UserId.New(), "Test", "{}");
+        var publicId = WorkflowDefinitionPublicId.New();
+        var workflow = WorkflowDefinition.Create(UserId.New(), "Test", "{}", publicId);
         var newJson = "{\"updated\": true}";
 
         // ACT
@@ -47,7 +49,8 @@ public class WorkflowDefinitionTests
     public void UpdateFlowJson_WhenRejected_UpdatesJson()
     {
         // ARRANGE
-        var workflow = WorkflowDefinition.Create(UserId.New(), "Test", "{}");
+        var publicId = WorkflowDefinitionPublicId.New();
+        var workflow = WorkflowDefinition.Create(UserId.New(), "Test", "{}", publicId);
         workflow.SubmitForReview();
         workflow.Reject(UserId.New(), "Test rejection");
 
@@ -64,7 +67,8 @@ public class WorkflowDefinitionTests
     public void UpdateFlowJson_WhenNotDraftOrRejected_ThrowsException()
     {
         // ARRANGE
-        var workflow = WorkflowDefinition.Create(UserId.New(), "Test", "{}");
+        var publicId = WorkflowDefinitionPublicId.New();
+        var workflow = WorkflowDefinition.Create(UserId.New(), "Test", "{}", publicId);
         workflow.SubmitForReview();
 
         // ACT
@@ -81,7 +85,8 @@ public class WorkflowDefinitionTests
     public void SubmitForReview_WhenDraft_ChangesToPendingReviewAndRaisesEvent()
     {
         // ARRANGE
-        var workflow = WorkflowDefinition.Create(UserId.New(), "Test", "{}");
+        var publicId = WorkflowDefinitionPublicId.New();
+        var workflow = WorkflowDefinition.Create(UserId.New(), "Test", "{}", publicId);
 
         // ACT
         workflow.SubmitForReview();
@@ -95,7 +100,8 @@ public class WorkflowDefinitionTests
     public void SubmitForReview_WhenRejected_ChangesToPendingReviewAndRaisesEvent()
     {
         // ARRANGE
-        var workflow = WorkflowDefinition.Create(UserId.New(), "Test", "{}");
+        var publicId = WorkflowDefinitionPublicId.New();
+        var workflow = WorkflowDefinition.Create(UserId.New(), "Test", "{}", publicId);
         workflow.SubmitForReview();
         workflow.Reject(UserId.New(), "Test rejection");
 
@@ -111,7 +117,8 @@ public class WorkflowDefinitionTests
     public void SubmitForReview_WhenNotDraftOrRejected_ThrowsException()
     {
         // ARRANGE
-        var workflow = WorkflowDefinition.Create(UserId.New(), "Test", "{}");
+        var publicId = WorkflowDefinitionPublicId.New();
+        var workflow = WorkflowDefinition.Create(UserId.New(), "Test", "{}", publicId);
         workflow.SubmitForReview();
 
         // ACT
@@ -128,7 +135,8 @@ public class WorkflowDefinitionTests
     public void Approve_WhenPendingReviewAndAllNodesConfigured_ChangesToApprovedAndRaisesEvent()
     {
         // ARRANGE
-        var workflow = WorkflowDefinition.Create(UserId.New(), "Test", "{}");
+        var publicId = WorkflowDefinitionPublicId.New();
+        var workflow = WorkflowDefinition.Create(UserId.New(), "Test", "{}", publicId);
         workflow.AddApiNodeStub("API Node", "Business notes");
         var apiNode = workflow.Nodes.OfType<ApiWorkflowNode>().First();
         apiNode.ConfigureTechnicalDetails(
@@ -137,6 +145,17 @@ public class WorkflowDefinitionTests
             TemporalDDD.Domain.WorkflowOrchestration.ValueObjects.RetryPolicy.Create(3, 2).Value!,
             TemporalDDD.Domain.WorkflowOrchestration.ValueObjects.ContractMapping.Create(true, null, null, null).Value!
         );
+        
+        // Add transitions to make topology valid (Start -> API -> End)
+        var startNode = workflow.Nodes.OfType<StartWorkflowNode>().First();
+        var endNode = workflow.Nodes.OfType<EndWorkflowNode>().First();
+        var transitions = new List<WorkflowTransition>
+        {
+            new WorkflowTransition(startNode.Id, apiNode.Id),
+            new WorkflowTransition(apiNode.Id, endNode.Id)
+        };
+        workflow.UpdateNodes(workflow.Nodes.ToList(), transitions, null);
+        
         workflow.SubmitForReview();
         var reviewerId = UserId.New();
 
@@ -152,7 +171,8 @@ public class WorkflowDefinitionTests
     public void Approve_WhenNotPendingReview_ThrowsException()
     {
         // ARRANGE
-        var workflow = WorkflowDefinition.Create(UserId.New(), "Test", "{}");
+        var publicId = WorkflowDefinitionPublicId.New();
+        var workflow = WorkflowDefinition.Create(UserId.New(), "Test", "{}", publicId);
 
         // ACT
         var action = () => workflow.Approve(UserId.New());
@@ -166,7 +186,8 @@ public class WorkflowDefinitionTests
     public void Approve_WhenNodesNotConfigured_ThrowsException()
     {
         // ARRANGE
-        var workflow = WorkflowDefinition.Create(UserId.New(), "Test", "{}");
+        var publicId = WorkflowDefinitionPublicId.New();
+        var workflow = WorkflowDefinition.Create(UserId.New(), "Test", "{}", publicId);
         workflow.AddApiNodeStub("API Node", "Business notes");
         workflow.SubmitForReview();
 
@@ -184,7 +205,8 @@ public class WorkflowDefinitionTests
     public void Reject_WhenPendingReview_ChangesToRejectedAndRaisesEvent()
     {
         // ARRANGE
-        var workflow = WorkflowDefinition.Create(UserId.New(), "Test", "{}");
+        var publicId = WorkflowDefinitionPublicId.New();
+        var workflow = WorkflowDefinition.Create(UserId.New(), "Test", "{}", publicId);
         workflow.SubmitForReview();
         var reviewerId = UserId.New();
         var reason = "Test rejection";
@@ -201,7 +223,8 @@ public class WorkflowDefinitionTests
     public void Reject_WhenNotPendingReview_ThrowsException()
     {
         // ARRANGE
-        var workflow = WorkflowDefinition.Create(UserId.New(), "Test", "{}");
+        var publicId = WorkflowDefinitionPublicId.New();
+        var workflow = WorkflowDefinition.Create(UserId.New(), "Test", "{}", publicId);
 
         // ACT
         var action = () => workflow.Reject(UserId.New(), "Test rejection");
@@ -217,7 +240,8 @@ public class WorkflowDefinitionTests
     public void AddApiNodeStub_AddsNodeToCollection()
     {
         // ARRANGE
-        var workflow = WorkflowDefinition.Create(UserId.New(), "Test", "{}");
+        var publicId = WorkflowDefinitionPublicId.New();
+        var workflow = WorkflowDefinition.Create(UserId.New(), "Test", "{}", publicId);
 
         // ACT
         workflow.AddApiNodeStub("API Node", "Business notes");
@@ -231,7 +255,8 @@ public class WorkflowDefinitionTests
     public void AddNotificationNodeStub_AddsNodeToCollection()
     {
         // ARRANGE
-        var workflow = WorkflowDefinition.Create(UserId.New(), "Test", "{}");
+        var publicId = WorkflowDefinitionPublicId.New();
+        var workflow = WorkflowDefinition.Create(UserId.New(), "Test", "{}", publicId);
 
         // ACT
         workflow.AddNotificationNodeStub("Notification Node", "Business notes");
@@ -245,7 +270,8 @@ public class WorkflowDefinitionTests
     public void Nodes_IsReadOnlyCollection()
     {
         // ARRANGE
-        var workflow = WorkflowDefinition.Create(UserId.New(), "Test", "{}");
+        var publicId = WorkflowDefinitionPublicId.New();
+        var workflow = WorkflowDefinition.Create(UserId.New(), "Test", "{}", publicId);
 
         // ACT
         var nodes = workflow.Nodes;

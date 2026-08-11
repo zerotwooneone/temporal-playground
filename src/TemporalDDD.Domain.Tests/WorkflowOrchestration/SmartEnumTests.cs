@@ -199,7 +199,7 @@ public class SmartEnumTests
     public void NodeType_FromValue_WithInvalidValue_ReturnsFailure()
     {
         // ACT
-        var result = NodeType.FromValue(99);
+        var result = NodeType.FromValue(799);
 
         // ASSERT
         result.IsFailure.Should().BeTrue();

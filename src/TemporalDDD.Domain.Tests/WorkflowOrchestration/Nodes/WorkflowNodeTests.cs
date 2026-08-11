@@ -12,7 +12,8 @@ public class WorkflowNodeTests
     public void ApiWorkflowNode_WhenAddedViaAggregate_HasCorrectDefaults()
     {
         // ARRANGE
-        var workflow = WorkflowDefinition.Create(UserId.New(), "Test", "{}");
+        var publicId = WorkflowDefinitionPublicId.New();
+        var workflow = WorkflowDefinition.Create(UserId.New(), "Test", "{}", publicId);
 
         // ACT
         workflow.AddApiNodeStub("API Node", "Business notes");
@@ -30,7 +31,8 @@ public class WorkflowNodeTests
     public void ApiWorkflowNode_ValidateConfiguration_WithAllRequiredFields_SetsIsConfiguredToTrue()
     {
         // ARRANGE
-        var workflow = WorkflowDefinition.Create(UserId.New(), "Test", "{}");
+        var publicId = WorkflowDefinitionPublicId.New();
+        var workflow = WorkflowDefinition.Create(UserId.New(), "Test", "{}", publicId);
         workflow.AddApiNodeStub("API Node", "Business notes");
         var node = workflow.Nodes.OfType<ApiWorkflowNode>().First();
         var retryPolicy = RetryPolicy.Create(3, 2).Value!;
@@ -47,7 +49,8 @@ public class WorkflowNodeTests
     public void ApiWorkflowNode_ValidateConfiguration_WithMissingEndpointUrl_SetsIsConfiguredToFalse()
     {
         // ARRANGE
-        var workflow = WorkflowDefinition.Create(UserId.New(), "Test", "{}");
+        var publicId = WorkflowDefinitionPublicId.New();
+        var workflow = WorkflowDefinition.Create(UserId.New(), "Test", "{}", publicId);
         workflow.AddApiNodeStub("API Node", "Business notes");
         var node = workflow.Nodes.OfType<ApiWorkflowNode>().First();
         var retryPolicy = RetryPolicy.Create(3, 2).Value!;
@@ -64,7 +67,8 @@ public class WorkflowNodeTests
     public void ApiWorkflowNode_ValidateConfiguration_WithMissingRetryPolicy_SetsIsConfiguredToFalse()
     {
         // ARRANGE
-        var workflow = WorkflowDefinition.Create(UserId.New(), "Test", "{}");
+        var publicId = WorkflowDefinitionPublicId.New();
+        var workflow = WorkflowDefinition.Create(UserId.New(), "Test", "{}", publicId);
         workflow.AddApiNodeStub("API Node", "Business notes");
         var node = workflow.Nodes.OfType<ApiWorkflowNode>().First();
         var mapping = ContractMapping.Create(true, null, null, null).Value!;
@@ -80,7 +84,8 @@ public class WorkflowNodeTests
     public void ApiWorkflowNode_ValidateConfiguration_WithMissingContractMapping_SetsIsConfiguredToFalse()
     {
         // ARRANGE
-        var workflow = WorkflowDefinition.Create(UserId.New(), "Test", "{}");
+        var publicId = WorkflowDefinitionPublicId.New();
+        var workflow = WorkflowDefinition.Create(UserId.New(), "Test", "{}", publicId);
         workflow.AddApiNodeStub("API Node", "Business notes");
         var node = workflow.Nodes.OfType<ApiWorkflowNode>().First();
         var retryPolicy = RetryPolicy.Create(3, 2).Value!;
@@ -98,7 +103,8 @@ public class WorkflowNodeTests
     public void NotificationWorkflowNode_WhenAddedViaAggregate_HasCorrectDefaults()
     {
         // ARRANGE
-        var workflow = WorkflowDefinition.Create(UserId.New(), "Test", "{}");
+        var publicId = WorkflowDefinitionPublicId.New();
+        var workflow = WorkflowDefinition.Create(UserId.New(), "Test", "{}", publicId);
 
         // ACT
         workflow.AddNotificationNodeStub("Notification Node", "Business notes");
@@ -116,7 +122,8 @@ public class WorkflowNodeTests
     public void NotificationWorkflowNode_ValidateConfiguration_WithValidTemplate_SetsIsConfiguredToTrue()
     {
         // ARRANGE
-        var workflow = WorkflowDefinition.Create(UserId.New(), "Test", "{}");
+        var publicId = WorkflowDefinitionPublicId.New();
+        var workflow = WorkflowDefinition.Create(UserId.New(), "Test", "{}", publicId);
         workflow.AddNotificationNodeStub("Notification Node", "Business notes");
         var node = workflow.Nodes.OfType<NotificationWorkflowNode>().First();
 
@@ -131,7 +138,8 @@ public class WorkflowNodeTests
     public void NotificationWorkflowNode_ValidateConfiguration_WithNullTemplate_SetsIsConfiguredToFalse()
     {
         // ARRANGE
-        var workflow = WorkflowDefinition.Create(UserId.New(), "Test", "{}");
+        var publicId = WorkflowDefinitionPublicId.New();
+        var workflow = WorkflowDefinition.Create(UserId.New(), "Test", "{}", publicId);
         workflow.AddNotificationNodeStub("Notification Node", "Business notes");
         var node = workflow.Nodes.OfType<NotificationWorkflowNode>().First();
 
@@ -146,7 +154,8 @@ public class WorkflowNodeTests
     public void NotificationWorkflowNode_ValidateConfiguration_WithWhitespaceTemplate_SetsIsConfiguredToFalse()
     {
         // ARRANGE
-        var workflow = WorkflowDefinition.Create(UserId.New(), "Test", "{}");
+        var publicId = WorkflowDefinitionPublicId.New();
+        var workflow = WorkflowDefinition.Create(UserId.New(), "Test", "{}", publicId);
         workflow.AddNotificationNodeStub("Notification Node", "Business notes");
         var node = workflow.Nodes.OfType<NotificationWorkflowNode>().First();
 

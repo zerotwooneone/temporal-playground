@@ -22,7 +22,9 @@ public sealed class EndWorkflowNode : WorkflowNode
 
     public static EndWorkflowNode CreateStub(string name, string? businessNotes)
     {
-        return new EndWorkflowNode(WorkflowNodeId.New(), name, businessNotes);
+        var node = new EndWorkflowNode(WorkflowNodeId.New(), name, businessNotes);
+        node.IsConfigured = true; // End nodes are always configured
+        return node;
     }
 
     public override void ValidateConfiguration()
