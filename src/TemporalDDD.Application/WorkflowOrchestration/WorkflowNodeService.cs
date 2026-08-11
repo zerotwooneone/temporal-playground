@@ -1,44 +1,24 @@
-using Microsoft.Extensions.DependencyInjection;
-using TemporalDDD.Application.Messaging;
-using TemporalDDD.Application.WorkflowOrchestration;
-using TemporalDDD.Domain.IdentityAndAccess;
 using TemporalDDD.Domain.WorkflowOrchestration;
 using TemporalDDD.Domain.WorkflowOrchestration.Nodes;
 using TemporalDDD.Domain.WorkflowOrchestration.ValueObjects;
-using Temporalio.Activities;
 
-namespace TemporalDDD.Infrastructure.WorkflowOrchestration;
+namespace TemporalDDD.Application.WorkflowOrchestration;
 
-public class WorkflowOrchestrationActivities : IWorkflowOrchestrationActivities
+public class WorkflowNodeService : IWorkflowNodeService
 {
-    private readonly IServiceScopeFactory _scopeFactory;
-    private readonly IWorkflowEventMapper _eventMapper;
-    private readonly IMessagePublisher _messagePublisher;
+    private readonly IWorkflowDefinitionRepository _workflowDefinitionRepository;
 
-    public WorkflowOrchestrationActivities(
-        IServiceScopeFactory scopeFactory,
-        IWorkflowEventMapper eventMapper,
-        IMessagePublisher messagePublisher)
+    public WorkflowNodeService(IWorkflowDefinitionRepository workflowDefinitionRepository)
     {
-        _scopeFactory = scopeFactory;
-        _eventMapper = eventMapper;
-        _messagePublisher = messagePublisher;
+        _workflowDefinitionRepository = workflowDefinitionRepository;
     }
 
-    [Activity]
-    public async Task<SaveWorkflowResult> UpdateNodesAndSaveAsync(UpdateWorkflowNodesInput input)
+    public async Task UpdateNodesAsync(WorkflowDefinitionId workflowDefinitionId, UpdateWorkflowNodesInput input, CancellationToken cancellationToken = default)
     {
-        using var scope = _scopeFactory.CreateScope();
-        var workflowDefinitionRepository = scope.ServiceProvider.GetRequiredService<IWorkflowDefinitionRepository>();
-
         // Validate workflow exists
-        var workflowIdResult = WorkflowDefinitionId.Create(input.WorkflowDefinitionId);
-        if (workflowIdResult.IsFailure)
-            throw new InvalidOperationException($"Invalid WorkflowDefinitionId: {workflowIdResult.Error}");
-
-        var workflow = await workflowDefinitionRepository.GetByIdAsync(workflowIdResult.Value);
+        var workflow = await _workflowDefinitionRepository.GetByIdAsync(workflowDefinitionId, cancellationToken);
         if (workflow == null)
-            throw new InvalidOperationException($"Workflow with WorkflowDefinitionId {input.WorkflowDefinitionId} not found");
+            throw new InvalidOperationException($"Workflow with WorkflowDefinitionId {workflowDefinitionId} not found");
 
         // Map DTOs to domain nodes
         var domainNodes = new List<WorkflowNode>();
@@ -116,27 +96,6 @@ public class WorkflowOrchestrationActivities : IWorkflowOrchestrationActivities
 
         // Update workflow with new nodes and transitions
         workflow.UpdateNodes(domainNodes, domainTransitions, null);
-        await workflowDefinitionRepository.SaveAsync(workflow);
-
-        // Map domain events to application events
-        var domainEvents = workflow.DomainEvents;
-        var applicationEvents = domainEvents
-            .Select(e => _eventMapper.MapToApplicationEvent(e))
-            .ToList();
-
-        // Return result with events
-        return new SaveWorkflowResult(
-            WorkflowId: workflow.Id.ToString(),
-            Events: applicationEvents
-        );
-    }
-
-    [Activity]
-    public async Task PublishApplicationEventsAsync(PublishEventsInput input)
-    {
-        foreach (var applicationEvent in input.Events)
-        {
-            await _messagePublisher.PublishEventAsync(applicationEvent);
-        }
+        await _workflowDefinitionRepository.SaveAsync(workflow, cancellationToken);
     }
 }

@@ -58,6 +58,9 @@ public static class DependencyInjection
         services.AddScoped<IEvaluationPublicIdQuery, EvaluationPublicIdQuery>();
         services.AddScoped<IWorkflowDefinitionQuery, WorkflowDefinitionQuery>();
 
+        // Register application services
+        services.AddScoped<IWorkflowNodeService, WorkflowNodeService>();
+
         // Register event mappers
         services.AddScoped<ICredentialEvaluationEventMapper, CredentialEvaluationEventMapper>();
         services.AddScoped<IIdentityEventMapper, IdentityEventMapper>();

@@ -1,9 +1,7 @@
 using Microsoft.AspNetCore.Mvc;
-using Temporalio.Client;
 using TemporalDDD.Application.WorkflowOrchestration;
 using TemporalDDD.Domain.IdentityAndAccess;
 using TemporalDDD.Domain.WorkflowOrchestration;
-using TemporalDDD.Infrastructure.Generators;
 
 namespace TemporalDDD.Api.WorkflowOrchestration;
 
@@ -11,24 +9,24 @@ namespace TemporalDDD.Api.WorkflowOrchestration;
 [Route("api/workflows")]
 public class WorkflowOrchestrationController : ControllerBase
 {
-    private readonly ITemporalClient _temporalClient;
     private readonly IWorkflowDefinitionQuery _query;
     private readonly IWorkflowCodeGeneratorService _codeGeneratorService;
     private readonly IConfiguration _configuration;
     private readonly IWorkflowDefinitionRepository _repository;
+    private readonly IWorkflowNodeService _workflowNodeService;
 
     public WorkflowOrchestrationController(
-        ITemporalClient temporalClient,
         IWorkflowDefinitionQuery query,
         IWorkflowCodeGeneratorService codeGeneratorService,
         IConfiguration configuration,
-        IWorkflowDefinitionRepository repository)
+        IWorkflowDefinitionRepository repository,
+        IWorkflowNodeService workflowNodeService)
     {
-        _temporalClient = temporalClient;
         _query = query;
         _codeGeneratorService = codeGeneratorService;
         _configuration = configuration;
         _repository = repository;
+        _workflowNodeService = workflowNodeService;
     }
 
     [HttpGet]
@@ -130,19 +128,8 @@ public class WorkflowOrchestrationController : ControllerBase
 
         try
         {
-            await _temporalClient.StartWorkflowAsync(
-                (UpdateWorkflowNodesWorkflow wf) => wf.RunAsync(input),
-                new WorkflowOptions
-                {
-                    Id = $"update-nodes-{id}-{Guid.NewGuid():N}",
-                    TaskQueue = "WORKFLOW_ORCHESTRATION_TASK_QUEUE",
-                    Memo = new Dictionary<string, object>
-                    {
-                        ["WorkflowId"] = id
-                    }
-                });
-
-            return Ok(new { message = "Workflow update started" });
+            await _workflowNodeService.UpdateNodesAsync(workflowDefinitionId, input, cancellationToken);
+            return Ok(new { message = "Workflow updated successfully" });
         }
         catch (Exception ex)
         {
