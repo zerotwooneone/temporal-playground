@@ -80,13 +80,20 @@ public class RoslynWorkflowCodeGeneratorServiceTests
             Assert.DoesNotContain(diagnostics, d => d.Severity == DiagnosticSeverity.Error);
             Assert.DoesNotContain(diagnostics, d => d.Severity == DiagnosticSeverity.Warning);
 
-            // Assert that the code contains the expected attributes and method calls
+            // Assert that the code contains the expected attributes
             Assert.Contains("[Workflow]", generatedCode);
             Assert.Contains("[WorkflowRun]", generatedCode);
             Assert.Contains("CandidateOnboarding", generatedCode);
+
+            // Assert that the code contains the expected activity calls
             Assert.Contains("ExecuteApiCallAsync", generatedCode);
             Assert.Contains("WaitConditionAsync", generatedCode);
             Assert.Contains("ExecuteActivityAsync", generatedCode);
+
+            
+            // Assert that the code contains the unrolled signal flag
+            Assert.Contains("_signal_", generatedCode);
+            Assert.Contains("[WorkflowSignal]", generatedCode);
         }
         finally
         {

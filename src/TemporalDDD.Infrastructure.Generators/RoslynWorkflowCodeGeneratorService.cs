@@ -45,7 +45,8 @@ public class RoslynWorkflowCodeGeneratorService : IWorkflowCodeGeneratorService
         foreach (var humanTaskNode in humanTaskNodes)
         {
             var signalName = humanTaskNode.SignalName.Value;
-            var flagName = $"_signalReceived_{SanitizeIdentifier(signalName)}";
+            var sanitizedSignalName = SanitizeIdentifier(signalName);
+            var flagName = $"_signal_{sanitizedSignalName}";
             sb.AppendLine($"    private bool {flagName} = false;");
         }
         sb.AppendLine();
@@ -54,101 +55,22 @@ public class RoslynWorkflowCodeGeneratorService : IWorkflowCodeGeneratorService
         foreach (var humanTaskNode in humanTaskNodes)
         {
             var signalName = humanTaskNode.SignalName.Value;
-            var flagName = $"_signalReceived_{SanitizeIdentifier(signalName)}";
-            var methodName = SanitizeIdentifier(signalName);
+            var sanitizedSignalName = SanitizeIdentifier(signalName);
+            var flagName = $"_signal_{sanitizedSignalName}";
             sb.AppendLine($"    [WorkflowSignal]");
-            sb.AppendLine($"    public async Task {methodName}Async()");
-            sb.AppendLine($"    {{");
-            sb.AppendLine($"        {flagName} = true;");
-            sb.AppendLine($"    }}");
-            sb.AppendLine();
+            sb.AppendLine($"    public async Task {sanitizedSignalName}Async() => {flagName} = true;");
         }
+        sb.AppendLine();
 
-        // Generate the Run method
+        // Generate the Run method with unrolled workflow logic
         sb.AppendLine($"    [WorkflowRun]");
         sb.AppendLine($"    public async Task RunAsync(WorkflowInstancePublicId workflowInstancePublicId)");
         sb.AppendLine($"    {{");
-        sb.AppendLine($"        await ExecuteWorkflowAsync(workflowInstancePublicId);");
-        sb.AppendLine($"    }}");
-        sb.AppendLine();
 
-        // Generate the main execution method with DAG traversal
-        sb.AppendLine($"    private async Task ExecuteWorkflowAsync(WorkflowInstancePublicId workflowInstancePublicId)");
-        sb.AppendLine($"    {{");
-        sb.AppendLine($"        var visited = new HashSet<string>();");
-        sb.AppendLine($"        await TraverseFromNodeAsync(\"{startNode.Id.Value}\", visited, nodes, adjacency);");
-        sb.AppendLine($"    }}");
-        sb.AppendLine();
+        // Traverse the graph at compile time and generate unrolled code
+        var visited = new HashSet<WorkflowNodeId>();
+        GenerateNodeExecution(sb, startNode.Id, nodes, adjacency, visited, 1);
 
-        // Generate the traversal method
-        sb.AppendLine($"    private async Task TraverseFromNodeAsync(string nodeId, HashSet<string> visited, Dictionary<WorkflowNodeId, WorkflowNode> nodes, Dictionary<WorkflowNodeId, List<WorkflowNodeId>> adjacency)");
-        sb.AppendLine($"    {{");
-        sb.AppendLine($"        if (visited.Contains(nodeId)) return;");
-        sb.AppendLine($"        visited.Add(nodeId);");
-        sb.AppendLine();
-        sb.AppendLine($"        var currentId = WorkflowNodeId.Parse(nodeId).Value;");
-        sb.AppendLine($"        var currentNode = nodes[new WorkflowNodeId(currentId)];");
-        sb.AppendLine();
-        sb.AppendLine($"        switch (currentNode.Type.Value)");
-        sb.AppendLine($"        {{");
-        sb.AppendLine($"            case 0: // Start");
-        sb.AppendLine($"                // Start node - no action");
-        sb.AppendLine($"                break;");
-        sb.AppendLine($"            case 1: // Api");
-        sb.AppendLine($"                {{");
-        sb.AppendLine($"                    var apiNode = (ApiWorkflowNode)currentNode;");
-        sb.AppendLine($"                    var input = new ExecuteApiInput(");
-        sb.AppendLine($"                        nodeId: nodeId,");
-        sb.AppendLine($"                        endpointUrl: apiNode.EndpointUrl,");
-        sb.AppendLine($"                        authToken: apiNode.AuthToken,");
-        sb.AppendLine($"                        mapping: apiNode.ContractMapping);");
-        sb.AppendLine($"                    await Workflow.ExecuteActivityAsync(");
-        sb.AppendLine($"                        (IWorkflowExecutionActivities act) => act.ExecuteApiCallAsync(input),");
-        sb.AppendLine($"                        new ActivityOptions {{ ScheduleToCloseTimeout = TimeSpan.FromMinutes(5) }});");
-        sb.AppendLine($"                }}");
-        sb.AppendLine($"                break;");
-        sb.AppendLine($"            case 2: // Notification");
-        sb.AppendLine($"                {{");
-        sb.AppendLine($"                    var notificationNode = (NotificationWorkflowNode)currentNode;");
-        sb.AppendLine($"                    var input = new SendNotificationInput(");
-        sb.AppendLine($"                        nodeId: nodeId,");
-        sb.AppendLine($"                        messageTemplate: notificationNode.MessageTemplate);");
-        sb.AppendLine($"                    await Workflow.ExecuteActivityAsync(");
-        sb.AppendLine($"                        (IWorkflowExecutionActivities act) => act.SendNotificationAsync(input),");
-        sb.AppendLine($"                        new ActivityOptions {{ ScheduleToCloseTimeout = TimeSpan.FromMinutes(5) }});");
-        sb.AppendLine($"                }}");
-        sb.AppendLine($"                break;");
-        sb.AppendLine($"            case 3: // HumanTask");
-        sb.AppendLine($"                {{");
-        sb.AppendLine($"                    var humanTaskNode = (HumanTaskWorkflowNode)currentNode;");
-        sb.AppendLine($"                    var signalName = humanTaskNode.SignalName.Value;");
-        sb.AppendLine($"                    var sanitizedSignalName = SanitizeIdentifier(signalName);");
-        sb.AppendLine($"                    var flagName = $\"_signalReceived_{{sanitizedSignalName}}\";");
-        sb.AppendLine($"                    await Workflow.WaitConditionAsync(() => flagName);");
-        sb.AppendLine($"                }}");
-        sb.AppendLine($"                break;");
-        sb.AppendLine($"            case 99: // End");
-        sb.AppendLine($"                // End node - no action");
-        sb.AppendLine($"                break;");
-        sb.AppendLine($"            default:");
-        sb.AppendLine($"                throw new InvalidOperationException($\"Unknown node type: {{currentNode.Type}}\");");
-        sb.AppendLine($"        }}");
-        sb.AppendLine();
-        sb.AppendLine($"        // Get outgoing transitions");
-        sb.AppendLine($"        if (adjacency.TryGetValue(new WorkflowNodeId(currentId), out var nextNodes))");
-        sb.AppendLine($"        {{");
-        sb.AppendLine($"            if (nextNodes.Count > 1)");
-        sb.AppendLine($"            {{");
-        sb.AppendLine($"                // Parallel execution");
-        sb.AppendLine($"                var tasks = nextNodes.Select(nextId => TraverseFromNodeAsync(nextId.Value, visited, nodes, adjacency)).ToArray();");
-        sb.AppendLine($"                await Task.WhenAll(tasks);");
-        sb.AppendLine($"            }}");
-        sb.AppendLine($"            else if (nextNodes.Count == 1)");
-        sb.AppendLine($"            {{");
-        sb.AppendLine($"                // Sequential execution");
-        sb.AppendLine($"                await TraverseFromNodeAsync(nextNodes[0].Value, visited, nodes, adjacency);");
-        sb.AppendLine($"            }}");
-        sb.AppendLine($"        }}");
         sb.AppendLine($"    }}");
         sb.AppendLine("}");
 
@@ -179,11 +101,105 @@ public class RoslynWorkflowCodeGeneratorService : IWorkflowCodeGeneratorService
         return formattedCode;
     }
 
+    private void GenerateNodeExecution(
+        StringBuilder sb,
+        WorkflowNodeId nodeId,
+        Dictionary<WorkflowNodeId, WorkflowNode> nodes,
+        Dictionary<WorkflowNodeId, List<WorkflowNodeId>> adjacency,
+        HashSet<WorkflowNodeId> visited,
+        int indentLevel)
+    {
+        if (visited.Contains(nodeId))
+            return;
+        visited.Add(nodeId);
+
+        var currentNode = nodes[nodeId];
+        var indent = new string(' ', indentLevel * 4);
+
+        switch (currentNode.Type.Value)
+        {
+            case 0: // Start
+                // Start node - no action
+                break;
+
+            case 1: // Api
+                {
+                    var apiNode = (ApiWorkflowNode)currentNode;
+                    var nodeIdStr = nodeId.Value.ToString();
+                    sb.AppendLine($"{indent}var apiInput_{SanitizeIdentifier(nodeIdStr)} = new ExecuteApiInput(");
+                    sb.AppendLine($"{indent}    nodeId: \"{nodeIdStr}\",");
+                    sb.AppendLine($"{indent}    endpointUrl: \"{apiNode.EndpointUrl}\",");
+                    sb.AppendLine($"{indent}    authToken: \"{apiNode.AuthToken}\",");
+                    sb.AppendLine($"{indent}    mapping: null);");
+                    sb.AppendLine($"{indent}await Workflow.ExecuteActivityAsync(");
+                    sb.AppendLine($"{indent}    (IWorkflowExecutionActivities act) => act.ExecuteApiCallAsync(apiInput_{SanitizeIdentifier(nodeIdStr)}),");
+                    sb.AppendLine($"{indent}    new ActivityOptions {{ ScheduleToCloseTimeout = TimeSpan.FromMinutes(5) }});");
+                }
+                break;
+
+            case 2: // Notification
+                {
+                    var notificationNode = (NotificationWorkflowNode)currentNode;
+                    var nodeIdStr = nodeId.Value.ToString();
+                    sb.AppendLine($"{indent}var notificationInput_{SanitizeIdentifier(nodeIdStr)} = new SendNotificationInput(");
+                    sb.AppendLine($"{indent}    nodeId: \"{nodeIdStr}\",");
+                    sb.AppendLine($"{indent}    messageTemplate: \"{notificationNode.MessageTemplate}\");");
+                    sb.AppendLine($"{indent}await Workflow.ExecuteActivityAsync(");
+                    sb.AppendLine($"{indent}    (IWorkflowExecutionActivities act) => act.SendNotificationAsync(notificationInput_{SanitizeIdentifier(nodeIdStr)}),");
+                    sb.AppendLine($"{indent}    new ActivityOptions {{ ScheduleToCloseTimeout = TimeSpan.FromMinutes(5) }});");
+                }
+                break;
+
+            case 3: // HumanTask
+                {
+                    var humanTaskNode = (HumanTaskWorkflowNode)currentNode;
+                    var signalName = humanTaskNode.SignalName.Value;
+                    var sanitizedSignalName = SanitizeIdentifier(signalName);
+                    var flagName = $"_signal_{sanitizedSignalName}";
+                    sb.AppendLine($"{indent}await Temporalio.Workflows.Workflow.WaitConditionAsync(() => {flagName});");
+                }
+                break;
+
+            case 99: // End
+                // End node - no action
+                break;
+
+            default:
+                throw new InvalidOperationException($"Unknown node type: {currentNode.Type}");
+        }
+
+        // Get outgoing transitions and generate next nodes
+        if (adjacency.TryGetValue(nodeId, out var nextNodes))
+        {
+            if (nextNodes.Count > 1)
+            {
+                // Parallel execution - generate Task.WhenAll
+                sb.AppendLine($"{indent}await Task.WhenAll(");
+                for (int i = 0; i < nextNodes.Count; i++)
+                {
+                    var nextId = nextNodes[i];
+                    sb.AppendLine($"{indent}    async () =>");
+                    sb.AppendLine($"{indent}    {{");
+                    GenerateNodeExecution(sb, nextId, nodes, adjacency, visited, indentLevel + 2);
+                    sb.AppendLine($"{indent}    }}");
+                    if (i < nextNodes.Count - 1)
+                        sb.AppendLine($"{indent},");
+                }
+                sb.AppendLine($"{indent});");
+            }
+            else if (nextNodes.Count == 1)
+            {
+                // Sequential execution
+                GenerateNodeExecution(sb, nextNodes[0], nodes, adjacency, visited, indentLevel);
+            }
+        }
+    }
+
     private static string SanitizeIdentifier(string identifier)
     {
         // Remove invalid characters and ensure it's a valid C# identifier
         var sanitized = new string(identifier.Where(c => char.IsLetterOrDigit(c) || c == '_').ToArray());
-        if (string.IsNullOrEmpty(sanitized) || !char.IsLetter(sanitized[0]) && sanitized[0] != '_')
+        if (string.IsNullOrEmpty(sanitized) || (!char.IsLetter(sanitized[0]) && sanitized[0] != '_'))
         {
             sanitized = "_" + sanitized;
         }
