@@ -2,7 +2,7 @@ using TemporalDDD.Domain.WorkflowOrchestration.ValueObjects;
 
 namespace TemporalDDD.Domain.WorkflowOrchestration.Nodes;
 
-public sealed class ApiWorkflowNode : WorkflowNode
+public sealed class ApiWorkflowNode : WorkflowNode, IActivityWorkflowNode
 {
     public string? EndpointUrl { get; private set; }
     public string? AuthToken { get; private set; }
@@ -47,6 +47,13 @@ public sealed class ApiWorkflowNode : WorkflowNode
         RetryPolicy = retryPolicy;
         ContractMapping = mapping;
         ValidateConfiguration();
+    }
+
+    public void ConfigureResponseSchema(IEnumerable<NodeOutputDefinition> schemaOutputs)
+    {
+        // The API output is locked in when the user configures the node
+        _outputDefinitions.Clear();
+        _outputDefinitions.AddRange(schemaOutputs);
     }
 
     public override void ValidateConfiguration()

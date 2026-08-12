@@ -1,3 +1,4 @@
 namespace TemporalDDD.Domain.WorkflowOrchestration;
 
-public sealed record WorkflowTransition(WorkflowNodeId SourceNodeId, WorkflowNodeId TargetNodeId);
+// Add an optional BranchLabel (e.g., "True", "False")
+public sealed record WorkflowTransition(WorkflowNodeId SourceNodeId, WorkflowNodeId TargetNodeId, string? BranchLabel = null);

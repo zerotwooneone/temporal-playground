@@ -23,6 +23,9 @@ public sealed class WorkflowDefinition : AggregateRoot
     private readonly List<WorkflowTransition> _transitions = new();
     public IReadOnlyList<WorkflowTransition> Transitions => _transitions.AsReadOnly();
 
+    private readonly List<NodeOutputDefinition> _expectedInputs = new();
+    public IReadOnlyList<NodeOutputDefinition> ExpectedInputs => _expectedInputs.AsReadOnly();
+
     private WorkflowDefinition() { }
 
     // Internal constructor for infrastructure rehydration
@@ -118,6 +121,10 @@ public sealed class WorkflowDefinition : AggregateRoot
         if (topologyValidation.IsFailure)
             throw new InvalidOperationException($"Cannot approve workflow: {topologyValidation.Error}");
 
+        var executionScopeValidation = ValidateExecutionScopes();
+        if (executionScopeValidation.IsFailure)
+            throw new InvalidOperationException($"Cannot approve workflow: {executionScopeValidation.Error}");
+
         Status = WorkflowStatus.Approved;
         RaiseDomainEvent(new WorkflowApproved(Id, reviewerId));
     }
@@ -142,6 +149,22 @@ public sealed class WorkflowDefinition : AggregateRoot
         {
             FlowJson = flowJson;
         }
+    }
+
+    public void UpdateWorkflowInputs(IEnumerable<NodeOutputDefinition> inputs)
+    {
+        _expectedInputs.Clear();
+        _expectedInputs.AddRange(inputs);
+
+        // Sync the workflow inputs to the Start Node's outputs so downstream nodes can map to them
+        var startNode = _nodes.OfType<StartWorkflowNode>().Single();
+        startNode.ConfigureOutputs(_expectedInputs);
+    }
+
+    private WorkflowNode GetNode(WorkflowNodeId nodeId)
+    {
+        return _nodes.FirstOrDefault(n => n.Id == nodeId)
+            ?? throw new InvalidOperationException($"Node with ID '{nodeId}' not found in workflow.");
     }
 
     public Result ValidateTopology()
@@ -249,6 +272,88 @@ public sealed class WorkflowDefinition : AggregateRoot
             }
         }
 
+        // Rule 6: Decision nodes must have both True and False branches
+        var decisionNodes = _nodes.OfType<DecisionWorkflowNode>();
+        foreach (var decisionNode in decisionNodes)
+        {
+            var outgoingTransitions = _transitions.Where(t => t.SourceNodeId == decisionNode.Id).ToList();
+
+            // Ensure there is a "True" branch and a "False" branch
+            if (!outgoingTransitions.Any(t => t.BranchLabel == "True") ||
+                !outgoingTransitions.Any(t => t.BranchLabel == "False"))
+            {
+                return Result.Failure($"Decision Node '{decisionNode.Name}' must have both a 'True' and 'False' outgoing transition.");
+            }
+        }
+
+        return Result.Success();
+    }
+
+    private HashSet<WorkflowNodeId> GetExecutionScopeForNode(WorkflowNodeId targetNodeId)
+    {
+        var scope = new HashSet<WorkflowNodeId>();
+        var queue = new Queue<WorkflowNodeId>();
+
+        // Seed the queue with the immediate parents of the target node
+        var immediateParents = _transitions
+            .Where(t => t.TargetNodeId == targetNodeId)
+            .Select(t => t.SourceNodeId);
+
+        foreach (var parent in immediateParents)
+        {
+            queue.Enqueue(parent);
+        }
+
+        // Traverse backward up the DAG
+        while (queue.Count > 0)
+        {
+            var current = queue.Dequeue();
+
+            // HashSet.Add returns false if the item was already present, protecting us from infinite loops 
+            // in case topology validation hasn't caught a cycle yet.
+            if (scope.Add(current))
+            {
+                var nextParents = _transitions
+                    .Where(t => t.TargetNodeId == current)
+                    .Select(t => t.SourceNodeId);
+
+                foreach (var nextParent in nextParents)
+                {
+                    queue.Enqueue(nextParent);
+                }
+            }
+        }
+
+        return scope;
+    }
+
+    private Result ValidateExecutionScopes()
+    {
+        foreach (var node in _nodes.Where(n => n.InputBindings.Any()))
+        {
+            // Get all guaranteed ancestors using our BFS traversal
+            var ancestors = GetExecutionScopeForNode(node.Id);
+
+            foreach (var binding in node.InputBindings)
+            {
+                // 1. Check Execution Scope Reachability
+                if (!ancestors.Contains(binding.Source.SourceNodeId))
+                    return Result.Failure($"Invalid mapping on Node '{node.Name}': Source Node '{binding.Source.SourceNodeId}' is not an upstream ancestor.");
+
+                // 2. Strict Type Checking
+                var sourceNode = GetNode(binding.Source.SourceNodeId);
+                var sourceOutput = sourceNode.OutputDefinitions.FirstOrDefault(o => o.PropertyName == binding.Source.SourcePath);
+                var targetInput = node.InputDefinitions.FirstOrDefault(i => i.PropertyName == binding.TargetInputProperty);
+
+                if (sourceOutput == null || targetInput == null)
+                    return Result.Failure($"Invalid mapping on Node '{node.Name}': Source or Target property not found in the node contracts.");
+
+                if (!sourceOutput.DataType.IsAssignableTo(targetInput.DataType))
+                {
+                    return Result.Failure($"Type mismatch on Node '{node.Name}'. Cannot map {sourceOutput.DataType} to {targetInput.DataType}.");
+                }
+            }
+        }
         return Result.Success();
     }
 

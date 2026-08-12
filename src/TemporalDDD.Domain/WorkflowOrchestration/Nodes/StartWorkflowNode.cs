@@ -1,5 +1,7 @@
 namespace TemporalDDD.Domain.WorkflowOrchestration.Nodes;
 
+using TemporalDDD.Domain.WorkflowOrchestration;
+
 public sealed class StartWorkflowNode : WorkflowNode
 {
     private StartWorkflowNode() { }
@@ -25,6 +27,12 @@ public sealed class StartWorkflowNode : WorkflowNode
         var node = new StartWorkflowNode(WorkflowNodeId.New(), name, businessNotes);
         node.IsConfigured = true; // Start nodes are always configured
         return node;
+    }
+
+    public void ConfigureOutputs(IEnumerable<NodeOutputDefinition> workflowInputs)
+    {
+        _outputDefinitions.Clear();
+        _outputDefinitions.AddRange(workflowInputs);
     }
 
     public override void ValidateConfiguration()
