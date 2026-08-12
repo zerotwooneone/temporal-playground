@@ -43,6 +43,12 @@ public class WorkflowDefinitionConfiguration : IEntityTypeConfiguration<Workflow
         builder.Property(x => x.FlowJson)
             .IsRequired();
 
+        // JSON column for Workflow Inputs
+        // Note: This is stored as a JSON string in the database
+        // Conversion between Domain List<T> and DBO string happens in repository mapping
+        builder.Property(x => x.ExpectedInputsJson)
+            .IsRequired();
+
         // Relationship to WorkflowNodes
         builder.HasMany<WorkflowNodeDbo>()
             .WithOne()

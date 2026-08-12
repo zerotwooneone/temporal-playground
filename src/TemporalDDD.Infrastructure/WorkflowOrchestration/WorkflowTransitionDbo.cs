@@ -6,4 +6,5 @@ public class WorkflowTransitionDbo
     public string WorkflowDefinitionId { get; set; }
     public string SourceNodeId { get; set; }
     public string TargetNodeId { get; set; }
+    public string? BranchLabel { get; set; }
 }

@@ -32,6 +32,18 @@ public class WorkflowNodeConfiguration : IEntityTypeConfiguration<WorkflowNodeDb
         builder.Property(x => x.IsConfigured)
             .IsRequired();
 
+        // JSON columns for Node Contracts and Bindings
+        // Note: These are stored as JSON strings in the database
+        // Conversion between Domain List<T> and DBO string happens in repository mapping
+        builder.Property(x => x.InputDefinitionsJson)
+            .IsRequired();
+
+        builder.Property(x => x.OutputDefinitionsJson)
+            .IsRequired();
+
+        builder.Property(x => x.InputBindingsJson)
+            .IsRequired();
+
         // Table-Per-Hierarchy (TPH) using NodeType as discriminator
         builder.HasDiscriminator(x => x.NodeType)
             .HasValue<StartWorkflowNodeDbo>(0)  // NodeType.Start

@@ -1,4 +1,5 @@
 using Microsoft.EntityFrameworkCore;
+using System.Text.Json;
 using TemporalDDD.Domain.IdentityAndAccess;
 using TemporalDDD.Domain.WorkflowOrchestration;
 using TemporalDDD.Domain.WorkflowOrchestration.Nodes;
@@ -80,7 +81,8 @@ public class WorkflowDefinitionRepository : IWorkflowDefinitionRepository
             {
                 WorkflowDefinitionId = id,
                 SourceNodeId = transition.SourceNodeId.ToString(),
-                TargetNodeId = transition.TargetNodeId.ToString()
+                TargetNodeId = transition.TargetNodeId.ToString(),
+                BranchLabel = transition.BranchLabel
             };
             _dbContext.WorkflowTransitions.Add(transitionDbo);
         }
@@ -105,14 +107,17 @@ public class WorkflowDefinitionRepository : IWorkflowDefinitionRepository
         {
             var sourceNodeId = WorkflowNodeId.Create(t.SourceNodeId).Value ?? throw new InvalidOperationException($"Invalid SourceNodeId in database: {t.SourceNodeId}");
             var targetNodeId = WorkflowNodeId.Create(t.TargetNodeId).Value ?? throw new InvalidOperationException($"Invalid TargetNodeId in database: {t.TargetNodeId}");
-            return new WorkflowTransition(sourceNodeId, targetNodeId);
+            return new WorkflowTransition(sourceNodeId, targetNodeId, t.BranchLabel);
         }).ToList();
 
         // Parse ClassName from database
         var className = WorkflowClassName.Create(dbo.Name, publicId).Value;
 
+        // Deserialize ExpectedInputs from JSON
+        var expectedInputs = JsonSerializer.Deserialize<List<NodeOutputDefinition>>(dbo.ExpectedInputsJson, GetJsonOptions()) ?? new List<NodeOutputDefinition>();
+
         // Use internal constructor for rehydration
-        return new WorkflowDefinition(
+        var workflow = new WorkflowDefinition(
             id: id,
             publicId: publicId,
             creatorId: creatorId,
@@ -123,6 +128,11 @@ public class WorkflowDefinitionRepository : IWorkflowDefinitionRepository
             nodes: nodes,
             transitions: transitions
         );
+
+        // Set ExpectedInputs using the public method
+        workflow.UpdateWorkflowInputs(expectedInputs);
+
+        return workflow;
     }
 
     private WorkflowNode MapDboToNode(WorkflowNodeDbo dbo)
@@ -134,17 +144,29 @@ public class WorkflowDefinitionRepository : IWorkflowDefinitionRepository
             throw new InvalidOperationException($"Invalid NodeType in database: {dbo.NodeType}. {nodeTypeResult.Error}");
         var nodeType = nodeTypeResult.Value;
 
+        // Deserialize JSON columns
+        var inputDefinitions = JsonSerializer.Deserialize<List<NodeInputDefinition>>(dbo.InputDefinitionsJson, GetJsonOptions()) ?? new List<NodeInputDefinition>();
+        var outputDefinitions = JsonSerializer.Deserialize<List<NodeOutputDefinition>>(dbo.OutputDefinitionsJson, GetJsonOptions()) ?? new List<NodeOutputDefinition>();
+        var inputBindings = JsonSerializer.Deserialize<List<ParameterBinding>>(dbo.InputBindingsJson, GetJsonOptions()) ?? new List<ParameterBinding>();
+
         return nodeType switch
         {
-            var t when t == NodeType.Start => new StartWorkflowNode(nodeId, dbo.Name, dbo.BusinessNotes, dbo.IsConfigured),
+            var t when t == NodeType.Start => MapStartNode(dbo, nodeId, inputDefinitions, outputDefinitions, inputBindings),
             var t when t == NodeType.End => new EndWorkflowNode(nodeId, dbo.Name, dbo.BusinessNotes, dbo.IsConfigured),
-            var t when t == NodeType.Api => MapApiNode(dbo, nodeId),
-            var t when t == NodeType.Notification => MapNotificationNode(dbo, nodeId),
+            var t when t == NodeType.Api => MapApiNode(dbo, nodeId, inputDefinitions, outputDefinitions, inputBindings),
+            var t when t == NodeType.Notification => MapNotificationNode(dbo, nodeId, inputDefinitions, outputDefinitions, inputBindings),
             _ => throw new InvalidOperationException($"Unsupported NodeType in database: {dbo.NodeType}")
         };
     }
 
-    private ApiWorkflowNode MapApiNode(WorkflowNodeDbo dbo, WorkflowNodeId nodeId)
+    private StartWorkflowNode MapStartNode(WorkflowNodeDbo dbo, WorkflowNodeId nodeId, List<NodeInputDefinition> inputDefinitions, List<NodeOutputDefinition> outputDefinitions, List<ParameterBinding> inputBindings)
+    {
+        var node = new StartWorkflowNode(nodeId, dbo.Name, dbo.BusinessNotes, dbo.IsConfigured);
+        node.ConfigureOutputs(outputDefinitions);
+        return node;
+    }
+
+    private ApiWorkflowNode MapApiNode(WorkflowNodeDbo dbo, WorkflowNodeId nodeId, List<NodeInputDefinition> inputDefinitions, List<NodeOutputDefinition> outputDefinitions, List<ParameterBinding> inputBindings)
     {
         if (dbo is not ApiWorkflowNodeDbo apiDbo)
             throw new InvalidOperationException($"Expected ApiWorkflowNodeDbo but got {dbo.GetType().Name}");
@@ -171,7 +193,7 @@ public class WorkflowDefinitionRepository : IWorkflowDefinitionRepository
                 contractMapping = mappingResult.Value;
         }
 
-        return new ApiWorkflowNode(
+        var node = new ApiWorkflowNode(
             id: nodeId,
             name: dbo.Name,
             businessNotes: dbo.BusinessNotes,
@@ -181,20 +203,34 @@ public class WorkflowDefinitionRepository : IWorkflowDefinitionRepository
             retryPolicy: retryPolicy,
             contractMapping: contractMapping
         );
+
+        // Apply deserialized data
+        node.UpdateInputBindings(inputBindings);
+        if (outputDefinitions.Any())
+        {
+            node.ConfigureResponseSchema(outputDefinitions);
+        }
+
+        return node;
     }
 
-    private NotificationWorkflowNode MapNotificationNode(WorkflowNodeDbo dbo, WorkflowNodeId nodeId)
+    private NotificationWorkflowNode MapNotificationNode(WorkflowNodeDbo dbo, WorkflowNodeId nodeId, List<NodeInputDefinition> inputDefinitions, List<NodeOutputDefinition> outputDefinitions, List<ParameterBinding> inputBindings)
     {
         if (dbo is not NotificationWorkflowNodeDbo notificationDbo)
             throw new InvalidOperationException($"Expected NotificationWorkflowNodeDbo but got {dbo.GetType().Name}");
 
-        return new NotificationWorkflowNode(
+        var node = new NotificationWorkflowNode(
             id: nodeId,
             name: dbo.Name,
             businessNotes: dbo.BusinessNotes,
             isConfigured: dbo.IsConfigured,
             messageTemplate: notificationDbo.MessageTemplate
         );
+
+        // Apply deserialized data
+        node.UpdateInputBindings(inputBindings);
+
+        return node;
     }
 
     private void MapToDbo(WorkflowDefinition workflow, WorkflowDefinitionDbo dbo)
@@ -206,6 +242,9 @@ public class WorkflowDefinitionRepository : IWorkflowDefinitionRepository
         dbo.ClassName = workflow.ClassName.Value;
         dbo.Status = workflow.Status.Value;
         dbo.FlowJson = workflow.FlowJson;
+        
+        // Serialize ExpectedInputs to JSON
+        dbo.ExpectedInputsJson = JsonSerializer.Serialize(workflow.ExpectedInputs, GetJsonOptions());
     }
 
     private WorkflowNodeDbo MapNodeToDbo(WorkflowNode node, string workflowDefinitionId)
@@ -219,7 +258,10 @@ public class WorkflowDefinitionRepository : IWorkflowDefinitionRepository
                 NodeType = startNode.Type.Value,
                 Name = startNode.Name,
                 BusinessNotes = startNode.BusinessNotes,
-                IsConfigured = startNode.IsConfigured
+                IsConfigured = startNode.IsConfigured,
+                InputDefinitionsJson = JsonSerializer.Serialize(startNode.InputDefinitions, GetJsonOptions()),
+                OutputDefinitionsJson = JsonSerializer.Serialize(startNode.OutputDefinitions, GetJsonOptions()),
+                InputBindingsJson = JsonSerializer.Serialize(startNode.InputBindings, GetJsonOptions())
             },
             EndWorkflowNode endNode => new EndWorkflowNodeDbo
             {
@@ -228,7 +270,10 @@ public class WorkflowDefinitionRepository : IWorkflowDefinitionRepository
                 NodeType = endNode.Type.Value,
                 Name = endNode.Name,
                 BusinessNotes = endNode.BusinessNotes,
-                IsConfigured = endNode.IsConfigured
+                IsConfigured = endNode.IsConfigured,
+                InputDefinitionsJson = JsonSerializer.Serialize(endNode.InputDefinitions, GetJsonOptions()),
+                OutputDefinitionsJson = JsonSerializer.Serialize(endNode.OutputDefinitions, GetJsonOptions()),
+                InputBindingsJson = JsonSerializer.Serialize(endNode.InputBindings, GetJsonOptions())
             },
             ApiWorkflowNode apiNode => MapApiNodeToDbo(apiNode, workflowDefinitionId),
             NotificationWorkflowNode notificationNode => MapNotificationNodeToDbo(notificationNode, workflowDefinitionId),
@@ -253,7 +298,10 @@ public class WorkflowDefinitionRepository : IWorkflowDefinitionRepository
             ContractMappingConvertXmlToJson = node.ContractMapping?.ConvertXmlToJson,
             ContractMappingQueryParameters = node.ContractMapping?.QueryParameters,
             ContractMappingRequestMapping = node.ContractMapping?.RequestMapping,
-            ContractMappingResponseMapping = node.ContractMapping?.ResponseMapping
+            ContractMappingResponseMapping = node.ContractMapping?.ResponseMapping,
+            InputDefinitionsJson = JsonSerializer.Serialize(node.InputDefinitions, GetJsonOptions()),
+            OutputDefinitionsJson = JsonSerializer.Serialize(node.OutputDefinitions, GetJsonOptions()),
+            InputBindingsJson = JsonSerializer.Serialize(node.InputBindings, GetJsonOptions())
         };
     }
 
@@ -267,7 +315,24 @@ public class WorkflowDefinitionRepository : IWorkflowDefinitionRepository
             Name = node.Name,
             BusinessNotes = node.BusinessNotes,
             IsConfigured = node.IsConfigured,
-            MessageTemplate = node.MessageTemplate
+            MessageTemplate = node.MessageTemplate,
+            InputDefinitionsJson = JsonSerializer.Serialize(node.InputDefinitions, GetJsonOptions()),
+            OutputDefinitionsJson = JsonSerializer.Serialize(node.OutputDefinitions, GetJsonOptions()),
+            InputBindingsJson = JsonSerializer.Serialize(node.InputBindings, GetJsonOptions())
         };
+    }
+
+    private static JsonSerializerOptions GetJsonOptions()
+    {
+        var options = new JsonSerializerOptions
+        {
+            PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
+            WriteIndented = false
+        };
+        
+        // Configure polymorphic type discriminator for WorkflowDataType
+        options.TypeInfoResolver = new PolymorphicTypeResolver();
+        
+        return options;
     }
 }

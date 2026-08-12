@@ -1,3 +1,5 @@
+using TemporalDDD.Domain.WorkflowOrchestration;
+
 namespace TemporalDDD.Infrastructure.WorkflowOrchestration;
 
 public class WorkflowDefinitionDbo
@@ -9,4 +11,7 @@ public class WorkflowDefinitionDbo
     public string ClassName { get; set; }
     public int Status { get; set; }
     public string FlowJson { get; set; }
+    
+    // JSON column for Workflow Inputs
+    public string ExpectedInputsJson { get; set; } = "[]";
 }
