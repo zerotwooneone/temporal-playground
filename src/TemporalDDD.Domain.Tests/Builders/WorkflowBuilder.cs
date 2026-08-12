@@ -33,15 +33,9 @@ public class WorkflowBuilder
     public WorkflowBuilder WithApiNode(
         string referenceName, 
         out WorkflowNodeId nodeId, 
-        IEnumerable<NodeOutputDefinition>? outputs = null,
         bool skipConfiguration = false)
     {
         var node = ApiWorkflowNode.CreateStub(referenceName, null);
-        
-        if (outputs != null)
-        {
-            node.ConfigureResponseSchema(outputs);
-        }
         
         if (!skipConfiguration)
         {
@@ -84,6 +78,40 @@ public class WorkflowBuilder
         
         // Decision nodes are always configured once created
         node.ValidateConfiguration();
+
+        _additionalNodes.Add(node);
+        _nodes[referenceName] = node.Id;
+        nodeId = node.Id;
+        return this;
+    }
+
+    public WorkflowBuilder WithHumanTaskNode(
+        string referenceName, 
+        out WorkflowNodeId nodeId,
+        IEnumerable<NodeInputDefinition>? inputs = null,
+        IEnumerable<NodeOutputDefinition>? outputs = null,
+        bool skipConfiguration = false)
+    {
+        var node = HumanTaskWorkflowNode.CreateStub(referenceName, null);
+        
+        if (inputs != null)
+        {
+            node.ConfigureInputs(inputs);
+        }
+        
+        if (outputs != null)
+        {
+            node.ConfigureOutputs(outputs);
+        }
+        
+        if (!skipConfiguration)
+        {
+            // Apply valid defaults so the test doesn't fail IsConfigured checks
+            var requiredRole = TaskRole.Create("Admin").Value!;
+            var signalName = TemporalSignalName.Create("HumanTaskSignal").Value!;
+            var timeout = TaskTimeout.Create(30).Value!;
+            node.ConfigureTechnicalDetails(requiredRole, signalName, timeout, null);
+        }
 
         _additionalNodes.Add(node);
         _nodes[referenceName] = node.Id;

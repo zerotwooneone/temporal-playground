@@ -11,6 +11,19 @@ public class DecisionWorkflowNode : WorkflowNode
         _inputDefinitions.Add(new NodeInputDefinition("Condition", WorkflowDataType.Primitive.Boolean, true));
     }
 
+    // Internal constructor for infrastructure rehydration
+    internal DecisionWorkflowNode(
+        WorkflowNodeId id,
+        string name,
+        string? businessNotes,
+        bool isConfigured)
+        : base(id, NodeType.Decision, name, businessNotes)
+    {
+        IsConfigured = isConfigured;
+        // Rehydrate the fixed input definition
+        _inputDefinitions.Add(new NodeInputDefinition("Condition", WorkflowDataType.Primitive.Boolean, true));
+    }
+
     public static DecisionWorkflowNode CreateStub(string name, string? businessNotes)
     {
         return new DecisionWorkflowNode(WorkflowNodeId.New(), name, businessNotes);

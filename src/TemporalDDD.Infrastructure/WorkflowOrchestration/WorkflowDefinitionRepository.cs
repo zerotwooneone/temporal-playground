@@ -155,14 +155,15 @@ public class WorkflowDefinitionRepository : IWorkflowDefinitionRepository
             var t when t == NodeType.End => new EndWorkflowNode(nodeId, dbo.Name, dbo.BusinessNotes, dbo.IsConfigured),
             var t when t == NodeType.Api => MapApiNode(dbo, nodeId, inputDefinitions, outputDefinitions, inputBindings),
             var t when t == NodeType.Notification => MapNotificationNode(dbo, nodeId, inputDefinitions, outputDefinitions, inputBindings),
+            var t when t == NodeType.HumanTask => MapHumanTaskNode(dbo, nodeId, inputDefinitions, outputDefinitions, inputBindings),
+            var t when t == NodeType.Decision => MapDecisionNode(dbo, nodeId, inputDefinitions, outputDefinitions, inputBindings),
             _ => throw new InvalidOperationException($"Unsupported NodeType in database: {dbo.NodeType}")
         };
     }
 
     private StartWorkflowNode MapStartNode(WorkflowNodeDbo dbo, WorkflowNodeId nodeId, List<NodeInputDefinition> inputDefinitions, List<NodeOutputDefinition> outputDefinitions, List<ParameterBinding> inputBindings)
     {
-        var node = new StartWorkflowNode(nodeId, dbo.Name, dbo.BusinessNotes, dbo.IsConfigured);
-        node.ConfigureOutputs(outputDefinitions);
+        var node = new StartWorkflowNode(nodeId, dbo.Name, dbo.BusinessNotes, dbo.IsConfigured, outputDefinitions);
         return node;
     }
 
@@ -201,15 +202,13 @@ public class WorkflowDefinitionRepository : IWorkflowDefinitionRepository
             endpointUrl: apiDbo.EndpointUrl,
             authToken: apiDbo.AuthToken,
             retryPolicy: retryPolicy,
-            contractMapping: contractMapping
+            contractMapping: contractMapping,
+            inputDefinitions: inputDefinitions,
+            outputDefinitions: outputDefinitions
         );
 
         // Apply deserialized data
         node.UpdateInputBindings(inputBindings);
-        if (outputDefinitions.Any())
-        {
-            node.ConfigureResponseSchema(outputDefinitions);
-        }
 
         return node;
     }
@@ -224,12 +223,69 @@ public class WorkflowDefinitionRepository : IWorkflowDefinitionRepository
             name: dbo.Name,
             businessNotes: dbo.BusinessNotes,
             isConfigured: dbo.IsConfigured,
-            messageTemplate: notificationDbo.MessageTemplate
+            messageTemplate: notificationDbo.MessageTemplate,
+            inputDefinitions: inputDefinitions,
+            outputDefinitions: outputDefinitions
         );
 
         // Apply deserialized data
         node.UpdateInputBindings(inputBindings);
 
+        return node;
+    }
+
+    private HumanTaskWorkflowNode MapHumanTaskNode(WorkflowNodeDbo dbo, WorkflowNodeId nodeId, List<NodeInputDefinition> inputDefinitions, List<NodeOutputDefinition> outputDefinitions, List<ParameterBinding> inputBindings)
+    {
+        if (dbo is not HumanTaskWorkflowNodeDbo humanTaskDbo)
+            throw new InvalidOperationException($"Expected HumanTaskWorkflowNodeDbo but got {dbo.GetType().Name}");
+
+        // Reconstruct value objects
+        TaskRole? requiredRole = null;
+        if (!string.IsNullOrWhiteSpace(humanTaskDbo.RequiredRole))
+        {
+            var roleResult = TaskRole.Create(humanTaskDbo.RequiredRole);
+            if (roleResult.IsSuccess)
+                requiredRole = roleResult.Value;
+        }
+
+        TemporalSignalName? signalName = null;
+        if (!string.IsNullOrWhiteSpace(humanTaskDbo.SignalName))
+        {
+            var signalResult = TemporalSignalName.Create(humanTaskDbo.SignalName);
+            if (signalResult.IsSuccess)
+                signalName = signalResult.Value;
+        }
+
+        TaskTimeout? timeout = null;
+        if (humanTaskDbo.TimeoutInMinutes.HasValue)
+        {
+            var timeoutResult = TaskTimeout.Create(humanTaskDbo.TimeoutInMinutes.Value);
+            if (timeoutResult.IsSuccess)
+                timeout = timeoutResult.Value;
+        }
+
+        var node = new HumanTaskWorkflowNode(
+            id: nodeId,
+            name: dbo.Name,
+            businessNotes: dbo.BusinessNotes,
+            isConfigured: dbo.IsConfigured,
+            requiredRole: requiredRole,
+            signalName: signalName,
+            timeout: timeout,
+            uiFormSchema: humanTaskDbo.UIFormSchema,
+            inputDefinitions: inputDefinitions,
+            outputDefinitions: outputDefinitions
+        );
+
+        // Apply deserialized data
+        node.UpdateInputBindings(inputBindings);
+
+        return node;
+    }
+
+    private DecisionWorkflowNode MapDecisionNode(WorkflowNodeDbo dbo, WorkflowNodeId nodeId, List<NodeInputDefinition> inputDefinitions, List<NodeOutputDefinition> outputDefinitions, List<ParameterBinding> inputBindings)
+    {
+        var node = new DecisionWorkflowNode(nodeId, dbo.Name, dbo.BusinessNotes, dbo.IsConfigured);
         return node;
     }
 
@@ -277,6 +333,8 @@ public class WorkflowDefinitionRepository : IWorkflowDefinitionRepository
             },
             ApiWorkflowNode apiNode => MapApiNodeToDbo(apiNode, workflowDefinitionId),
             NotificationWorkflowNode notificationNode => MapNotificationNodeToDbo(notificationNode, workflowDefinitionId),
+            HumanTaskWorkflowNode humanTaskNode => MapHumanTaskNodeToDbo(humanTaskNode, workflowDefinitionId),
+            DecisionWorkflowNode decisionNode => MapDecisionNodeToDbo(decisionNode, workflowDefinitionId),
             _ => throw new InvalidOperationException($"Unsupported WorkflowNode type: {node.GetType().Name}")
         };
     }
@@ -316,6 +374,42 @@ public class WorkflowDefinitionRepository : IWorkflowDefinitionRepository
             BusinessNotes = node.BusinessNotes,
             IsConfigured = node.IsConfigured,
             MessageTemplate = node.MessageTemplate,
+            InputDefinitionsJson = JsonSerializer.Serialize(node.InputDefinitions, GetJsonOptions()),
+            OutputDefinitionsJson = JsonSerializer.Serialize(node.OutputDefinitions, GetJsonOptions()),
+            InputBindingsJson = JsonSerializer.Serialize(node.InputBindings, GetJsonOptions())
+        };
+    }
+
+    private HumanTaskWorkflowNodeDbo MapHumanTaskNodeToDbo(HumanTaskWorkflowNode node, string workflowDefinitionId)
+    {
+        return new HumanTaskWorkflowNodeDbo
+        {
+            Id = node.Id.ToString(),
+            WorkflowDefinitionId = workflowDefinitionId,
+            NodeType = node.Type.Value,
+            Name = node.Name,
+            BusinessNotes = node.BusinessNotes,
+            IsConfigured = node.IsConfigured,
+            RequiredRole = node.RequiredRole?.Value,
+            SignalName = node.SignalName?.Value,
+            TimeoutInMinutes = node.Timeout?.TimeoutInMinutes,
+            UIFormSchema = node.UIFormSchema,
+            InputDefinitionsJson = JsonSerializer.Serialize(node.InputDefinitions, GetJsonOptions()),
+            OutputDefinitionsJson = JsonSerializer.Serialize(node.OutputDefinitions, GetJsonOptions()),
+            InputBindingsJson = JsonSerializer.Serialize(node.InputBindings, GetJsonOptions())
+        };
+    }
+
+    private DecisionWorkflowNodeDbo MapDecisionNodeToDbo(DecisionWorkflowNode node, string workflowDefinitionId)
+    {
+        return new DecisionWorkflowNodeDbo
+        {
+            Id = node.Id.ToString(),
+            WorkflowDefinitionId = workflowDefinitionId,
+            NodeType = node.Type.Value,
+            Name = node.Name,
+            BusinessNotes = node.BusinessNotes,
+            IsConfigured = node.IsConfigured,
             InputDefinitionsJson = JsonSerializer.Serialize(node.InputDefinitions, GetJsonOptions()),
             OutputDefinitionsJson = JsonSerializer.Serialize(node.OutputDefinitions, GetJsonOptions()),
             InputBindingsJson = JsonSerializer.Serialize(node.InputBindings, GetJsonOptions())

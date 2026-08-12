@@ -16,10 +16,15 @@ public sealed class StartWorkflowNode : WorkflowNode
         WorkflowNodeId id,
         string name,
         string? businessNotes,
-        bool isConfigured)
+        bool isConfigured,
+        IEnumerable<NodeOutputDefinition>? outputDefinitions)
         : base(id, NodeType.Start, name, businessNotes)
     {
         IsConfigured = isConfigured;
+        if (outputDefinitions != null)
+        {
+            _outputDefinitions.AddRange(outputDefinitions);
+        }
     }
 
     public static StartWorkflowNode CreateStub(string name, string? businessNotes)

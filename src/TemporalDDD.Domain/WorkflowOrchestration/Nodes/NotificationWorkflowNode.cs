@@ -19,11 +19,21 @@ public sealed class NotificationWorkflowNode : WorkflowNode
         string name,
         string? businessNotes,
         bool isConfigured,
-        string? messageTemplate)
+        string? messageTemplate,
+        IEnumerable<NodeInputDefinition>? inputDefinitions,
+        IEnumerable<NodeOutputDefinition>? outputDefinitions)
         : base(id, NodeType.Notification, name, businessNotes)
     {
         IsConfigured = isConfigured;
         MessageTemplate = messageTemplate;
+        if (inputDefinitions != null)
+        {
+            _inputDefinitions.AddRange(inputDefinitions);
+        }
+        if (outputDefinitions != null)
+        {
+            _outputDefinitions.AddRange(outputDefinitions);
+        }
     }
 
     public static NotificationWorkflowNode CreateStub(string name, string? businessNotes)

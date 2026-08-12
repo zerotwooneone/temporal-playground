@@ -25,7 +25,9 @@ public sealed class HumanTaskWorkflowNode : WorkflowNode
         TaskRole requiredRole,
         TemporalSignalName signalName,
         TaskTimeout timeout,
-        string? uiFormSchema)
+        string? uiFormSchema,
+        IEnumerable<NodeInputDefinition>? inputDefinitions,
+        IEnumerable<NodeOutputDefinition>? outputDefinitions)
         : base(id, NodeType.HumanTask, name, businessNotes)
     {
         IsConfigured = isConfigured;
@@ -33,6 +35,14 @@ public sealed class HumanTaskWorkflowNode : WorkflowNode
         SignalName = signalName;
         Timeout = timeout;
         UIFormSchema = uiFormSchema;
+        if (inputDefinitions != null)
+        {
+            _inputDefinitions.AddRange(inputDefinitions);
+        }
+        if (outputDefinitions != null)
+        {
+            _outputDefinitions.AddRange(outputDefinitions);
+        }
     }
 
     public static HumanTaskWorkflowNode CreateStub(string name, string? businessNotes)
@@ -47,6 +57,18 @@ public sealed class HumanTaskWorkflowNode : WorkflowNode
         Timeout = timeout;
         UIFormSchema = uiFormSchema;
         ValidateConfiguration();
+    }
+
+    public void ConfigureInputs(IEnumerable<NodeInputDefinition> inputs)
+    {
+        _inputDefinitions.Clear();
+        _inputDefinitions.AddRange(inputs);
+    }
+
+    public void ConfigureOutputs(IEnumerable<NodeOutputDefinition> outputs)
+    {
+        _outputDefinitions.Clear();
+        _outputDefinitions.AddRange(outputs);
     }
 
     public override void ValidateConfiguration()

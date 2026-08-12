@@ -25,7 +25,9 @@ public sealed class ApiWorkflowNode : WorkflowNode, IActivityWorkflowNode
         string? endpointUrl,
         string? authToken,
         RetryPolicy? retryPolicy,
-        ContractMapping? contractMapping)
+        ContractMapping? contractMapping,
+        IEnumerable<NodeInputDefinition>? inputDefinitions,
+        IEnumerable<NodeOutputDefinition>? outputDefinitions)
         : base(id, NodeType.Api, name, businessNotes)
     {
         IsConfigured = isConfigured;
@@ -33,11 +35,22 @@ public sealed class ApiWorkflowNode : WorkflowNode, IActivityWorkflowNode
         AuthToken = authToken;
         RetryPolicy = retryPolicy;
         ContractMapping = contractMapping;
+        if (inputDefinitions != null)
+        {
+            _inputDefinitions.AddRange(inputDefinitions);
+        }
+        if (outputDefinitions != null)
+        {
+            _outputDefinitions.AddRange(outputDefinitions);
+        }
     }
 
     public static ApiWorkflowNode CreateStub(string name, string? businessNotes)
     {
-        return new ApiWorkflowNode(WorkflowNodeId.New(), name, businessNotes);
+        var node = new ApiWorkflowNode(WorkflowNodeId.New(), name, businessNotes);
+        // Fixed output: API nodes always return a JsonDocument
+        node._outputDefinitions.Add(new NodeOutputDefinition("ApiResponse", WorkflowDataType.Primitive.Json));
+        return node;
     }
 
     public void ConfigureTechnicalDetails(string endpointUrl, string? authToken, RetryPolicy retryPolicy, ContractMapping mapping)
@@ -47,13 +60,6 @@ public sealed class ApiWorkflowNode : WorkflowNode, IActivityWorkflowNode
         RetryPolicy = retryPolicy;
         ContractMapping = mapping;
         ValidateConfiguration();
-    }
-
-    public void ConfigureResponseSchema(IEnumerable<NodeOutputDefinition> schemaOutputs)
-    {
-        // The API output is locked in when the user configures the node
-        _outputDefinitions.Clear();
-        _outputDefinitions.AddRange(schemaOutputs);
     }
 
     public override void ValidateConfiguration()
