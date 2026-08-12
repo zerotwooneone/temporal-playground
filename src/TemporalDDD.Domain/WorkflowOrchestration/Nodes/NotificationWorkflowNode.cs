@@ -4,8 +4,6 @@ using TemporalDDD.Domain.WorkflowOrchestration;
 
 public sealed class NotificationWorkflowNode : WorkflowNode
 {
-    private NotificationWorkflowNode() { }
-
     private NotificationWorkflowNode(WorkflowNodeId id, string name, string? businessNotes)
         : base(id, NodeType.Notification, name, businessNotes)
     {

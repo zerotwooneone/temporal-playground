@@ -7,8 +7,6 @@ public sealed class ApiWorkflowNode : WorkflowNode, IActivityWorkflowNode
     public RetryPolicy? RetryPolicy { get; private set; }
     public ContractMapping? ContractMapping { get; private set; }
 
-    private ApiWorkflowNode() { }
-
     private ApiWorkflowNode(WorkflowNodeId id, string name, string? businessNotes)
         : base(id, NodeType.Api, name, businessNotes)
     {

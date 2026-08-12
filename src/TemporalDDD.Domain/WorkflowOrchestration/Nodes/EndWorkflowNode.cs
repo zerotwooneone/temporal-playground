@@ -2,8 +2,6 @@ namespace TemporalDDD.Domain.WorkflowOrchestration.Nodes;
 
 public sealed class EndWorkflowNode : WorkflowNode
 {
-    private EndWorkflowNode() { }
-
     private EndWorkflowNode(WorkflowNodeId id, string name, string? businessNotes)
         : base(id, NodeType.End, name, businessNotes)
     {

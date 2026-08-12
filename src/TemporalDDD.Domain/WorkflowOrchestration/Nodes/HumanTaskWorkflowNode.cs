@@ -9,8 +9,6 @@ public sealed class HumanTaskWorkflowNode : WorkflowNode
     public TaskTimeout Timeout { get; private set; }
     public string? UIFormSchema { get; private set; }
 
-    private HumanTaskWorkflowNode() { }
-
     private HumanTaskWorkflowNode(WorkflowNodeId id, string name, string? businessNotes)
         : base(id, NodeType.HumanTask, name, businessNotes)
     {

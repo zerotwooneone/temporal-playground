@@ -4,8 +4,6 @@ using TemporalDDD.Domain.WorkflowOrchestration;
 
 public sealed class StartWorkflowNode : WorkflowNode
 {
-    private StartWorkflowNode() { }
-
     private StartWorkflowNode(WorkflowNodeId id, string name, string? businessNotes)
         : base(id, NodeType.Start, name, businessNotes)
     {
