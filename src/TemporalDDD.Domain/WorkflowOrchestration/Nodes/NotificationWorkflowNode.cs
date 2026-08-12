@@ -42,7 +42,8 @@ public sealed class NotificationWorkflowNode : WorkflowNode
     public static NotificationWorkflowNode CreateStub(string name, string? businessNotes)
     {
         var node = new NotificationWorkflowNode(WorkflowNodeId.New(), name, businessNotes);
-        node._inputDefinitions.Add(new NodeInputDefinition("MessageTemplate", WorkflowDataType.Primitive.String, true));
+        // Technical input definition: MessageTemplate (Required, String)
+        node._inputDefinitions.Add(new NodeInputDefinition(MessageTemplateKey, WorkflowDataType.Primitive.String, true));
         // Outputs remain empty because it is a sink/pass-through
         return node;
     }

@@ -50,6 +50,9 @@ public sealed class ApiWorkflowNode : WorkflowNode, IActivityWorkflowNode
     public static ApiWorkflowNode CreateStub(string name, string? businessNotes)
     {
         var node = new ApiWorkflowNode(WorkflowNodeId.New(), name, businessNotes);
+        // Technical input definitions: EndpointUrl (Required, String) and AuthToken (Optional, String)
+        node._inputDefinitions.Add(new NodeInputDefinition(EndpointUrlKey, WorkflowDataType.Primitive.String, true));
+        node._inputDefinitions.Add(new NodeInputDefinition(AuthTokenKey, WorkflowDataType.Primitive.String, false));
         // Fixed output: API nodes always return a JsonDocument
         node._outputDefinitions.Add(new NodeOutputDefinition("ApiResponse", WorkflowDataType.Primitive.Json));
         return node;
