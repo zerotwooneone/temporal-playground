@@ -17,7 +17,6 @@ export function validateParameterBinding(
   targetNodeId: string,
   sourceDataType: WorkflowDataType,
   targetDataType: WorkflowDataType,
-  nodes: Node[],
   edges: Edge[]
 ): ValidationResult {
   // Check type assignability
@@ -29,7 +28,7 @@ export function validateParameterBinding(
   }
 
   // Check scope - source must be an ancestor of target
-  if (!isAncestor(sourceNodeId, targetNodeId, nodes, edges)) {
+  if (!isAncestor(sourceNodeId, targetNodeId, edges)) {
     return {
       isValid: false,
       error: `Scope violation: node '${sourceNodeId}' is not an upstream ancestor of node '${targetNodeId}'`
@@ -39,7 +38,7 @@ export function validateParameterBinding(
   return { isValid: true };
 }
 
-function isAncestor(sourceNodeId: string, targetNodeId: string, nodes: Node[], edges: Edge[]): boolean {
+function isAncestor(sourceNodeId: string, targetNodeId: string, edges: Edge[]): boolean {
   // Build adjacency list for the graph
   const adjacency = new Map<string, string[]>();
   edges.forEach(edge => {

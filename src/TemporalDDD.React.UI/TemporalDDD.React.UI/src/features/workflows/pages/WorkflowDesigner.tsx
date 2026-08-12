@@ -7,12 +7,16 @@ import { useWorkflowStore } from '../../../store/workflowStore';
 import { getWorkflowById } from '../../../api/client';
 import ApiNode from '../components/nodes/ApiNode';
 import NotificationNode from '../components/nodes/NotificationNode';
+import StartNode from '../components/nodes/StartNode';
+import EndNode from '../components/nodes/EndNode';
 import WorkflowToolbar from '../components/WorkflowToolbar';
 import NodePropertiesPanel from '../components/NodePropertiesPanel';
 
 const nodeTypes = {
   apiNode: ApiNode,
   notificationNode: NotificationNode,
+  start: StartNode,
+  end: EndNode,
 };
 
 export default function WorkflowDesigner() {

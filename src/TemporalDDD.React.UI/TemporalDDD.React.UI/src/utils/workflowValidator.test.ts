@@ -56,12 +56,6 @@ describe('isAssignableTo', () => {
 });
 
 describe('validateParameterBinding', () => {
-  const nodes: Node[] = [
-    { id: 'node1', type: 'apiNode', position: { x: 0, y: 0 }, data: {} },
-    { id: 'node2', type: 'apiNode', position: { x: 100, y: 0 }, data: {} },
-    { id: 'node3', type: 'apiNode', position: { x: 200, y: 0 }, data: {} },
-  ];
-
   const edges: Edge[] = [
     { id: 'e1', source: 'node1', target: 'node2' },
     { id: 'e2', source: 'node2', target: 'node3' },
@@ -71,7 +65,7 @@ describe('validateParameterBinding', () => {
     const sourceDataType: WorkflowDataType = { kind: 'Primitive', name: 'String', value: 0 };
     const targetDataType: WorkflowDataType = { kind: 'Primitive', name: 'String', value: 0 };
     
-    const result = validateParameterBinding('node1', 'node2', sourceDataType, targetDataType, nodes, edges);
+    const result = validateParameterBinding('node1', 'node2', sourceDataType, targetDataType, edges);
     expect(result.isValid).toBe(true);
     expect(result.error).toBeUndefined();
   });
@@ -80,7 +74,7 @@ describe('validateParameterBinding', () => {
     const sourceDataType: WorkflowDataType = { kind: 'Primitive', name: 'Number', value: 1 };
     const targetDataType: WorkflowDataType = { kind: 'Primitive', name: 'String', value: 0 };
     
-    const result = validateParameterBinding('node1', 'node2', sourceDataType, targetDataType, nodes, edges);
+    const result = validateParameterBinding('node1', 'node2', sourceDataType, targetDataType, edges);
     expect(result.isValid).toBe(false);
     expect(result.error).toContain('Type mismatch');
   });
@@ -89,18 +83,12 @@ describe('validateParameterBinding', () => {
     const sourceDataType: WorkflowDataType = { kind: 'Primitive', name: 'String', value: 0 };
     const targetDataType: WorkflowDataType = { kind: 'Primitive', name: 'String', value: 0 };
     
-    const result = validateParameterBinding('node3', 'node1', sourceDataType, targetDataType, nodes, edges);
+    const result = validateParameterBinding('node3', 'node1', sourceDataType, targetDataType, edges);
     expect(result.isValid).toBe(false);
     expect(result.error).toContain('Scope violation');
   });
 
   it('should fail for scope violation (parallel branch)', () => {
-    const parallelNodes: Node[] = [
-      { id: 'start', type: 'apiNode', position: { x: 0, y: 0 }, data: {} },
-      { id: 'branchA', type: 'apiNode', position: { x: 100, y: 0 }, data: {} },
-      { id: 'branchB', type: 'apiNode', position: { x: 100, y: 100 }, data: {} },
-    ];
-
     const parallelEdges: Edge[] = [
       { id: 'e1', source: 'start', target: 'branchA' },
       { id: 'e2', source: 'start', target: 'branchB' },
@@ -109,7 +97,7 @@ describe('validateParameterBinding', () => {
     const sourceDataType: WorkflowDataType = { kind: 'Primitive', name: 'String', value: 0 };
     const targetDataType: WorkflowDataType = { kind: 'Primitive', name: 'String', value: 0 };
     
-    const result = validateParameterBinding('branchB', 'branchA', sourceDataType, targetDataType, parallelNodes, parallelEdges);
+    const result = validateParameterBinding('branchB', 'branchA', sourceDataType, targetDataType, parallelEdges);
     expect(result.isValid).toBe(false);
     expect(result.error).toContain('Scope violation');
   });

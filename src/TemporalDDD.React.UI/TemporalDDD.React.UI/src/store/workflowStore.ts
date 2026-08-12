@@ -9,6 +9,7 @@ import {
   type OnEdgesChange,
   type OnConnect,
 } from '@xyflow/react';
+import type { ParameterBinding } from '../types/workflowTypes';
 
 interface WorkflowStore {
   nodes: Node[];
@@ -26,6 +27,7 @@ interface WorkflowStore {
   toggleEdgeSelection: (id: string, isMultiSelect: boolean) => void;
   addNode: (type: 'apiNode' | 'notificationNode') => void;
   updateNodeData: (id: string, data: Record<string, any>) => void;
+  updateNodeInputBindings: (id: string, bindings: ParameterBinding[]) => void;
   deleteSelectedEdges: () => void;
   loadWorkflow: (workflowData: any) => void;
   clearWorkflow: () => void;
@@ -100,6 +102,14 @@ export const useWorkflowStore = create<WorkflowStore>((set) => ({
       nodes: state.nodes.map((node) =>
         node.id === id
           ? { ...node, data: { ...node.data, ...data } }
+          : node
+      ),
+    })),
+  updateNodeInputBindings: (id, bindings) =>
+    set((state) => ({
+      nodes: state.nodes.map((node) =>
+        node.id === id
+          ? { ...node, data: { ...node.data, inputBindings: bindings } }
           : node
       ),
     })),
