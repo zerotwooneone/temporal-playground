@@ -26,9 +26,9 @@ public class RoslynWorkflowCodeGeneratorServiceTests
         var endNode = EndWorkflowNode.CreateStub("End", null);
 
         // Configure the nodes with technical details
-        apiNode.ConfigureTechnicalDetails(
-            "https://api.example.com/verify",
-            "token123",
+        apiNode.SetTechnicalInput(ApiWorkflowNode.EndpointUrlKey, new InputValueSource.Fixed("https://api.example.com/verify"));
+        apiNode.SetTechnicalInput(ApiWorkflowNode.AuthTokenKey, new InputValueSource.Fixed("token123"));
+        apiNode.ConfigureValueObjects(
             RetryPolicy.Create(3, 2).Value,
             ContractMapping.Create(true, "param1", "requestMapping", "responseMapping").Value);
         
@@ -250,14 +250,14 @@ public class RoslynWorkflowCodeGeneratorServiceTests
         var endNode = EndWorkflowNode.CreateStub("End", null);
 
         // Configure API nodes
-        apiNode1.ConfigureTechnicalDetails(
-            "https://api1.example.com",
-            "token1",
+        apiNode1.SetTechnicalInput(ApiWorkflowNode.EndpointUrlKey, new InputValueSource.Fixed("https://api1.example.com"));
+        apiNode1.SetTechnicalInput(ApiWorkflowNode.AuthTokenKey, new InputValueSource.Fixed("token1"));
+        apiNode1.ConfigureValueObjects(
             RetryPolicy.Create(3, 2).Value,
             ContractMapping.Create(false, null, null, null).Value);
-        apiNode2.ConfigureTechnicalDetails(
-            "https://api2.example.com",
-            "token2",
+        apiNode2.SetTechnicalInput(ApiWorkflowNode.EndpointUrlKey, new InputValueSource.Fixed("https://api2.example.com"));
+        apiNode2.SetTechnicalInput(ApiWorkflowNode.AuthTokenKey, new InputValueSource.Fixed("token2"));
+        apiNode2.ConfigureValueObjects(
             RetryPolicy.Create(3, 2).Value,
             ContractMapping.Create(false, null, null, null).Value);
 
@@ -315,9 +315,9 @@ public class RoslynWorkflowCodeGeneratorServiceTests
         var apiNode = ApiWorkflowNode.CreateStub("API Node", null);
         var endNode = EndWorkflowNode.CreateStub("End", null);
 
-        apiNode.ConfigureTechnicalDetails(
-            "https://api.example.com",
-            "token",
+        apiNode.SetTechnicalInput(ApiWorkflowNode.EndpointUrlKey, new InputValueSource.Fixed("https://api.example.com"));
+        apiNode.SetTechnicalInput(ApiWorkflowNode.AuthTokenKey, new InputValueSource.Fixed("token"));
+        apiNode.ConfigureValueObjects(
             RetryPolicy.Create(3, 2).Value,
             ContractMapping.Create(false, null, null, null).Value);
 
@@ -373,7 +373,7 @@ public class RoslynWorkflowCodeGeneratorServiceTests
         var notificationNode = NotificationWorkflowNode.CreateStub("Notification", null);
         var endNode = EndWorkflowNode.CreateStub("End", null);
 
-        notificationNode.ConfigureTechnicalDetails("Hello {name}");
+        notificationNode.SetTechnicalInput(NotificationWorkflowNode.MessageTemplateKey, new InputValueSource.Fixed("Hello {name}"));
 
         var transitions = new List<WorkflowTransition>
         {

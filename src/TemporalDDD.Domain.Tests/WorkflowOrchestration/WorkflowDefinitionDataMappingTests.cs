@@ -138,8 +138,8 @@ public class WorkflowDefinitionDataMappingTests
         var apiNode = builder.Build().Nodes.OfType<ApiWorkflowNode>().First(n => n.Id == apiNodeId);
         var retryPolicy = RetryPolicy.Create(3, 2).Value!;
         var contractMapping = ContractMapping.Create(true, null, null, null).Value!;
-        apiNode.SetTechnicalInput("EndpointUrl", new InputValueSource.Mapped(new VariableReference(downstreamNodeId, "ApiResponse")));
-        apiNode.SetTechnicalInput("AuthToken", new InputValueSource.Fixed("token"));
+        apiNode.SetTechnicalInput(ApiWorkflowNode.EndpointUrlKey, new InputValueSource.Mapped(new VariableReference(downstreamNodeId, "ApiResponse")));
+        apiNode.SetTechnicalInput(ApiWorkflowNode.AuthTokenKey, new InputValueSource.Fixed("token"));
         apiNode.ConfigureValueObjects(retryPolicy, contractMapping);
         
         var workflow = builder.ReadyForApproval().Build();
@@ -172,7 +172,7 @@ public class WorkflowDefinitionDataMappingTests
         
         // Configure NotificationNode with Mapped MessageTemplate pointing to Json output
         var notificationNode = builder.Build().Nodes.OfType<NotificationWorkflowNode>().First(n => n.Id == notificationNodeId);
-        notificationNode.SetTechnicalInput("MessageTemplate", new InputValueSource.Mapped(new VariableReference(apiNodeId, "ApiResponse")));
+        notificationNode.SetTechnicalInput(NotificationWorkflowNode.MessageTemplateKey, new InputValueSource.Mapped(new VariableReference(apiNodeId, "ApiResponse")));
         
         var workflow = builder.ReadyForApproval().Build();
         var reviewerId = UserId.New();
@@ -203,7 +203,7 @@ public class WorkflowDefinitionDataMappingTests
         
         // Configure NotificationNode with Mapped MessageTemplate pointing to Start's String output
         var notificationNode = builder.Build().Nodes.OfType<NotificationWorkflowNode>().First(n => n.Id == notificationNodeId);
-        notificationNode.SetTechnicalInput("MessageTemplate", new InputValueSource.Mapped(new VariableReference(builder.Build().Nodes.OfType<StartWorkflowNode>().First().Id, "ApiUrl")));
+        notificationNode.SetTechnicalInput(NotificationWorkflowNode.MessageTemplateKey, new InputValueSource.Mapped(new VariableReference(builder.Build().Nodes.OfType<StartWorkflowNode>().First().Id, "ApiUrl")));
         
         var workflow = builder.ReadyForApproval().Build();
         var reviewerId = UserId.New();

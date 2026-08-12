@@ -130,10 +130,12 @@ public class RoslynWorkflowCodeGeneratorService : IWorkflowCodeGeneratorService
                 {
                     var apiNode = (ApiWorkflowNode)currentNode;
                     var nodeIdStr = nodeId.Value.ToString();
+                    var endpointUrl = apiNode.GetTechnicalInput(ApiWorkflowNode.EndpointUrlKey) is InputValueSource.Fixed fixedUrl ? fixedUrl.Value : string.Empty;
+                    var authToken = apiNode.GetTechnicalInput(ApiWorkflowNode.AuthTokenKey) is InputValueSource.Fixed fixedToken ? fixedToken.Value : string.Empty;
                     sb.AppendLine($"{indent}var apiInput_{SanitizeIdentifier(nodeIdStr)} = new ExecuteApiInput(");
                     sb.AppendLine($"{indent}    NodeId: \"{nodeIdStr}\",");
-                    sb.AppendLine($"{indent}    EndpointUrl: \"{apiNode.EndpointUrl}\",");
-                    sb.AppendLine($"{indent}    AuthToken: \"{apiNode.AuthToken}\",");
+                    sb.AppendLine($"{indent}    EndpointUrl: \"{endpointUrl}\",");
+                    sb.AppendLine($"{indent}    AuthToken: \"{authToken}\",");
                     sb.AppendLine($"{indent}    Mapping: null);");
                     sb.AppendLine($"{indent}await Workflow.ExecuteActivityAsync(");
                     sb.AppendLine($"{indent}    (IWorkflowExecutionActivities act) => act.ExecuteApiCallAsync(apiInput_{SanitizeIdentifier(nodeIdStr)}),");
@@ -145,9 +147,10 @@ public class RoslynWorkflowCodeGeneratorService : IWorkflowCodeGeneratorService
                 {
                     var notificationNode = (NotificationWorkflowNode)currentNode;
                     var nodeIdStr = nodeId.Value.ToString();
+                    var messageTemplate = notificationNode.GetTechnicalInput(NotificationWorkflowNode.MessageTemplateKey) is InputValueSource.Fixed fixedTemplate ? fixedTemplate.Value : string.Empty;
                     sb.AppendLine($"{indent}var notificationInput_{SanitizeIdentifier(nodeIdStr)} = new SendNotificationInput(");
                     sb.AppendLine($"{indent}    NodeId: \"{nodeIdStr}\",");
-                    sb.AppendLine($"{indent}    MessageTemplate: \"{notificationNode.MessageTemplate}\");");
+                    sb.AppendLine($"{indent}    MessageTemplate: \"{messageTemplate}\");");
                     sb.AppendLine($"{indent}await Workflow.ExecuteActivityAsync(");
                     sb.AppendLine($"{indent}    (IWorkflowExecutionActivities act) => act.SendNotificationAsync(notificationInput_{SanitizeIdentifier(nodeIdStr)}),");
                     sb.AppendLine($"{indent}    new ActivityOptions {{ ScheduleToCloseTimeout = TimeSpan.FromMinutes(5) }});");

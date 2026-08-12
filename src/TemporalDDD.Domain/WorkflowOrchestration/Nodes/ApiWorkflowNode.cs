@@ -4,6 +4,9 @@ namespace TemporalDDD.Domain.WorkflowOrchestration.Nodes;
 
 public sealed class ApiWorkflowNode : WorkflowNode, IActivityWorkflowNode
 {
+    public const string EndpointUrlKey = "EndpointUrl";
+    public const string AuthTokenKey = "AuthToken";
+
     public RetryPolicy? RetryPolicy { get; private set; }
     public ContractMapping? ContractMapping { get; private set; }
 
@@ -61,13 +64,6 @@ public sealed class ApiWorkflowNode : WorkflowNode, IActivityWorkflowNode
 
     public override void ValidateConfiguration()
     {
-        IsConfigured = _technicalInputs.ContainsKey("EndpointUrl") && RetryPolicy != null && ContractMapping != null;
+        IsConfigured = _technicalInputs.ContainsKey(EndpointUrlKey) && RetryPolicy != null && ContractMapping != null;
     }
-
-    // Helper methods for backward compatibility / query layer
-    public string? GetFixedEndpointUrl() => 
-        GetTechnicalInput("EndpointUrl") is InputValueSource.Fixed fixedValue ? fixedValue.Value : null;
-
-    public string? GetFixedAuthToken() => 
-        GetTechnicalInput("AuthToken") is InputValueSource.Fixed fixedValue ? fixedValue.Value : null;
 }

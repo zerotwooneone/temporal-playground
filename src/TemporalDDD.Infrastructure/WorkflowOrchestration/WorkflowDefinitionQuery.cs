@@ -75,8 +75,8 @@ public class WorkflowDefinitionQuery : IWorkflowDefinitionQuery
                     Name: n.Name,
                     BusinessNotes: n.BusinessNotes,
                     IsConfigured: n.IsConfigured,
-                    EndpointUrl: ExtractFixedValueFromDictionary(technicalInputs, "EndpointUrl"),
-                    AuthToken: ExtractFixedValueFromDictionary(technicalInputs, "AuthToken"),
+                    EndpointUrl: ExtractFixedValueFromDictionary(technicalInputs, ApiWorkflowNode.EndpointUrlKey),
+                    AuthToken: ExtractFixedValueFromDictionary(technicalInputs, ApiWorkflowNode.AuthTokenKey),
                     RetryPolicyMaxAttempts: apiNode.RetryPolicyMaxAttempts,
                     RetryPolicyBackoffCoefficient: apiNode.RetryPolicyBackoffCoefficient,
                     ContractMappingConvertXmlToJson: apiNode.ContractMappingConvertXmlToJson,
@@ -103,7 +103,7 @@ public class WorkflowDefinitionQuery : IWorkflowDefinitionQuery
                     ContractMappingQueryParameters: null,
                     ContractMappingRequestMapping: null,
                     ContractMappingResponseMapping: null,
-                    MessageTemplate: ExtractFixedValueFromDictionary(technicalInputs, "MessageTemplate")
+                    MessageTemplate: ExtractFixedValueFromDictionary(technicalInputs, NotificationWorkflowNode.MessageTemplateKey)
                 );
             }
             else
@@ -176,6 +176,15 @@ public class WorkflowDefinitionQuery : IWorkflowDefinitionQuery
         if (!technicalInputs.TryGetValue(key, out var valueSource))
             return null;
 
+        if (valueSource is InputValueSource.Fixed fixedValue)
+            return fixedValue.Value;
+
+        return null;
+    }
+
+    private static string? ExtractFixedValueFromNode(WorkflowNode node, string key)
+    {
+        var valueSource = node.GetTechnicalInput(key);
         if (valueSource is InputValueSource.Fixed fixedValue)
             return fixedValue.Value;
 

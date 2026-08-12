@@ -4,6 +4,8 @@ using TemporalDDD.Domain.WorkflowOrchestration;
 
 public sealed class NotificationWorkflowNode : WorkflowNode
 {
+    public const string MessageTemplateKey = "MessageTemplate";
+
     private NotificationWorkflowNode(WorkflowNodeId id, string name, string? businessNotes)
         : base(id, NodeType.Notification, name, businessNotes)
     {
@@ -47,13 +49,13 @@ public sealed class NotificationWorkflowNode : WorkflowNode
 
     public override void ValidateConfiguration()
     {
-        if (!_technicalInputs.ContainsKey("MessageTemplate"))
+        if (!_technicalInputs.ContainsKey(MessageTemplateKey))
         {
             IsConfigured = false;
             return;
         }
 
-        var messageTemplate = GetTechnicalInput("MessageTemplate");
+        var messageTemplate = GetTechnicalInput(MessageTemplateKey);
         
         // If Fixed, check that the value is not whitespace
         if (messageTemplate is InputValueSource.Fixed fixedValue)
@@ -66,8 +68,4 @@ public sealed class NotificationWorkflowNode : WorkflowNode
             IsConfigured = true;
         }
     }
-
-    // Helper method for query layer to extract Fixed value
-    public string? GetFixedMessageTemplate() => 
-        GetTechnicalInput("MessageTemplate") is InputValueSource.Fixed fixedValue ? fixedValue.Value : null;
 }

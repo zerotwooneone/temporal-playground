@@ -39,8 +39,8 @@ public class WorkflowNodeTests
         var mapping = ContractMapping.Create(true, null, null, null).Value!;
 
         // ACT
-        node.SetTechnicalInput("EndpointUrl", new InputValueSource.Fixed("https://api.example.com"));
-        node.SetTechnicalInput("AuthToken", new InputValueSource.Fixed("token"));
+        node.SetTechnicalInput(ApiWorkflowNode.EndpointUrlKey, new InputValueSource.Fixed("https://api.example.com"));
+        node.SetTechnicalInput(ApiWorkflowNode.AuthTokenKey, new InputValueSource.Fixed("token"));
         node.ConfigureValueObjects(retryPolicy, mapping);
 
         // ASSERT
@@ -59,7 +59,7 @@ public class WorkflowNodeTests
         var mapping = ContractMapping.Create(true, null, null, null).Value!;
 
         // ACT
-        node.SetTechnicalInput("AuthToken", new InputValueSource.Fixed("token"));
+        node.SetTechnicalInput(ApiWorkflowNode.AuthTokenKey, new InputValueSource.Fixed("token"));
         node.ConfigureValueObjects(retryPolicy, mapping);
 
         // ASSERT
@@ -77,8 +77,8 @@ public class WorkflowNodeTests
         var mapping = ContractMapping.Create(true, null, null, null).Value!;
 
         // ACT
-        node.SetTechnicalInput("EndpointUrl", new InputValueSource.Fixed("https://api.example.com"));
-        node.SetTechnicalInput("AuthToken", new InputValueSource.Fixed("token"));
+        node.SetTechnicalInput(ApiWorkflowNode.EndpointUrlKey, new InputValueSource.Fixed("https://api.example.com"));
+        node.SetTechnicalInput(ApiWorkflowNode.AuthTokenKey, new InputValueSource.Fixed("token"));
         node.ConfigureValueObjects(null, mapping);
 
         // ASSERT
@@ -96,8 +96,8 @@ public class WorkflowNodeTests
         var retryPolicy = RetryPolicy.Create(3, 2).Value!;
 
         // ACT
-        node.SetTechnicalInput("EndpointUrl", new InputValueSource.Fixed("https://api.example.com"));
-        node.SetTechnicalInput("AuthToken", new InputValueSource.Fixed("token"));
+        node.SetTechnicalInput(ApiWorkflowNode.EndpointUrlKey, new InputValueSource.Fixed("https://api.example.com"));
+        node.SetTechnicalInput(ApiWorkflowNode.AuthTokenKey, new InputValueSource.Fixed("token"));
         node.ConfigureValueObjects(retryPolicy, null);
 
         // ASSERT
@@ -135,7 +135,7 @@ public class WorkflowNodeTests
         var node = workflow.Nodes.OfType<NotificationWorkflowNode>().First();
 
         // ACT
-        node.SetTechnicalInput("MessageTemplate", new InputValueSource.Fixed("Hello {name}"));
+        node.SetTechnicalInput(NotificationWorkflowNode.MessageTemplateKey, new InputValueSource.Fixed("Hello {name}"));
 
         // ASSERT
         node.IsConfigured.Should().BeTrue();
@@ -167,7 +167,7 @@ public class WorkflowNodeTests
         var node = workflow.Nodes.OfType<NotificationWorkflowNode>().First();
 
         // ACT
-        node.SetTechnicalInput("MessageTemplate", new InputValueSource.Fixed("   "));
+        node.SetTechnicalInput(NotificationWorkflowNode.MessageTemplateKey, new InputValueSource.Fixed("   "));
 
         // ASSERT
         node.IsConfigured.Should().BeFalse();

@@ -62,10 +62,10 @@ public class WorkflowNodeService : IWorkflowNodeService
                     nodeDto.ContractMappingResponseMapping ?? string.Empty
                 ).Value;
 
-                apiNode.SetTechnicalInput("EndpointUrl", new InputValueSource.Fixed(nodeDto.EndpointUrl ?? string.Empty));
+                apiNode.SetTechnicalInput(ApiWorkflowNode.EndpointUrlKey, new InputValueSource.Fixed(nodeDto.EndpointUrl ?? string.Empty));
                 if (nodeDto.AuthToken != null)
                 {
-                    apiNode.SetTechnicalInput("AuthToken", new InputValueSource.Fixed(nodeDto.AuthToken));
+                    apiNode.SetTechnicalInput(ApiWorkflowNode.AuthTokenKey, new InputValueSource.Fixed(nodeDto.AuthToken));
                 }
                 apiNode.ConfigureValueObjects(retryPolicy, contractMapping);
             }
@@ -73,7 +73,7 @@ public class WorkflowNodeService : IWorkflowNodeService
             // Configure notification node specifics
             if (nodeTypeResult.Value.Value == 2 && domainNode is NotificationWorkflowNode notificationNode)
             {
-                notificationNode.SetTechnicalInput("MessageTemplate", new InputValueSource.Fixed(nodeDto.MessageTemplate ?? string.Empty));
+                notificationNode.SetTechnicalInput(NotificationWorkflowNode.MessageTemplateKey, new InputValueSource.Fixed(nodeDto.MessageTemplate ?? string.Empty));
             }
 
             domainNodes.Add(domainNode);
