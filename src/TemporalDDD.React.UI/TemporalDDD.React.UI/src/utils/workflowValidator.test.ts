@@ -5,14 +5,14 @@ import type { Node, Edge } from '@xyflow/react';
 
 describe('isAssignableTo', () => {
   it('should return true for matching primitive types', () => {
-    const source: WorkflowDataType = { kind: 'Primitive', name: 'String', value: 0 };
-    const target: WorkflowDataType = { kind: 'Primitive', name: 'String', value: 0 };
+    const source: WorkflowDataType = { kind: 'Primitive', name: 'String', value: 1 };
+    const target: WorkflowDataType = { kind: 'Primitive', name: 'String', value: 1 };
     expect(isAssignableTo(source, target)).toBe(true);
   });
 
   it('should return false for mismatched primitive types', () => {
-    const source: WorkflowDataType = { kind: 'Primitive', name: 'Number', value: 1 };
-    const target: WorkflowDataType = { kind: 'Primitive', name: 'String', value: 0 };
+    const source: WorkflowDataType = { kind: 'Primitive', name: 'Number', value: 2 };
+    const target: WorkflowDataType = { kind: 'Primitive', name: 'String', value: 1 };
     expect(isAssignableTo(source, target)).toBe(false);
   });
 
@@ -20,12 +20,12 @@ describe('isAssignableTo', () => {
     const source: WorkflowDataType = { 
       kind: 'Semantic', 
       semanticName: 'UserId', 
-      underlyingType: { name: 'String', value: 0 } 
+      underlyingType: { name: 'String', value: 1 } 
     };
     const target: WorkflowDataType = { 
       kind: 'Semantic', 
       semanticName: 'Email', 
-      underlyingType: { name: 'String', value: 0 } 
+      underlyingType: { name: 'String', value: 1 } 
     };
     expect(isAssignableTo(source, target)).toBe(true);
   });
@@ -34,22 +34,22 @@ describe('isAssignableTo', () => {
     const source: WorkflowDataType = { 
       kind: 'Semantic', 
       semanticName: 'UserId', 
-      underlyingType: { name: 'String', value: 0 } 
+      underlyingType: { name: 'String', value: 1 } 
     };
     const target: WorkflowDataType = { 
       kind: 'Semantic', 
       semanticName: 'Age', 
-      underlyingType: { name: 'Number', value: 1 } 
+      underlyingType: { name: 'Number', value: 2 } 
     };
     expect(isAssignableTo(source, target)).toBe(false);
   });
 
   it('should return true for primitive to semantic with matching underlying type', () => {
-    const source: WorkflowDataType = { kind: 'Primitive', name: 'String', value: 0 };
+    const source: WorkflowDataType = { kind: 'Primitive', name: 'String', value: 1 };
     const target: WorkflowDataType = { 
       kind: 'Semantic', 
       semanticName: 'UserId', 
-      underlyingType: { name: 'String', value: 0 } 
+      underlyingType: { name: 'String', value: 1 } 
     };
     expect(isAssignableTo(source, target)).toBe(true);
   });
@@ -62,8 +62,8 @@ describe('validateParameterBinding', () => {
   ];
 
   it('should pass for valid type and scope', () => {
-    const sourceDataType: WorkflowDataType = { kind: 'Primitive', name: 'String', value: 0 };
-    const targetDataType: WorkflowDataType = { kind: 'Primitive', name: 'String', value: 0 };
+    const sourceDataType: WorkflowDataType = { kind: 'Primitive', name: 'String', value: 1 };
+    const targetDataType: WorkflowDataType = { kind: 'Primitive', name: 'String', value: 1 };
     
     const result = validateParameterBinding('node1', 'node2', sourceDataType, targetDataType, edges);
     expect(result.isValid).toBe(true);
@@ -71,8 +71,8 @@ describe('validateParameterBinding', () => {
   });
 
   it('should fail for type mismatch', () => {
-    const sourceDataType: WorkflowDataType = { kind: 'Primitive', name: 'Number', value: 1 };
-    const targetDataType: WorkflowDataType = { kind: 'Primitive', name: 'String', value: 0 };
+    const sourceDataType: WorkflowDataType = { kind: 'Primitive', name: 'Number', value: 2 };
+    const targetDataType: WorkflowDataType = { kind: 'Primitive', name: 'String', value: 1 };
     
     const result = validateParameterBinding('node1', 'node2', sourceDataType, targetDataType, edges);
     expect(result.isValid).toBe(false);
@@ -80,8 +80,8 @@ describe('validateParameterBinding', () => {
   });
 
   it('should fail for scope violation (non-ancestor)', () => {
-    const sourceDataType: WorkflowDataType = { kind: 'Primitive', name: 'String', value: 0 };
-    const targetDataType: WorkflowDataType = { kind: 'Primitive', name: 'String', value: 0 };
+    const sourceDataType: WorkflowDataType = { kind: 'Primitive', name: 'String', value: 1 };
+    const targetDataType: WorkflowDataType = { kind: 'Primitive', name: 'String', value: 1 };
     
     const result = validateParameterBinding('node3', 'node1', sourceDataType, targetDataType, edges);
     expect(result.isValid).toBe(false);
@@ -94,8 +94,8 @@ describe('validateParameterBinding', () => {
       { id: 'e2', source: 'start', target: 'branchB' },
     ];
 
-    const sourceDataType: WorkflowDataType = { kind: 'Primitive', name: 'String', value: 0 };
-    const targetDataType: WorkflowDataType = { kind: 'Primitive', name: 'String', value: 0 };
+    const sourceDataType: WorkflowDataType = { kind: 'Primitive', name: 'String', value: 1 };
+    const targetDataType: WorkflowDataType = { kind: 'Primitive', name: 'String', value: 1 };
     
     const result = validateParameterBinding('branchB', 'branchA', sourceDataType, targetDataType, parallelEdges);
     expect(result.isValid).toBe(false);

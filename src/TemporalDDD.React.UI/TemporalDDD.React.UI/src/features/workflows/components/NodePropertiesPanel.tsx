@@ -4,7 +4,7 @@ import { z } from 'zod';
 import { useWorkflowStore } from '../../../store/workflowStore';
 import { X, Plus, Trash2 } from 'lucide-react';
 import { useEffect, useState } from 'react';
-import type { ParameterBinding } from '../../../types/workflowTypes';
+import type { ParameterBinding, NodeInputDefinition, NodeOutputDefinition } from '../../../types/workflowTypes';
 
 // API Node Schema
 const apiNodeSchema = z.object({
@@ -30,6 +30,61 @@ const basicNodeSchema = z.object({
 type ApiNodeFormData = z.infer<typeof apiNodeSchema>;
 type NotificationNodeFormData = z.infer<typeof notificationNodeSchema>;
 type BasicNodeFormData = z.infer<typeof basicNodeSchema>;
+
+// Helper component to display contracts as read-only badges
+function ContractBadges({ 
+  inputs, 
+  outputs, 
+  isEditable 
+}: { 
+  inputs?: NodeInputDefinition[]; 
+  outputs?: NodeOutputDefinition[]; 
+  isEditable?: boolean 
+}) {
+  return (
+    <div className="space-y-3">
+      {inputs && inputs.length > 0 && (
+        <div>
+          <h4 className="text-xs font-semibold text-gray-600 mb-2">
+            Inputs {isEditable && '(Editable)'}
+          </h4>
+          <div className="flex flex-wrap gap-2">
+            {inputs.map((input, idx) => (
+              <span
+                key={idx}
+                className={`inline-flex items-center px-2 py-1 text-xs rounded-md ${
+                  input.isRequired
+                    ? 'bg-red-100 text-red-800 border border-red-200'
+                    : 'bg-gray-100 text-gray-800 border border-gray-200'
+                }`}
+              >
+                {input.propertyName}: {input.dataType.kind === 'Semantic' ? input.dataType.semanticName : input.dataType.name}
+                {input.isRequired && <span className="ml-1 text-red-600">*</span>}
+              </span>
+            ))}
+          </div>
+        </div>
+      )}
+      {outputs && outputs.length > 0 && (
+        <div>
+          <h4 className="text-xs font-semibold text-gray-600 mb-2">
+            Outputs {isEditable && '(Editable)'}
+          </h4>
+          <div className="flex flex-wrap gap-2">
+            {outputs.map((output, idx) => (
+              <span
+                key={idx}
+                className="inline-flex items-center px-2 py-1 text-xs rounded-md bg-green-100 text-green-800 border border-green-200"
+              >
+                {output.propertyName}: {output.dataType.kind === 'Semantic' ? output.dataType.semanticName : output.dataType.name}
+              </span>
+            ))}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
 
 export default function NodePropertiesPanel() {
   const { selectedNodeIds, nodes, updateNodeData, updateNodeInputBindings, setSelectedNodeIds } = useWorkflowStore();
@@ -215,6 +270,14 @@ export default function NodePropertiesPanel() {
           >
             Save Changes
           </button>
+
+          <div className="border-t border-gray-200 pt-4 mt-4">
+            <ContractBadges
+              inputs={(selectedNode?.data.inputDefinitions as NodeInputDefinition[]) || []}
+              outputs={(selectedNode?.data.outputDefinitions as NodeOutputDefinition[]) || []}
+              isEditable={true}
+            />
+          </div>
         </form>
       </div>
     );
@@ -299,65 +362,11 @@ export default function NodePropertiesPanel() {
           </button>
 
           <div className="border-t border-gray-200 pt-4 mt-4">
-            <div className="flex items-center justify-between mb-3">
-              <h3 className="text-sm font-semibold text-gray-900">Input Bindings</h3>
-              <button
-                type="button"
-                onClick={addInputBinding}
-                className="flex items-center gap-1 text-sm text-blue-600 hover:text-blue-700"
-              >
-                <Plus size={16} />
-                Add Binding
-              </button>
-            </div>
-
-            {inputBindings.map((binding, index) => (
-              <div key={index} className="space-y-2 p-3 bg-gray-50 rounded-md mb-2">
-                <div className="flex items-center justify-between">
-                  <span className="text-xs text-gray-500">Binding {index + 1}</span>
-                  <button
-                    type="button"
-                    onClick={() => removeInputBinding(index)}
-                    className="text-red-500 hover:text-red-600"
-                  >
-                    <Trash2 size={16} />
-                  </button>
-                </div>
-                <div>
-                  <label className="block text-xs font-medium text-gray-700 mb-1">Target Property</label>
-                  <input
-                    type="text"
-                    value={binding.targetInputProperty}
-                    onChange={(e) => updateInputBinding(index, 'targetInputProperty', e.target.value)}
-                    className="w-full px-2 py-1 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500"
-                    placeholder="e.g., MessageTemplate"
-                  />
-                </div>
-                <div>
-                  <label className="block text-xs font-medium text-gray-700 mb-1">Source Node</label>
-                  <select
-                    value={binding.source.sourceNodeId}
-                    onChange={(e) => updateInputBinding(index, 'source', { ...binding.source, sourceNodeId: e.target.value })}
-                    className="w-full px-2 py-1 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500"
-                  >
-                    <option value="">Select source node...</option>
-                    {nodes.map(node => (
-                      <option key={node.id} value={node.id}>{(node.data.name as string) || node.id}</option>
-                    ))}
-                  </select>
-                </div>
-                <div>
-                  <label className="block text-xs font-medium text-gray-700 mb-1">Source Property</label>
-                  <input
-                    type="text"
-                    value={binding.source.sourcePath}
-                    onChange={(e) => updateInputBinding(index, 'source', { ...binding.source, sourcePath: e.target.value })}
-                    className="w-full px-2 py-1 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500"
-                    placeholder="e.g., ApiResult"
-                  />
-                </div>
-              </div>
-            ))}
+            <ContractBadges
+              inputs={(selectedNode?.data.inputDefinitions as NodeInputDefinition[]) || []}
+              outputs={(selectedNode?.data.outputDefinitions as NodeOutputDefinition[]) || []}
+              isEditable={false}
+            />
           </div>
         </form>
       </div>
@@ -428,12 +437,151 @@ export default function NodePropertiesPanel() {
           </button>
 
           <div className="border-t border-gray-200 pt-4 mt-4">
+            <ContractBadges
+              inputs={(selectedNode?.data.inputDefinitions as NodeInputDefinition[]) || []}
+              outputs={(selectedNode?.data.outputDefinitions as NodeOutputDefinition[]) || []}
+              isEditable={false}
+            />
+          </div>
+        </form>
+      </div>
+    );
+  }
+
+  // Decision Node Form (nodeType === 3)
+  if (nodeType === 3) {
+    return (
+      <div className="fixed right-0 top-0 h-full w-96 bg-white border-l border-gray-200 shadow-xl z-10 overflow-y-auto">
+        <div className="p-4 border-b border-gray-200 flex items-center justify-between">
+          <h2 className="text-lg font-semibold text-gray-900">Decision Node Properties</h2>
+          <button
+            onClick={handleClose}
+            className="p-1 hover:bg-gray-100 rounded-md transition-colors"
+          >
+            <X size={20} className="text-gray-500" />
+          </button>
+        </div>
+
+        <div className="p-4 space-y-4">
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Name</label>
+            <input
+              value={(selectedNode?.data.name as string) || ''}
+              readOnly
+              className="w-full px-3 py-2 border border-gray-300 rounded-md bg-gray-50 text-gray-600"
+            />
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Business Notes</label>
+            <textarea
+              value={(selectedNode?.data.businessNotes as string) || ''}
+              readOnly
+              rows={4}
+              className="w-full px-3 py-2 border border-gray-300 rounded-md bg-gray-50 text-gray-600"
+            />
+          </div>
+
+          <div className="border-t border-gray-200 pt-4 mt-4">
+            <ContractBadges
+              inputs={(selectedNode?.data.inputDefinitions as NodeInputDefinition[]) || []}
+              outputs={(selectedNode?.data.outputDefinitions as NodeOutputDefinition[]) || []}
+              isEditable={false}
+            />
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // HumanTask Node Form (nodeType === 4)
+  if (nodeType === 4) {
+    const humanTaskForm = useForm<BasicNodeFormData>({
+      resolver: zodResolver(basicNodeSchema),
+      defaultValues: {
+        name: '',
+        businessNotes: '',
+      },
+    });
+
+    useEffect(() => {
+      if (selectedNode && nodeType === 4) {
+        humanTaskForm.reset({
+          name: (selectedNode.data.name as string) || '',
+          businessNotes: (selectedNode.data.businessNotes as string) || '',
+        });
+      }
+    }, [selectedNode, nodeType, humanTaskForm]);
+
+    const humanTaskOnSubmit = (data: BasicNodeFormData) => {
+      if (selectedNodeId) {
+        updateNodeData(selectedNodeId, { ...data, isConfigured: true });
+      }
+    };
+
+    const {
+      register,
+      handleSubmit,
+      formState: { errors },
+    } = humanTaskForm;
+
+    return (
+      <div className="fixed right-0 top-0 h-full w-96 bg-white border-l border-gray-200 shadow-xl z-10 overflow-y-auto">
+        <div className="p-4 border-b border-gray-200 flex items-center justify-between">
+          <h2 className="text-lg font-semibold text-gray-900">Human Task Node Properties</h2>
+          <button
+            onClick={handleClose}
+            className="p-1 hover:bg-gray-100 rounded-md transition-colors"
+          >
+            <X size={20} className="text-gray-500" />
+          </button>
+        </div>
+
+        <form onSubmit={handleSubmit(humanTaskOnSubmit)} className="p-4 space-y-4">
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Name</label>
+            <input
+              {...register('name')}
+              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-orange-500"
+              placeholder="Human Task Name"
+            />
+            {errors.name && (
+              <p className="text-sm text-red-600 mt-1">{errors.name.message}</p>
+            )}
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Business Notes</label>
+            <textarea
+              {...register('businessNotes')}
+              rows={4}
+              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-orange-500"
+              placeholder="Optional business context..."
+            />
+          </div>
+
+          <button
+            type="submit"
+            className="w-full bg-orange-600 text-white py-2 px-4 rounded-md hover:bg-orange-700 transition-colors font-medium"
+          >
+            Save Changes
+          </button>
+
+          <div className="border-t border-gray-200 pt-4 mt-4">
+            <ContractBadges
+              inputs={(selectedNode?.data.inputDefinitions as NodeInputDefinition[]) || []}
+              outputs={(selectedNode?.data.outputDefinitions as NodeOutputDefinition[]) || []}
+              isEditable={true}
+            />
+          </div>
+
+          <div className="border-t border-gray-200 pt-4 mt-4">
             <div className="flex items-center justify-between mb-3">
               <h3 className="text-sm font-semibold text-gray-900">Input Bindings</h3>
               <button
                 type="button"
                 onClick={addInputBinding}
-                className="flex items-center gap-1 text-sm text-purple-600 hover:text-purple-700"
+                className="flex items-center gap-1 text-sm text-orange-600 hover:text-orange-700"
               >
                 <Plus size={16} />
                 Add Binding
@@ -447,7 +595,7 @@ export default function NodePropertiesPanel() {
                   <button
                     type="button"
                     onClick={() => removeInputBinding(index)}
-                    className="text-red-500 hover:text-red-600"
+                    className="text-red-600 hover:text-red-700"
                   >
                     <Trash2 size={16} />
                   </button>
@@ -458,8 +606,8 @@ export default function NodePropertiesPanel() {
                     type="text"
                     value={binding.targetInputProperty}
                     onChange={(e) => updateInputBinding(index, 'targetInputProperty', e.target.value)}
-                    className="w-full px-2 py-1 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-purple-500"
-                    placeholder="e.g., MessageTemplate"
+                    className="w-full px-2 py-1 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-orange-500"
+                    placeholder="e.g., InputData"
                   />
                 </div>
                 <div>
@@ -467,7 +615,7 @@ export default function NodePropertiesPanel() {
                   <select
                     value={binding.source.sourceNodeId}
                     onChange={(e) => updateInputBinding(index, 'source', { ...binding.source, sourceNodeId: e.target.value })}
-                    className="w-full px-2 py-1 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-purple-500"
+                    className="w-full px-2 py-1 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-orange-500"
                   >
                     <option value="">Select source node...</option>
                     {nodes.map(node => (
@@ -481,8 +629,8 @@ export default function NodePropertiesPanel() {
                     type="text"
                     value={binding.source.sourcePath}
                     onChange={(e) => updateInputBinding(index, 'source', { ...binding.source, sourcePath: e.target.value })}
-                    className="w-full px-2 py-1 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-purple-500"
-                    placeholder="e.g., ApiResult"
+                    className="w-full px-2 py-1 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-orange-500"
+                    placeholder="e.g., OutputData"
                   />
                 </div>
               </div>

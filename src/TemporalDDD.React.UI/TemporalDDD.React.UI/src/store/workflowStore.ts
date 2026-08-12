@@ -9,7 +9,7 @@ import {
   type OnEdgesChange,
   type OnConnect,
 } from '@xyflow/react';
-import type { ParameterBinding } from '../types/workflowTypes';
+import type { ParameterBinding, NodeInputDefinition, NodeOutputDefinition } from '../types/workflowTypes';
 
 interface WorkflowStore {
   nodes: Node[];
@@ -85,6 +85,22 @@ export const useWorkflowStore = create<WorkflowStore>((set) => ({
   addNode: (type) =>
     set((state) => {
       const guid = crypto.randomUUID();
+      let inputDefinitions: NodeInputDefinition[] = [];
+      let outputDefinitions: NodeOutputDefinition[] = [];
+
+      // Initialize contracts based on node type
+      if (type === 'apiNode') {
+        // API nodes have fixed output: ApiResponse as JsonDocument
+        outputDefinitions = [
+          { propertyName: 'ApiResponse', dataType: { kind: 'Primitive', name: 'JsonDocument', value: 5 } }
+        ];
+      } else if (type === 'notificationNode') {
+        // Notification nodes have fixed input: MessageTemplate as String
+        inputDefinitions = [
+          { propertyName: 'MessageTemplate', dataType: { kind: 'Primitive', name: 'String', value: 1 }, isRequired: true }
+        ];
+      }
+
       const newNode: Node = {
         id: `WFNId${guid}`,
         type,
@@ -93,6 +109,8 @@ export const useWorkflowStore = create<WorkflowStore>((set) => ({
           name: type === 'apiNode' ? 'New API Task' : 'New Notification',
           nodeType: type === 'apiNode' ? 1 : 2,
           isConfigured: false,
+          inputDefinitions,
+          outputDefinitions,
         },
       };
       return { nodes: [...state.nodes, newNode] };
@@ -180,6 +198,9 @@ export const useWorkflowStore = create<WorkflowStore>((set) => ({
               contractMappingRequestMapping: node.contractMappingRequestMapping,
               contractMappingResponseMapping: node.contractMappingResponseMapping,
               messageTemplate: node.messageTemplate,
+              inputDefinitions: node.inputDefinitions || [],
+              outputDefinitions: node.outputDefinitions || [],
+              inputBindings: node.inputBindings || [],
             },
           };
         });
