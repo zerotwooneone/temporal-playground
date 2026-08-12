@@ -272,17 +272,22 @@ public sealed class WorkflowDefinition : AggregateRoot
             }
         }
 
-        // Rule 6: Decision nodes must have both True and False branches
+        // Rule 6: Decision nodes must have at least one branch with explicit labels
         var decisionNodes = _nodes.OfType<DecisionWorkflowNode>();
         foreach (var decisionNode in decisionNodes)
         {
             var outgoingTransitions = _transitions.Where(t => t.SourceNodeId == decisionNode.Id).ToList();
-
-            // Ensure there is a "True" branch and a "False" branch
-            if (!outgoingTransitions.Any(t => t.BranchLabel == "True") ||
-                !outgoingTransitions.Any(t => t.BranchLabel == "False"))
+            
+            // Rule 1: Must go somewhere
+            if (!outgoingTransitions.Any())
             {
-                return Result.Failure($"Decision Node '{decisionNode.Name}' must have both a 'True' and 'False' outgoing transition.");
+                return Result.Failure($"Decision Node '{decisionNode.Name}' must have at least one outgoing transition.");
+            }
+
+            // Rule 2: The branches it does have must be explicitly labeled
+            if (outgoingTransitions.Any(t => string.IsNullOrWhiteSpace(t.BranchLabel)))
+            {
+                return Result.Failure($"All outgoing transitions from Decision Node '{decisionNode.Name}' must have a BranchLabel (e.g., 'True' or 'False').");
             }
         }
 
