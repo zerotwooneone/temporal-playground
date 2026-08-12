@@ -58,11 +58,8 @@ public class ApiWorkflowNodeConfiguration : IEntityTypeConfiguration<ApiWorkflow
 {
     public void Configure(EntityTypeBuilder<ApiWorkflowNodeDbo> builder)
     {
-        // Configure ApiWorkflowNodeDbo specific properties
-        builder.Property(x => x.EndpointUrl)
-            .IsRequired(false);
-
-        builder.Property(x => x.AuthToken)
+        // Configure unified technical inputs as JSON
+        builder.Property(x => x.TechnicalInputsJson)
             .IsRequired(false);
 
         // Flattened RetryPolicy properties
@@ -91,8 +88,8 @@ public class NotificationWorkflowNodeConfiguration : IEntityTypeConfiguration<No
 {
     public void Configure(EntityTypeBuilder<NotificationWorkflowNodeDbo> builder)
     {
-        // Configure NotificationWorkflowNodeDbo specific properties
-        builder.Property(x => x.MessageTemplate)
+        // Configure unified technical inputs as JSON
+        builder.Property(x => x.TechnicalInputsJson)
             .IsRequired(false);
     }
 }

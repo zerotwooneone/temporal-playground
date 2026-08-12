@@ -3,6 +3,7 @@ using TemporalDDD.Domain.WorkflowOrchestration;
 using TemporalDDD.Domain.WorkflowOrchestration.Nodes;
 using TemporalDDD.Domain.Tests.Builders;
 using TemporalDDD.Domain.WorkflowOrchestration.Events;
+using TemporalDDD.Domain.WorkflowOrchestration.ValueObjects;
 
 namespace TemporalDDD.Domain.Tests.WorkflowOrchestration;
 
@@ -109,6 +110,110 @@ public class WorkflowDefinitionDataMappingTests
         // ASSERT
         action.Should().Throw<InvalidOperationException>()
             .WithMessage("*Type mismatch*");
+    }
+    #endregion
+
+    #region Mapped Technical Property Validation Tests
+    [Fact]
+    public void Approve_WhenMappedPropertyPointsToInvalidAncestor_ReturnsFailure()
+    {
+        // ARRANGE
+        var builder = new WorkflowBuilder();
+        
+        // Add workflow input that Start node will output
+        builder.WithWorkflowInput(new NodeOutputDefinition("UserId", WorkflowDataType.Primitive.String));
+        
+        // Create API node with Mapped EndpointUrl pointing to non-ancestor
+        builder.WithApiNode("ApiNode", out var apiNodeId, skipConfiguration: true);
+        
+        // Create a downstream node that's not an ancestor
+        builder.WithApiNode("DownstreamNode", out var downstreamNodeId);
+        
+        // Build DAG: Start -> ApiNode -> DownstreamNode -> End
+        builder.WithTransition("Start", "ApiNode");
+        builder.WithTransition("ApiNode", "DownstreamNode");
+        builder.WithTransition("DownstreamNode", "End");
+        
+        // Configure ApiNode with Mapped EndpointUrl pointing to DownstreamNode (invalid - not an ancestor)
+        var apiNode = builder.Build().Nodes.OfType<ApiWorkflowNode>().First(n => n.Id == apiNodeId);
+        var retryPolicy = RetryPolicy.Create(3, 2).Value!;
+        var contractMapping = ContractMapping.Create(true, null, null, null).Value!;
+        apiNode.SetTechnicalInput("EndpointUrl", new InputValueSource.Mapped(new VariableReference(downstreamNodeId, "ApiResponse")));
+        apiNode.SetTechnicalInput("AuthToken", new InputValueSource.Fixed("token"));
+        apiNode.ConfigureValueObjects(retryPolicy, contractMapping);
+        
+        var workflow = builder.ReadyForApproval().Build();
+        var reviewerId = UserId.New();
+
+        // ACT
+        var action = () => workflow.Approve(reviewerId);
+
+        // ASSERT
+        action.Should().Throw<InvalidOperationException>()
+            .WithMessage("*is not an upstream ancestor*");
+    }
+
+    [Fact]
+    public void Approve_WhenMappedPropertyPointsToWrongDataType_ReturnsFailure()
+    {
+        // ARRANGE
+        var builder = new WorkflowBuilder();
+        
+        // Create API node (has fixed output: ApiResponse as JsonDocument)
+        builder.WithApiNode("ApiNode", out var apiNodeId);
+        
+        // Create Notification node with Mapped MessageTemplate pointing to Json output (invalid - must be String)
+        builder.WithNotificationNode("NotificationNode", out var notificationNodeId, skipConfiguration: true);
+        
+        // Build DAG: Start -> Api -> Notification -> End
+        builder.WithTransition("Start", "ApiNode");
+        builder.WithTransition("ApiNode", "NotificationNode");
+        builder.WithTransition("NotificationNode", "End");
+        
+        // Configure NotificationNode with Mapped MessageTemplate pointing to Json output
+        var notificationNode = builder.Build().Nodes.OfType<NotificationWorkflowNode>().First(n => n.Id == notificationNodeId);
+        notificationNode.SetTechnicalInput("MessageTemplate", new InputValueSource.Mapped(new VariableReference(apiNodeId, "ApiResponse")));
+        
+        var workflow = builder.ReadyForApproval().Build();
+        var reviewerId = UserId.New();
+
+        // ACT
+        var action = () => workflow.Approve(reviewerId);
+
+        // ASSERT
+        action.Should().Throw<InvalidOperationException>()
+            .WithMessage("*Technical properties require String type*");
+    }
+
+    [Fact]
+    public void Approve_WhenMappedPropertyPointsToValidStringAncestor_ReturnsSuccess()
+    {
+        // ARRANGE
+        var builder = new WorkflowBuilder();
+        
+        // Add workflow input that Start node will output as String
+        builder.WithWorkflowInput(new NodeOutputDefinition("ApiUrl", WorkflowDataType.Primitive.String));
+        
+        // Create Notification node with Mapped MessageTemplate pointing to Start's String output
+        builder.WithNotificationNode("NotificationNode", out var notificationNodeId, skipConfiguration: true);
+        
+        // Build DAG: Start -> Notification -> End
+        builder.WithTransition("Start", "NotificationNode");
+        builder.WithTransition("NotificationNode", "End");
+        
+        // Configure NotificationNode with Mapped MessageTemplate pointing to Start's String output
+        var notificationNode = builder.Build().Nodes.OfType<NotificationWorkflowNode>().First(n => n.Id == notificationNodeId);
+        notificationNode.SetTechnicalInput("MessageTemplate", new InputValueSource.Mapped(new VariableReference(builder.Build().Nodes.OfType<StartWorkflowNode>().First().Id, "ApiUrl")));
+        
+        var workflow = builder.ReadyForApproval().Build();
+        var reviewerId = UserId.New();
+
+        // ACT
+        workflow.Approve(reviewerId);
+
+        // ASSERT
+        workflow.Status.Should().Be(WorkflowStatus.Approved);
+        workflow.DomainEvents.Should().ContainSingle(e => e is WorkflowApproved);
     }
     #endregion
 }

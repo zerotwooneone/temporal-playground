@@ -359,6 +359,45 @@ public sealed class WorkflowDefinition : AggregateRoot
                 }
             }
         }
+
+        // Validate Mapped technical properties (generic iteration over TechnicalInputs)
+        foreach (var node in _nodes)
+        {
+            var ancestors = GetExecutionScopeForNode(node.Id);
+
+            // Iterate over all technical inputs regardless of node type
+            foreach (var (propertyName, valueSource) in node.TechnicalInputs)
+            {
+                if (valueSource is InputValueSource.Mapped mapped)
+                {
+                    var validationResult = ValidateMappedProperty(node.Name, propertyName, mapped.Source, ancestors);
+                    if (validationResult.IsFailure)
+                        return validationResult;
+                }
+            }
+        }
+
+        return Result.Success();
+    }
+
+    private Result ValidateMappedProperty(string nodeName, string propertyName, VariableReference source, HashSet<WorkflowNodeId> ancestors)
+    {
+        // 1. Check Execution Scope Reachability
+        if (!ancestors.Contains(source.SourceNodeId))
+            return Result.Failure($"Invalid mapped property '{propertyName}' on Node '{nodeName}': Source Node '{source.SourceNodeId}' is not an upstream ancestor.");
+
+        // 2. Type Check: Must be String type for technical properties
+        var sourceNode = GetNode(source.SourceNodeId);
+        var sourceOutput = sourceNode.OutputDefinitions.FirstOrDefault(o => o.PropertyName == source.SourcePath);
+
+        if (sourceOutput == null)
+            return Result.Failure($"Invalid mapped property '{propertyName}' on Node '{nodeName}': Source property '{source.SourcePath}' not found in source node.");
+
+        if (sourceOutput.DataType is not WorkflowDataType.Primitive primitive || primitive != WorkflowDataType.Primitive.String)
+        {
+            return Result.Failure($"Type mismatch on mapped property '{propertyName}' on Node '{nodeName}'. Technical properties require String type, but source is {sourceOutput.DataType}.");
+        }
+
         return Result.Success();
     }
 

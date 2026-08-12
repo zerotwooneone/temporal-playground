@@ -194,13 +194,21 @@ public class WorkflowDefinitionRepository : IWorkflowDefinitionRepository
                 contractMapping = mappingResult.Value;
         }
 
+        // Deserialize technical inputs dictionary
+        var technicalInputs = new Dictionary<string, InputValueSource>();
+        if (!string.IsNullOrWhiteSpace(apiDbo.TechnicalInputsJson))
+        {
+            technicalInputs = JsonSerializer.Deserialize<Dictionary<string, InputValueSource>>(
+                apiDbo.TechnicalInputsJson, 
+                GetJsonOptions()) ?? new Dictionary<string, InputValueSource>();
+        }
+
         var node = new ApiWorkflowNode(
             id: nodeId,
             name: dbo.Name,
             businessNotes: dbo.BusinessNotes,
             isConfigured: dbo.IsConfigured,
-            endpointUrl: apiDbo.EndpointUrl,
-            authToken: apiDbo.AuthToken,
+            technicalInputs: technicalInputs,
             retryPolicy: retryPolicy,
             contractMapping: contractMapping,
             inputDefinitions: inputDefinitions,
@@ -218,12 +226,21 @@ public class WorkflowDefinitionRepository : IWorkflowDefinitionRepository
         if (dbo is not NotificationWorkflowNodeDbo notificationDbo)
             throw new InvalidOperationException($"Expected NotificationWorkflowNodeDbo but got {dbo.GetType().Name}");
 
+        // Deserialize technical inputs dictionary
+        var technicalInputs = new Dictionary<string, InputValueSource>();
+        if (!string.IsNullOrWhiteSpace(notificationDbo.TechnicalInputsJson))
+        {
+            technicalInputs = JsonSerializer.Deserialize<Dictionary<string, InputValueSource>>(
+                notificationDbo.TechnicalInputsJson, 
+                GetJsonOptions()) ?? new Dictionary<string, InputValueSource>();
+        }
+
         var node = new NotificationWorkflowNode(
             id: nodeId,
             name: dbo.Name,
             businessNotes: dbo.BusinessNotes,
             isConfigured: dbo.IsConfigured,
-            messageTemplate: notificationDbo.MessageTemplate,
+            technicalInputs: technicalInputs,
             inputDefinitions: inputDefinitions,
             outputDefinitions: outputDefinitions
         );
@@ -349,8 +366,7 @@ public class WorkflowDefinitionRepository : IWorkflowDefinitionRepository
             Name = node.Name,
             BusinessNotes = node.BusinessNotes,
             IsConfigured = node.IsConfigured,
-            EndpointUrl = node.EndpointUrl,
-            AuthToken = node.AuthToken,
+            TechnicalInputsJson = node.TechnicalInputs.Any() ? JsonSerializer.Serialize(node.TechnicalInputs, GetJsonOptions()) : null,
             RetryPolicyMaxAttempts = node.RetryPolicy?.MaxAttempts,
             RetryPolicyBackoffCoefficient = node.RetryPolicy?.BackoffCoefficient,
             ContractMappingConvertXmlToJson = node.ContractMapping?.ConvertXmlToJson,
@@ -373,7 +389,7 @@ public class WorkflowDefinitionRepository : IWorkflowDefinitionRepository
             Name = node.Name,
             BusinessNotes = node.BusinessNotes,
             IsConfigured = node.IsConfigured,
-            MessageTemplate = node.MessageTemplate,
+            TechnicalInputsJson = node.TechnicalInputs.Any() ? JsonSerializer.Serialize(node.TechnicalInputs, GetJsonOptions()) : null,
             InputDefinitionsJson = JsonSerializer.Serialize(node.InputDefinitions, GetJsonOptions()),
             OutputDefinitionsJson = JsonSerializer.Serialize(node.OutputDefinitions, GetJsonOptions()),
             InputBindingsJson = JsonSerializer.Serialize(node.InputBindings, GetJsonOptions())

@@ -19,6 +19,17 @@ public abstract class WorkflowNode
     private readonly List<ParameterBinding> _inputBindings = new();
     public IReadOnlyList<ParameterBinding> InputBindings => _inputBindings.AsReadOnly();
 
+    // Unified technical inputs collection
+    protected readonly Dictionary<string, InputValueSource> _technicalInputs = new();
+    public IReadOnlyDictionary<string, InputValueSource> TechnicalInputs => _technicalInputs;
+
+    public void SetTechnicalInput(string key, InputValueSource value)
+    {
+        _technicalInputs[key] = value;
+        ValidateConfiguration();
+    }
+    public InputValueSource? GetTechnicalInput(string key) => _technicalInputs.TryGetValue(key, out var val) ? val : null;
+
     protected WorkflowNode() { }
 
     protected WorkflowNode(WorkflowNodeId id, NodeType type, string name, string? businessNotes)

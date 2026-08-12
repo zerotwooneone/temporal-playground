@@ -139,9 +139,9 @@ public class WorkflowDefinitionTests
         var workflow = WorkflowDefinition.Create(UserId.New(), "Test", "{}", publicId);
         workflow.AddApiNodeStub("API Node", "Business notes");
         var apiNode = workflow.Nodes.OfType<ApiWorkflowNode>().First();
-        apiNode.ConfigureTechnicalDetails(
-            "https://api.example.com",
-            "token",
+        apiNode.SetTechnicalInput("EndpointUrl", new InputValueSource.Fixed("https://api.example.com"));
+        apiNode.SetTechnicalInput("AuthToken", new InputValueSource.Fixed("token"));
+        apiNode.ConfigureValueObjects(
             TemporalDDD.Domain.WorkflowOrchestration.ValueObjects.RetryPolicy.Create(3, 2).Value!,
             TemporalDDD.Domain.WorkflowOrchestration.ValueObjects.ContractMapping.Create(true, null, null, null).Value!
         );

@@ -39,7 +39,9 @@ public class WorkflowNodeTests
         var mapping = ContractMapping.Create(true, null, null, null).Value!;
 
         // ACT
-        node.ConfigureTechnicalDetails("https://api.example.com", "token", retryPolicy, mapping);
+        node.SetTechnicalInput("EndpointUrl", new InputValueSource.Fixed("https://api.example.com"));
+        node.SetTechnicalInput("AuthToken", new InputValueSource.Fixed("token"));
+        node.ConfigureValueObjects(retryPolicy, mapping);
 
         // ASSERT
         node.IsConfigured.Should().BeTrue();
@@ -57,7 +59,8 @@ public class WorkflowNodeTests
         var mapping = ContractMapping.Create(true, null, null, null).Value!;
 
         // ACT
-        node.ConfigureTechnicalDetails(null, "token", retryPolicy, mapping);
+        node.SetTechnicalInput("AuthToken", new InputValueSource.Fixed("token"));
+        node.ConfigureValueObjects(retryPolicy, mapping);
 
         // ASSERT
         node.IsConfigured.Should().BeFalse();
@@ -74,7 +77,9 @@ public class WorkflowNodeTests
         var mapping = ContractMapping.Create(true, null, null, null).Value!;
 
         // ACT
-        node.ConfigureTechnicalDetails("https://api.example.com", "token", null, mapping);
+        node.SetTechnicalInput("EndpointUrl", new InputValueSource.Fixed("https://api.example.com"));
+        node.SetTechnicalInput("AuthToken", new InputValueSource.Fixed("token"));
+        node.ConfigureValueObjects(null, mapping);
 
         // ASSERT
         node.IsConfigured.Should().BeFalse();
@@ -91,7 +96,9 @@ public class WorkflowNodeTests
         var retryPolicy = RetryPolicy.Create(3, 2).Value!;
 
         // ACT
-        node.ConfigureTechnicalDetails("https://api.example.com", "token", retryPolicy, null);
+        node.SetTechnicalInput("EndpointUrl", new InputValueSource.Fixed("https://api.example.com"));
+        node.SetTechnicalInput("AuthToken", new InputValueSource.Fixed("token"));
+        node.ConfigureValueObjects(retryPolicy, null);
 
         // ASSERT
         node.IsConfigured.Should().BeFalse();
@@ -128,7 +135,7 @@ public class WorkflowNodeTests
         var node = workflow.Nodes.OfType<NotificationWorkflowNode>().First();
 
         // ACT
-        node.ConfigureTechnicalDetails("Hello {name}");
+        node.SetTechnicalInput("MessageTemplate", new InputValueSource.Fixed("Hello {name}"));
 
         // ASSERT
         node.IsConfigured.Should().BeTrue();
@@ -144,7 +151,7 @@ public class WorkflowNodeTests
         var node = workflow.Nodes.OfType<NotificationWorkflowNode>().First();
 
         // ACT
-        node.ConfigureTechnicalDetails(null!);
+        // Don't set any technical input
 
         // ASSERT
         node.IsConfigured.Should().BeFalse();
@@ -160,7 +167,7 @@ public class WorkflowNodeTests
         var node = workflow.Nodes.OfType<NotificationWorkflowNode>().First();
 
         // ACT
-        node.ConfigureTechnicalDetails("   ");
+        node.SetTechnicalInput("MessageTemplate", new InputValueSource.Fixed("   "));
 
         // ASSERT
         node.IsConfigured.Should().BeFalse();

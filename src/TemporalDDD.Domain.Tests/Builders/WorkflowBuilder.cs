@@ -42,7 +42,9 @@ public class WorkflowBuilder
             // Apply valid defaults so the test doesn't fail IsConfigured checks
             var retryPolicy = RetryPolicy.Create(3, 2).Value!;
             var contractMapping = ContractMapping.Create(true, null, null, null).Value!;
-            node.ConfigureTechnicalDetails("https://default.api", "token", retryPolicy, contractMapping);
+            node.SetTechnicalInput("EndpointUrl", new InputValueSource.Fixed("https://default.api"));
+            node.SetTechnicalInput("AuthToken", new InputValueSource.Fixed("token"));
+            node.ConfigureValueObjects(retryPolicy, contractMapping);
         }
 
         _additionalNodes.Add(node);
@@ -61,7 +63,7 @@ public class WorkflowBuilder
         if (!skipConfiguration)
         {
             // Apply valid defaults so the test doesn't fail IsConfigured checks
-            node.ConfigureTechnicalDetails("Default message template");
+            node.SetTechnicalInput("MessageTemplate", new InputValueSource.Fixed("Default message template"));
         }
 
         _additionalNodes.Add(node);

@@ -24,6 +24,19 @@ public class PolymorphicTypeResolver : DefaultJsonTypeInfoResolver
             };
         }
 
+        if (type == typeof(InputValueSource))
+        {
+            typeInfo.PolymorphismOptions = new JsonPolymorphismOptions
+            {
+                TypeDiscriminatorPropertyName = "$type",
+                DerivedTypes =
+                {
+                    new JsonDerivedType(typeof(InputValueSource.Fixed), "Fixed"),
+                    new JsonDerivedType(typeof(InputValueSource.Mapped), "Mapped")
+                }
+            };
+        }
+
         return typeInfo;
     }
 }

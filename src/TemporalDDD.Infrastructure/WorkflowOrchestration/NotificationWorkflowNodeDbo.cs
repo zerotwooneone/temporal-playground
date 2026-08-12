@@ -2,5 +2,6 @@ namespace TemporalDDD.Infrastructure.WorkflowOrchestration;
 
 public class NotificationWorkflowNodeDbo : WorkflowNodeDbo
 {
-    public string? MessageTemplate { get; set; }
+    // Unified technical inputs as JSON
+    public string? TechnicalInputsJson { get; set; }
 }

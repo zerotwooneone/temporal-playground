@@ -4,8 +4,6 @@ namespace TemporalDDD.Domain.WorkflowOrchestration.Nodes;
 
 public sealed class ApiWorkflowNode : WorkflowNode, IActivityWorkflowNode
 {
-    public string? EndpointUrl { get; private set; }
-    public string? AuthToken { get; private set; }
     public RetryPolicy? RetryPolicy { get; private set; }
     public ContractMapping? ContractMapping { get; private set; }
 
@@ -22,8 +20,7 @@ public sealed class ApiWorkflowNode : WorkflowNode, IActivityWorkflowNode
         string name,
         string? businessNotes,
         bool isConfigured,
-        string? endpointUrl,
-        string? authToken,
+        Dictionary<string, InputValueSource> technicalInputs,
         RetryPolicy? retryPolicy,
         ContractMapping? contractMapping,
         IEnumerable<NodeInputDefinition>? inputDefinitions,
@@ -31,8 +28,10 @@ public sealed class ApiWorkflowNode : WorkflowNode, IActivityWorkflowNode
         : base(id, NodeType.Api, name, businessNotes)
     {
         IsConfigured = isConfigured;
-        EndpointUrl = endpointUrl;
-        AuthToken = authToken;
+        foreach (var (key, value) in technicalInputs)
+        {
+            _technicalInputs[key] = value;
+        }
         RetryPolicy = retryPolicy;
         ContractMapping = contractMapping;
         if (inputDefinitions != null)
@@ -43,6 +42,8 @@ public sealed class ApiWorkflowNode : WorkflowNode, IActivityWorkflowNode
         {
             _outputDefinitions.AddRange(outputDefinitions);
         }
+        // Re-validate after rehydration
+        ValidateConfiguration();
     }
 
     public static ApiWorkflowNode CreateStub(string name, string? businessNotes)
@@ -53,10 +54,8 @@ public sealed class ApiWorkflowNode : WorkflowNode, IActivityWorkflowNode
         return node;
     }
 
-    public void ConfigureTechnicalDetails(string endpointUrl, string? authToken, RetryPolicy retryPolicy, ContractMapping mapping)
+    public void ConfigureValueObjects(RetryPolicy retryPolicy, ContractMapping mapping)
     {
-        EndpointUrl = endpointUrl;
-        AuthToken = authToken;
         RetryPolicy = retryPolicy;
         ContractMapping = mapping;
         ValidateConfiguration();
@@ -64,6 +63,13 @@ public sealed class ApiWorkflowNode : WorkflowNode, IActivityWorkflowNode
 
     public override void ValidateConfiguration()
     {
-        IsConfigured = EndpointUrl != null && RetryPolicy != null && ContractMapping != null;
+        IsConfigured = _technicalInputs.ContainsKey("EndpointUrl") && RetryPolicy != null && ContractMapping != null;
     }
+
+    // Helper methods for backward compatibility / query layer
+    public string? GetFixedEndpointUrl() => 
+        GetTechnicalInput("EndpointUrl") is InputValueSource.Fixed fixedValue ? fixedValue.Value : null;
+
+    public string? GetFixedAuthToken() => 
+        GetTechnicalInput("AuthToken") is InputValueSource.Fixed fixedValue ? fixedValue.Value : null;
 }

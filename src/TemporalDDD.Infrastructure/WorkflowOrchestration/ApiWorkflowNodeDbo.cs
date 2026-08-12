@@ -12,7 +12,6 @@ public class ApiWorkflowNodeDbo : WorkflowNodeDbo
     public string? ContractMappingRequestMapping { get; set; }
     public string? ContractMappingResponseMapping { get; set; }
 
-    // Additional properties
-    public string? EndpointUrl { get; set; }
-    public string? AuthToken { get; set; }
+    // Unified technical inputs as JSON
+    public string? TechnicalInputsJson { get; set; }
 }

@@ -62,18 +62,18 @@ public class WorkflowNodeService : IWorkflowNodeService
                     nodeDto.ContractMappingResponseMapping ?? string.Empty
                 ).Value;
 
-                apiNode.ConfigureTechnicalDetails(
-                    nodeDto.EndpointUrl ?? string.Empty,
-                    nodeDto.AuthToken,
-                    retryPolicy,
-                    contractMapping
-                );
+                apiNode.SetTechnicalInput("EndpointUrl", new InputValueSource.Fixed(nodeDto.EndpointUrl ?? string.Empty));
+                if (nodeDto.AuthToken != null)
+                {
+                    apiNode.SetTechnicalInput("AuthToken", new InputValueSource.Fixed(nodeDto.AuthToken));
+                }
+                apiNode.ConfigureValueObjects(retryPolicy, contractMapping);
             }
 
             // Configure notification node specifics
             if (nodeTypeResult.Value.Value == 2 && domainNode is NotificationWorkflowNode notificationNode)
             {
-                notificationNode.ConfigureTechnicalDetails(nodeDto.MessageTemplate ?? string.Empty);
+                notificationNode.SetTechnicalInput("MessageTemplate", new InputValueSource.Fixed(nodeDto.MessageTemplate ?? string.Empty));
             }
 
             domainNodes.Add(domainNode);
