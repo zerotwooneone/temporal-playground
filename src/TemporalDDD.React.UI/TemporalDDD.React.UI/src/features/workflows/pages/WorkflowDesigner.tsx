@@ -27,6 +27,19 @@ export default function WorkflowDesigner() {
   const { id } = useParams<{ id: string }>();
   const { nodes, edges, onNodesChange, onEdgesChange, onConnect, setSelectedNodeIds, setSelectedEdgeIds, toggleNodeSelection, toggleEdgeSelection, deleteSelectedEdges, loadWorkflow, clearWorkflow } = useWorkflowStore();
 
+  const isValidConnection = (connection: any) => {
+    const sourceHandle = connection.sourceHandle || 'Default';
+    
+    // Check if an edge already exists with the same source node and source handle
+    const existingEdge = edges.find(
+      (edge) => 
+        edge.source === connection.source && 
+        edge.sourceHandle === sourceHandle
+    );
+    
+    return !existingEdge;
+  };
+
   const { data: workflowData, isLoading, error } = useQuery({
     queryKey: ['workflow', id],
     queryFn: () => getWorkflowById(id!),
@@ -100,6 +113,7 @@ export default function WorkflowDesigner() {
           onNodesChange={onNodesChange}
           onEdgesChange={onEdgesChange}
           onConnect={onConnect}
+          isValidConnection={isValidConnection}
           onNodeClick={onNodeClick}
           onEdgeClick={onEdgeClick}
           onPaneClick={onPaneClick}

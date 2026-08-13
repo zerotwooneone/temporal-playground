@@ -272,22 +272,33 @@ public sealed class WorkflowDefinition : AggregateRoot
             }
         }
 
-        // Rule 6: Decision nodes must have at least one branch with explicit labels
-        var decisionNodes = _nodes.OfType<DecisionWorkflowNode>();
-        foreach (var decisionNode in decisionNodes)
+        // Rule 6: Universal Port Validation - Every declared OutputPort must have exactly one transition
+        foreach (var node in _nodes)
         {
-            var outgoingTransitions = _transitions.Where(t => t.SourceNodeId == decisionNode.Id).ToList();
+            var outgoingTransitions = _transitions.Where(t => t.SourceNodeId == node.Id).ToList();
+            var usedPorts = outgoingTransitions.Select(t => t.SourcePort).ToHashSet();
             
-            // Rule 1: Must go somewhere
-            if (!outgoingTransitions.Any())
+            // Every declared OutputPort must have exactly one transition
+            foreach (var port in node.OutputPorts)
             {
-                return Result.Failure($"Decision Node '{decisionNode.Name}' must have at least one outgoing transition.");
+                if (!usedPorts.Contains(port))
+                {
+                    return Result.Failure($"Node '{node.Name}' OutputPort '{port}' has no outgoing transition.");
+                }
+                
+                if (outgoingTransitions.Count(t => t.SourcePort == port) > 1)
+                {
+                    return Result.Failure($"Node '{node.Name}' OutputPort '{port}' has multiple outgoing transitions.");
+                }
             }
-
-            // Rule 2: The branches it does have must be explicitly labeled
-            if (outgoingTransitions.Any(t => string.IsNullOrWhiteSpace(t.BranchLabel)))
+            
+            // No transitions to undeclared ports
+            foreach (var port in usedPorts)
             {
-                return Result.Failure($"All outgoing transitions from Decision Node '{decisionNode.Name}' must have a BranchLabel (e.g., 'True' or 'False').");
+                if (!node.OutputPorts.Contains(port))
+                {
+                    return Result.Failure($"Node '{node.Name}' has transition to undeclared OutputPort '{port}'.");
+                }
             }
         }
 

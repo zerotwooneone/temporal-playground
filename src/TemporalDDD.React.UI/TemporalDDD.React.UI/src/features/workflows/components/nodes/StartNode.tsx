@@ -13,7 +13,7 @@ export default function StartNode({ data }: NodeProps) {
   return (
     <div className="bg-white border-2 border-green-500 rounded-lg shadow-md min-w-[200px]">
       {/* Source Handle */}
-      <Handle type="source" position={Position.Bottom} className="w-3 h-3 !bg-green-500" />
+      <Handle type="source" id="Default" position={Position.Bottom} className="w-3 h-3 !bg-green-500" />
 
       {/* Header */}
       <div className="bg-green-500 text-white px-3 py-2 rounded-t-lg flex items-center gap-2">

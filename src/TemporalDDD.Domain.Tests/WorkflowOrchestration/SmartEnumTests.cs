@@ -173,26 +173,26 @@ public class SmartEnumTests
     public void NodeType_FromValue_WithValidValue_ReturnsCorrectEnum()
     {
         // ACT
+        var result0 = NodeType.FromValue(0);
         var result1 = NodeType.FromValue(1);
         var result2 = NodeType.FromValue(2);
         var result3 = NodeType.FromValue(3);
         var result4 = NodeType.FromValue(4);
-        var result5 = NodeType.FromValue(5);
-        var result6 = NodeType.FromValue(6);
+        var result99 = NodeType.FromValue(99);
 
         // ASSERT
+        result0.IsSuccess.Should().BeTrue();
+        result0.Value.Should().Be(NodeType.Start);
         result1.IsSuccess.Should().BeTrue();
         result1.Value.Should().Be(NodeType.Api);
         result2.IsSuccess.Should().BeTrue();
         result2.Value.Should().Be(NodeType.Notification);
         result3.IsSuccess.Should().BeTrue();
-        result3.Value.Should().Be(NodeType.HumanTask);
+        result3.Value.Should().Be(NodeType.Decision);
         result4.IsSuccess.Should().BeTrue();
-        result4.Value.Should().Be(NodeType.Delay);
-        result5.IsSuccess.Should().BeTrue();
-        result5.Value.Should().Be(NodeType.Decision);
-        result6.IsSuccess.Should().BeTrue();
-        result6.Value.Should().Be(NodeType.DataTransformation);
+        result4.Value.Should().Be(NodeType.HumanTask);
+        result99.IsSuccess.Should().BeTrue();
+        result99.Value.Should().Be(NodeType.End);
     }
 
     [Fact]
@@ -210,40 +210,40 @@ public class SmartEnumTests
     public void NodeType_ImplicitOperator_ReturnsCorrectIntValue()
     {
         // ACT
+        int value0 = NodeType.Start;
         int value1 = NodeType.Api;
         int value2 = NodeType.Notification;
-        int value3 = NodeType.HumanTask;
-        int value4 = NodeType.Delay;
-        int value5 = NodeType.Decision;
-        int value6 = NodeType.DataTransformation;
+        int value3 = NodeType.Decision;
+        int value4 = NodeType.HumanTask;
+        int value99 = NodeType.End;
 
         // ASSERT
+        value0.Should().Be(0);
         value1.Should().Be(1);
         value2.Should().Be(2);
         value3.Should().Be(3);
         value4.Should().Be(4);
-        value5.Should().Be(5);
-        value6.Should().Be(6);
+        value99.Should().Be(99);
     }
 
     [Fact]
     public void NodeType_ToString_ReturnsCorrectName()
     {
         // ACT
+        var name0 = NodeType.Start.ToString();
         var name1 = NodeType.Api.ToString();
         var name2 = NodeType.Notification.ToString();
-        var name3 = NodeType.HumanTask.ToString();
-        var name4 = NodeType.Delay.ToString();
-        var name5 = NodeType.Decision.ToString();
-        var name6 = NodeType.DataTransformation.ToString();
+        var name3 = NodeType.Decision.ToString();
+        var name4 = NodeType.HumanTask.ToString();
+        var name99 = NodeType.End.ToString();
 
         // ASSERT
+        name0.Should().Be("Start");
         name1.Should().Be("Api");
         name2.Should().Be("Notification");
-        name3.Should().Be("HumanTask");
-        name4.Should().Be("Delay");
-        name5.Should().Be("Decision");
-        name6.Should().Be("DataTransformation");
+        name3.Should().Be("Decision");
+        name4.Should().Be("HumanTask");
+        name99.Should().Be("End");
     }
     #endregion
 }

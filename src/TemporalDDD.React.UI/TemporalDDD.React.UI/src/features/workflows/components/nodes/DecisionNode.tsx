@@ -40,8 +40,27 @@ export default function DecisionNode({ data }: NodeProps) {
         )}
       </div>
 
-      {/* Source Handle */}
-      <Handle type="source" position={Position.Bottom} className="w-3 h-3 !bg-orange-500" />
+      {/* Source Handles - True (left) and False (right) */}
+      <div className="flex justify-between px-3 pb-3">
+        <div className="flex items-center gap-2">
+          <Handle 
+            type="source" 
+            id="True" 
+            position={Position.Left} 
+            className="w-3 h-3 !bg-green-500"
+          />
+          <span className="text-xs font-medium text-green-700">True</span>
+        </div>
+        <div className="flex items-center gap-2">
+          <span className="text-xs font-medium text-red-700">False</span>
+          <Handle 
+            type="source" 
+            id="False" 
+            position={Position.Right} 
+            className="w-3 h-3 !bg-red-500"
+          />
+        </div>
+      </div>
     </div>
   );
 }

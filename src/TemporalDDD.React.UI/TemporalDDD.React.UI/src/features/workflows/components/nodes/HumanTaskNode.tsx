@@ -41,7 +41,7 @@ export default function HumanTaskNode({ data }: NodeProps) {
       </div>
 
       {/* Source Handle */}
-      <Handle type="source" position={Position.Bottom} className="w-3 h-3 !bg-yellow-500" />
+      <Handle type="source" id="Default" position={Position.Bottom} className="w-3 h-3 !bg-yellow-500" />
     </div>
   );
 }

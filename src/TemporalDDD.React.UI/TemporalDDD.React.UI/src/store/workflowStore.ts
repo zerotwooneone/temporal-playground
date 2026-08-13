@@ -47,9 +47,16 @@ export const useWorkflowStore = create<WorkflowStore>((set) => ({
       edges: applyEdgeChanges(changes, state.edges),
     })),
   onConnect: (connection) =>
-    set((state) => ({
-      edges: addEdge(connection, state.edges),
-    })),
+    set((state) => {
+      const edgeWithSourcePort = {
+        ...connection,
+        sourceHandle: connection.sourceHandle || 'Default',
+        data: {
+          sourcePort: connection.sourceHandle || 'Default'
+        }
+      };
+      return { edges: addEdge(edgeWithSourcePort, state.edges) };
+    }),
   setNodes: (nodes) => set({ nodes }),
   setEdges: (edges) => set({ edges }),
   setSelectedNodeIds: (ids) => set({ selectedNodeIds: ids }),
@@ -218,6 +225,12 @@ export const useWorkflowStore = create<WorkflowStore>((set) => ({
           } else if (node.nodeType === 2) {
             nodeType = 'notificationNode';
             position = { x: 250, y: 150 };
+          } else if (node.nodeType === 3) {
+            nodeType = 'decisionNode';
+            position = { x: 250, y: 150 };
+          } else if (node.nodeType === 4) {
+            nodeType = 'humanTaskNode';
+            position = { x: 250, y: 150 };
           } else {
             nodeType = 'custom';
             position = { x: 250, y: 150 };
@@ -246,6 +259,19 @@ export const useWorkflowStore = create<WorkflowStore>((set) => ({
             },
           };
         });
+
+        // Map transitions to edges with SourcePort support
+        if (workflowData.transitions && workflowData.transitions.length > 0) {
+          edges = workflowData.transitions.map((transition: any) => ({
+            id: `edge-${transition.sourceNodeId}-${transition.targetNodeId}`,
+            source: transition.sourceNodeId,
+            target: transition.targetNodeId,
+            sourceHandle: transition.sourcePort || 'Default',
+            data: {
+              sourcePort: transition.sourcePort || 'Default'
+            }
+          }));
+        }
       }
 
       return { nodes, edges, selectedNodeIds: [], selectedEdgeIds: [] };

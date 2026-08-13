@@ -5,6 +5,7 @@ public sealed class EndWorkflowNode : WorkflowNode
     private EndWorkflowNode(WorkflowNodeId id, string name, string? businessNotes)
         : base(id, NodeType.End, name, businessNotes)
     {
+        // End nodes have no output ports (terminal node)
     }
 
     // Internal constructor for infrastructure rehydration
@@ -16,6 +17,7 @@ public sealed class EndWorkflowNode : WorkflowNode
         : base(id, NodeType.End, name, businessNotes)
     {
         IsConfigured = isConfigured;
+        // End nodes have no output ports (terminal node)
     }
 
     public static EndWorkflowNode CreateStub(string name, string? businessNotes)

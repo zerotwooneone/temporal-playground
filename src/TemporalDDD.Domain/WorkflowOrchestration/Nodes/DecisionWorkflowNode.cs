@@ -9,6 +9,9 @@ public class DecisionWorkflowNode : WorkflowNode
     {
         // A Decision Node REQUIRES a Boolean input to evaluate
         _inputDefinitions.Add(new NodeInputDefinition("Condition", WorkflowDataType.Primitive.Boolean, true));
+        // Decision nodes have two output ports: True and False
+        _outputPorts.Add("True");
+        _outputPorts.Add("False");
     }
 
     // Internal constructor for infrastructure rehydration
@@ -22,11 +25,17 @@ public class DecisionWorkflowNode : WorkflowNode
         IsConfigured = isConfigured;
         // Rehydrate the fixed input definition
         _inputDefinitions.Add(new NodeInputDefinition("Condition", WorkflowDataType.Primitive.Boolean, true));
+        // Decision nodes have two output ports: True and False
+        _outputPorts.Add("True");
+        _outputPorts.Add("False");
     }
 
     public static DecisionWorkflowNode CreateStub(string name, string? businessNotes)
     {
-        return new DecisionWorkflowNode(WorkflowNodeId.New(), name, businessNotes);
+        var node = new DecisionWorkflowNode(WorkflowNodeId.New(), name, businessNotes);
+        node._outputPorts.Add("True");
+        node._outputPorts.Add("False");
+        return node;
     }
 
     public override void ValidateConfiguration()

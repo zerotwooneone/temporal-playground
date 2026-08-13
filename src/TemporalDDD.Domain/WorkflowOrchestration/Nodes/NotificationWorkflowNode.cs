@@ -9,6 +9,7 @@ public sealed class NotificationWorkflowNode : WorkflowNode
     private NotificationWorkflowNode(WorkflowNodeId id, string name, string? businessNotes)
         : base(id, NodeType.Notification, name, businessNotes)
     {
+        _outputPorts.Add("Default");
     }
 
     // Internal constructor for infrastructure rehydration
@@ -23,6 +24,7 @@ public sealed class NotificationWorkflowNode : WorkflowNode
         : base(id, NodeType.Notification, name, businessNotes)
     {
         IsConfigured = isConfigured;
+        _outputPorts.Add("Default");
         foreach (var (key, value) in technicalInputs)
         {
             _technicalInputs[key] = value;
@@ -42,6 +44,7 @@ public sealed class NotificationWorkflowNode : WorkflowNode
     public static NotificationWorkflowNode CreateStub(string name, string? businessNotes)
     {
         var node = new NotificationWorkflowNode(WorkflowNodeId.New(), name, businessNotes);
+        node._outputPorts.Add("Default");
         // Technical input definition: MessageTemplate (Required, String)
         node._inputDefinitions.Add(new NodeInputDefinition(MessageTemplateKey, WorkflowDataType.Primitive.String, true));
         // Outputs remain empty because it is a sink/pass-through

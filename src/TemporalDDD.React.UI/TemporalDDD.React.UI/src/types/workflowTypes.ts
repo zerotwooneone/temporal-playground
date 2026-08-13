@@ -46,3 +46,9 @@ export interface NodeData {
   contractMappingRequestMapping?: string;
   contractMappingResponseMapping?: string;
 }
+
+export interface WorkflowTransitionDto {
+  sourceNodeId: string;
+  targetNodeId: string;
+  sourcePort?: string;
+}

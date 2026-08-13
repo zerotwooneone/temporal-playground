@@ -82,7 +82,7 @@ public class WorkflowDefinitionRepository : IWorkflowDefinitionRepository
                 WorkflowDefinitionId = id,
                 SourceNodeId = transition.SourceNodeId.ToString(),
                 TargetNodeId = transition.TargetNodeId.ToString(),
-                BranchLabel = transition.BranchLabel
+                SourcePort = transition.SourcePort
             };
             _dbContext.WorkflowTransitions.Add(transitionDbo);
         }
@@ -107,7 +107,7 @@ public class WorkflowDefinitionRepository : IWorkflowDefinitionRepository
         {
             var sourceNodeId = WorkflowNodeId.Create(t.SourceNodeId).Value ?? throw new InvalidOperationException($"Invalid SourceNodeId in database: {t.SourceNodeId}");
             var targetNodeId = WorkflowNodeId.Create(t.TargetNodeId).Value ?? throw new InvalidOperationException($"Invalid TargetNodeId in database: {t.TargetNodeId}");
-            return new WorkflowTransition(sourceNodeId, targetNodeId, t.BranchLabel);
+            return new WorkflowTransition(sourceNodeId, targetNodeId, t.SourcePort);
         }).ToList();
 
         // Parse ClassName from database

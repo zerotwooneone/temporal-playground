@@ -16,6 +16,9 @@ public abstract class WorkflowNode
     protected readonly List<NodeOutputDefinition> _outputDefinitions = new();
     public IReadOnlyList<NodeOutputDefinition> OutputDefinitions => _outputDefinitions.AsReadOnly();
 
+    protected readonly List<string> _outputPorts = new();
+    public IReadOnlyList<string> OutputPorts => _outputPorts.AsReadOnly();
+
     private readonly List<ParameterBinding> _inputBindings = new();
     public IReadOnlyList<ParameterBinding> InputBindings => _inputBindings.AsReadOnly();
 

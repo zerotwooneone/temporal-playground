@@ -36,6 +36,7 @@ export default function WorkflowToolbar({ publicId }: WorkflowToolbarProps) {
         transitions: edges.map((edge) => ({
           sourceNodeId: edge.source,
           targetNodeId: edge.target,
+          sourcePort: edge.sourceHandle || edge.data?.sourcePort || 'Default',
         })),
       };
 

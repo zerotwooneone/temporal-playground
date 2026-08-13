@@ -12,6 +12,7 @@ public sealed class HumanTaskWorkflowNode : WorkflowNode
     private HumanTaskWorkflowNode(WorkflowNodeId id, string name, string? businessNotes)
         : base(id, NodeType.HumanTask, name, businessNotes)
     {
+        _outputPorts.Add("Default");
     }
 
     // Internal constructor for infrastructure rehydration
@@ -29,6 +30,7 @@ public sealed class HumanTaskWorkflowNode : WorkflowNode
         : base(id, NodeType.HumanTask, name, businessNotes)
     {
         IsConfigured = isConfigured;
+        _outputPorts.Add("Default");
         RequiredRole = requiredRole;
         SignalName = signalName;
         Timeout = timeout;
@@ -45,7 +47,9 @@ public sealed class HumanTaskWorkflowNode : WorkflowNode
 
     public static HumanTaskWorkflowNode CreateStub(string name, string? businessNotes)
     {
-        return new HumanTaskWorkflowNode(WorkflowNodeId.New(), name, businessNotes);
+        var node = new HumanTaskWorkflowNode(WorkflowNodeId.New(), name, businessNotes);
+        node._outputPorts.Add("Default");
+        return node;
     }
 
     public void ConfigureTechnicalDetails(TaskRole requiredRole, TemporalSignalName signalName, TaskTimeout timeout, string? uiFormSchema)

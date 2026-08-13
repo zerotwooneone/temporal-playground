@@ -53,18 +53,17 @@ public class WorkflowDefinitionDataMappingTests
         // ARRANGE
         var builder = new WorkflowBuilder();
         
-        // Create two parallel branches: Start -> NodeA -> End and Start -> NodeB
+        // Create a linear chain: Start -> NodeA -> NodeB -> End
         // API nodes now have fixed output: ApiResponse as JsonDocument
         builder.WithApiNode("NodeA", out var nodeAId);
         builder.WithApiNode("NodeB", out var nodeBId);
         
-        // Build DAG: Start -> NodeA -> End and Start -> NodeB -> End
+        // Build DAG: Start -> NodeA -> NodeB -> End
         builder.WithTransition("Start", "NodeA");
-        builder.WithTransition("NodeA", "End");
-        builder.WithTransition("Start", "NodeB");
+        builder.WithTransition("NodeA", "NodeB");
         builder.WithTransition("NodeB", "End");
         
-        // Try to map NodeB's output to NodeA's input (invalid - NodeB is not an ancestor of NodeA)
+        // Try to map NodeB's output to NodeA's input (invalid - NodeB is downstream, not an ancestor of NodeA)
         builder.WithDataMapping("NodeA", "EndpointUrl", "NodeB", "ApiResponse");
         
         var workflow = builder.ReadyForApproval().Build();

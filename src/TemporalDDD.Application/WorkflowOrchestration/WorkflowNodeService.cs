@@ -93,7 +93,7 @@ public class WorkflowNodeService : IWorkflowNodeService
             if (targetNodeIdResult.IsFailure)
                 throw new InvalidOperationException($"Invalid TargetNodeId: {targetNodeIdResult.Error}");
 
-            domainTransitions.Add(new WorkflowTransition(sourceNodeIdResult.Value, targetNodeIdResult.Value));
+            domainTransitions.Add(new WorkflowTransition(sourceNodeIdResult.Value, targetNodeIdResult.Value, transitionDto.SourcePort ?? "Default"));
         }
 
         // Update workflow with new nodes and transitions

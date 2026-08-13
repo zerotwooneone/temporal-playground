@@ -19,10 +19,10 @@ public class RoslynWorkflowCodeGeneratorService : IWorkflowCodeGeneratorService
         var nodes = workflowDefinition.Nodes.ToDictionary(n => n.Id);
         var transitions = workflowDefinition.Transitions.ToList();
 
-        // Build adjacency list for graph traversal
+        // Build adjacency list for graph traversal with SourcePort support
         var adjacency = transitions
             .GroupBy(t => t.SourceNodeId)
-            .ToDictionary(g => g.Key, g => g.Select(t => t.TargetNodeId).ToList());
+            .ToDictionary(g => g.Key, g => g.ToDictionary(t => t.SourcePort, t => t.TargetNodeId));
 
         // Find start node
         var startNode = workflowDefinition.Nodes.FirstOrDefault(n => n.Type == NodeType.Start);
@@ -136,7 +136,7 @@ public class RoslynWorkflowCodeGeneratorService : IWorkflowCodeGeneratorService
         StringBuilder sb,
         WorkflowNodeId nodeId,
         Dictionary<WorkflowNodeId, WorkflowNode> nodes,
-        Dictionary<WorkflowNodeId, List<WorkflowNodeId>> adjacency,
+        Dictionary<WorkflowNodeId, Dictionary<string, WorkflowNodeId>> adjacency,
         HashSet<WorkflowNodeId> visited,
         int indentLevel)
     {
@@ -184,7 +184,17 @@ public class RoslynWorkflowCodeGeneratorService : IWorkflowCodeGeneratorService
                 }
                 break;
 
-            case 3: // HumanTask
+            case 3: // Decision
+                {
+                    var decisionNode = (DecisionWorkflowNode)currentNode;
+                    var nodeIdStr = nodeId.Value.ToString();
+                    sb.AppendLine($"{indent}var decisionResult_{SanitizeIdentifier(nodeIdStr)} = await Workflow.ExecuteActivityAsync(");
+                    sb.AppendLine($"{indent}    (IWorkflowExecutionActivities act) => act.EvaluateDecisionAsync(\"{nodeIdStr}\"),");
+                    sb.AppendLine($"{indent}    new ActivityOptions {{ ScheduleToCloseTimeout = TimeSpan.FromMinutes(5) }});");
+                }
+                break;
+
+            case 4: // HumanTask
                 {
                     var humanTaskNode = (HumanTaskWorkflowNode)currentNode;
                     var signalName = humanTaskNode.SignalName.Value;
@@ -202,29 +212,50 @@ public class RoslynWorkflowCodeGeneratorService : IWorkflowCodeGeneratorService
                 throw new InvalidOperationException($"Unknown node type: {currentNode.Type}");
         }
 
-        // Get outgoing transitions and generate next nodes
-        if (adjacency.TryGetValue(nodeId, out var nextNodes))
+        // Get outgoing transitions and generate next nodes based on SourcePort
+        if (adjacency.TryGetValue(nodeId, out var portTransitions))
         {
-            if (nextNodes.Count > 1)
+            if (currentNode.Type == NodeType.Decision)
             {
-                // Parallel execution - generate Task.WhenAll
-                sb.AppendLine($"{indent}await Task.WhenAll(");
-                for (int i = 0; i < nextNodes.Count; i++)
+                // Decision node: generate if/else based on SourcePort
+                var nodeIdStr = nodeId.Value.ToString();
+                sb.AppendLine($"{indent}if (decisionResult_{SanitizeIdentifier(nodeIdStr)})");
+                sb.AppendLine($"{indent}{{");
+                if (portTransitions.TryGetValue("True", out var trueTargetId))
                 {
-                    var nextId = nextNodes[i];
+                    GenerateNodeExecution(sb, trueTargetId, nodes, adjacency, visited, indentLevel + 1);
+                }
+                sb.AppendLine($"{indent}}}");
+                sb.AppendLine($"{indent}else");
+                sb.AppendLine($"{indent}{{");
+                if (portTransitions.TryGetValue("False", out var falseTargetId))
+                {
+                    GenerateNodeExecution(sb, falseTargetId, nodes, adjacency, visited, indentLevel + 1);
+                }
+                sb.AppendLine($"{indent}}}");
+            }
+            else if (portTransitions.Count > 1)
+            {
+                // Parallel execution for nodes with multiple Default ports (should not happen with current validation)
+                sb.AppendLine($"{indent}await Task.WhenAll(");
+                var portList = portTransitions.ToList();
+                for (int i = 0; i < portList.Count; i++)
+                {
+                    var nextId = portList[i].Value;
                     sb.AppendLine($"{indent}    async () =>");
                     sb.AppendLine($"{indent}    {{");
                     GenerateNodeExecution(sb, nextId, nodes, adjacency, visited, indentLevel + 2);
                     sb.AppendLine($"{indent}    }}");
-                    if (i < nextNodes.Count - 1)
+                    if (i < portList.Count - 1)
                         sb.AppendLine($"{indent},");
                 }
                 sb.AppendLine($"{indent});");
             }
-            else if (nextNodes.Count == 1)
+            else if (portTransitions.Count == 1)
             {
-                // Sequential execution
-                GenerateNodeExecution(sb, nextNodes[0], nodes, adjacency, visited, indentLevel);
+                // Sequential execution for linear nodes
+                var nextId = portTransitions.Values.First();
+                GenerateNodeExecution(sb, nextId, nodes, adjacency, visited, indentLevel);
             }
         }
     }

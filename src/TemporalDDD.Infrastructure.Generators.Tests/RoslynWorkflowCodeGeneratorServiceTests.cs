@@ -41,9 +41,9 @@ public class RoslynWorkflowCodeGeneratorServiceTests
         // Create transitions: Start -> Api -> HumanTask -> End
         var transitions = new List<WorkflowTransition>
         {
-            new WorkflowTransition(startNode.Id, apiNode.Id),
-            new WorkflowTransition(apiNode.Id, humanTaskNode.Id),
-            new WorkflowTransition(humanTaskNode.Id, endNode.Id)
+            new WorkflowTransition(startNode.Id, apiNode.Id, "Default"),
+            new WorkflowTransition(apiNode.Id, humanTaskNode.Id, "Default"),
+            new WorkflowTransition(humanTaskNode.Id, endNode.Id, "Default")
         };
 
         // Create workflow definition with nodes and transitions
@@ -177,7 +177,7 @@ public class RoslynWorkflowCodeGeneratorServiceTests
 
         var transitions = new List<WorkflowTransition>
         {
-            new WorkflowTransition(apiNode.Id, endNode.Id)
+            new WorkflowTransition(apiNode.Id, endNode.Id, "Default")
         };
 
         var workflowDefinition = new WorkflowDefinition(
@@ -235,74 +235,6 @@ public class RoslynWorkflowCodeGeneratorServiceTests
     #endregion
 
     [Fact]
-    public async Task GenerateWorkflowClassAsync_WithParallelBranches_GeneratesTaskWhenAll()
-    {
-        // ARRANGE
-        var service = new RoslynWorkflowCodeGeneratorService();
-        var userId = UserId.New();
-        var publicId = WorkflowDefinitionPublicId.New();
-        var className = WorkflowClassName.Create("ParallelWorkflow", publicId).Value;
-        
-        // Create nodes with parallel branches: Start -> (API1, API2) -> End
-        var startNode = StartWorkflowNode.CreateStub("Start", null);
-        var apiNode1 = ApiWorkflowNode.CreateStub("API 1", null);
-        var apiNode2 = ApiWorkflowNode.CreateStub("API 2", null);
-        var endNode = EndWorkflowNode.CreateStub("End", null);
-
-        // Configure API nodes
-        apiNode1.SetTechnicalInput(ApiWorkflowNode.EndpointUrlKey, new InputValueSource.Fixed("https://api1.example.com"));
-        apiNode1.SetTechnicalInput(ApiWorkflowNode.AuthTokenKey, new InputValueSource.Fixed("token1"));
-        apiNode1.ConfigureValueObjects(
-            RetryPolicy.Create(3, 2).Value,
-            ContractMapping.Create(false, null, null, null).Value);
-        apiNode2.SetTechnicalInput(ApiWorkflowNode.EndpointUrlKey, new InputValueSource.Fixed("https://api2.example.com"));
-        apiNode2.SetTechnicalInput(ApiWorkflowNode.AuthTokenKey, new InputValueSource.Fixed("token2"));
-        apiNode2.ConfigureValueObjects(
-            RetryPolicy.Create(3, 2).Value,
-            ContractMapping.Create(false, null, null, null).Value);
-
-        // Create transitions with parallel branches
-        var transitions = new List<WorkflowTransition>
-        {
-            new WorkflowTransition(startNode.Id, apiNode1.Id),
-            new WorkflowTransition(startNode.Id, apiNode2.Id),
-            new WorkflowTransition(apiNode1.Id, endNode.Id),
-            new WorkflowTransition(apiNode2.Id, endNode.Id)
-        };
-
-        var workflowDefinition = new WorkflowDefinition(
-            WorkflowDefinitionId.New(),
-            publicId,
-            userId,
-            "Parallel Workflow",
-            className,
-            WorkflowStatus.Draft,
-            "{}",
-            new List<WorkflowNode> { startNode, apiNode1, apiNode2, endNode },
-            transitions);
-
-        var tempDirectory = Path.Combine(Path.GetTempPath(), Guid.NewGuid().ToString());
-        Directory.CreateDirectory(tempDirectory);
-
-        try
-        {
-            // ACT
-            var generatedCode = await service.GenerateWorkflowClassAsync(workflowDefinition, tempDirectory);
-
-            // ASSERT
-            Assert.Contains("Task.WhenAll", generatedCode);
-        }
-        finally
-        {
-            // Cleanup
-            if (Directory.Exists(tempDirectory))
-            {
-                Directory.Delete(tempDirectory, true);
-            }
-        }
-    }
-
-    [Fact]
     public async Task GenerateWorkflowClassAsync_WithApiNode_GeneratesExecuteApiCall()
     {
         // ARRANGE
@@ -323,8 +255,8 @@ public class RoslynWorkflowCodeGeneratorServiceTests
 
         var transitions = new List<WorkflowTransition>
         {
-            new WorkflowTransition(startNode.Id, apiNode.Id),
-            new WorkflowTransition(apiNode.Id, endNode.Id)
+            new WorkflowTransition(startNode.Id, apiNode.Id, "Default"),
+            new WorkflowTransition(apiNode.Id, endNode.Id, "Default")
         };
 
         var workflowDefinition = new WorkflowDefinition(
@@ -377,8 +309,8 @@ public class RoslynWorkflowCodeGeneratorServiceTests
 
         var transitions = new List<WorkflowTransition>
         {
-            new WorkflowTransition(startNode.Id, notificationNode.Id),
-            new WorkflowTransition(notificationNode.Id, endNode.Id)
+            new WorkflowTransition(startNode.Id, notificationNode.Id, "Default"),
+            new WorkflowTransition(notificationNode.Id, endNode.Id, "Default")
         };
 
         var workflowDefinition = new WorkflowDefinition(
@@ -428,7 +360,7 @@ public class RoslynWorkflowCodeGeneratorServiceTests
 
         var transitions = new List<WorkflowTransition>
         {
-            new WorkflowTransition(startNode.Id, endNode.Id)
+            new WorkflowTransition(startNode.Id, endNode.Id, "Default")
         };
 
         var workflowDefinition = new WorkflowDefinition(

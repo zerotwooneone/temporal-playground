@@ -131,13 +131,13 @@ public class WorkflowBuilder
         var sourceId = _nodes[sourceReference];
         var targetId = _nodes[targetReference];
         
-        _transitions.Add(new WorkflowTransition(sourceId, targetId, branchLabel));
+        _transitions.Add(new WorkflowTransition(sourceId, targetId, branchLabel ?? "Default"));
         return this;
     }
 
     public WorkflowBuilder WithTransition(WorkflowNodeId sourceId, WorkflowNodeId targetId, string? branchLabel = null)
     {
-        _transitions.Add(new WorkflowTransition(sourceId, targetId, branchLabel));
+        _transitions.Add(new WorkflowTransition(sourceId, targetId, branchLabel ?? "Default"));
         return this;
     }
 

@@ -10,7 +10,8 @@ public record UpdateWorkflowNodesInput(
 
 public record WorkflowTransitionDto(
     string SourceNodeId,
-    string TargetNodeId);
+    string TargetNodeId,
+    string? SourcePort = null);
 
 public record WorkflowNodeDto(
     string Id,

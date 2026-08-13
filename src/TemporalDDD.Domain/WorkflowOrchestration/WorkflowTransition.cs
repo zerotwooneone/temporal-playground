@@ -1,4 +1,4 @@
 namespace TemporalDDD.Domain.WorkflowOrchestration;
 
-// Add an optional BranchLabel (e.g., "True", "False")
-public sealed record WorkflowTransition(WorkflowNodeId SourceNodeId, WorkflowNodeId TargetNodeId, string? BranchLabel = null);
+// Port/Terminal Model: Every transition explicitly specifies the SourcePort on the source node
+public sealed record WorkflowTransition(WorkflowNodeId SourceNodeId, WorkflowNodeId TargetNodeId, string SourcePort);

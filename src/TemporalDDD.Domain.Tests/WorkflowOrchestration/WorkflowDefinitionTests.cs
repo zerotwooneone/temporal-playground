@@ -151,8 +151,8 @@ public class WorkflowDefinitionTests
         var endNode = workflow.Nodes.OfType<EndWorkflowNode>().First();
         var transitions = new List<WorkflowTransition>
         {
-            new WorkflowTransition(startNode.Id, apiNode.Id),
-            new WorkflowTransition(apiNode.Id, endNode.Id)
+            new WorkflowTransition(startNode.Id, apiNode.Id, "Default"),
+            new WorkflowTransition(apiNode.Id, endNode.Id, "Default")
         };
         workflow.UpdateNodes(workflow.Nodes.ToList(), transitions, null);
         
@@ -332,7 +332,7 @@ public class WorkflowDefinitionTests
         };
         var newTransitions = new List<WorkflowTransition>
         {
-            new WorkflowTransition(newNodes[0].Id, newNodes[1].Id)
+            new WorkflowTransition(newNodes[0].Id, newNodes[1].Id, "Default")
         };
 
         // ACT

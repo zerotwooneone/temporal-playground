@@ -13,6 +13,7 @@ public sealed class ApiWorkflowNode : WorkflowNode, IActivityWorkflowNode
     private ApiWorkflowNode(WorkflowNodeId id, string name, string? businessNotes)
         : base(id, NodeType.Api, name, businessNotes)
     {
+        _outputPorts.Add("Default");
     }
 
     // Internal constructor for infrastructure rehydration
@@ -29,6 +30,7 @@ public sealed class ApiWorkflowNode : WorkflowNode, IActivityWorkflowNode
         : base(id, NodeType.Api, name, businessNotes)
     {
         IsConfigured = isConfigured;
+        _outputPorts.Add("Default");
         foreach (var (key, value) in technicalInputs)
         {
             _technicalInputs[key] = value;
@@ -50,6 +52,7 @@ public sealed class ApiWorkflowNode : WorkflowNode, IActivityWorkflowNode
     public static ApiWorkflowNode CreateStub(string name, string? businessNotes)
     {
         var node = new ApiWorkflowNode(WorkflowNodeId.New(), name, businessNotes);
+        node._outputPorts.Add("Default");
         // Technical input definitions: EndpointUrl (Required, String) and AuthToken (Optional, String)
         node._inputDefinitions.Add(new NodeInputDefinition(EndpointUrlKey, WorkflowDataType.Primitive.String, true));
         node._inputDefinitions.Add(new NodeInputDefinition(AuthTokenKey, WorkflowDataType.Primitive.String, false));
