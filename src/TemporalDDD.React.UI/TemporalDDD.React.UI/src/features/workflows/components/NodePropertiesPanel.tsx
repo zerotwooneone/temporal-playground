@@ -161,7 +161,7 @@ function TechnicalInputConfig({
                   $type: 'Mapped', 
                   Source: { 
                     sourceNodeId: e.target.value, 
-                    sourcePath: inputValue.$type === 'Mapped' ? inputValue.Source.sourcePath : '' 
+                    sourcePath: '' 
                   } 
                 })
               }
@@ -175,8 +175,7 @@ function TechnicalInputConfig({
           </div>
           <div>
             <label className="block text-xs font-medium text-gray-700 mb-1">Source Property</label>
-            <input
-              type="text"
+            <select
               value={inputValue.$type === 'Mapped' ? inputValue.Source.sourcePath : ''}
               onChange={(e) => 
                 onUpdate({ 
@@ -187,9 +186,18 @@ function TechnicalInputConfig({
                   } 
                 })
               }
-              className="w-full px-2 py-1 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500"
-              placeholder="e.g., OutputData"
-            />
+              disabled={inputValue.$type !== 'Mapped' || !inputValue.Source.sourceNodeId}
+              className="w-full px-2 py-1 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500 disabled:bg-gray-100 disabled:cursor-not-allowed"
+            >
+              <option value="">Select source property...</option>
+              {inputValue.$type === 'Mapped' && inputValue.Source.sourceNodeId && (() => {
+                const sourceNode = allNodes.find(n => n.id === inputValue.Source.sourceNodeId);
+                const outputDefinitions = (sourceNode?.data.outputDefinitions as NodeOutputDefinition[]) || [];
+                return outputDefinitions.map((output, idx) => (
+                  <option key={idx} value={output.propertyName}>{output.propertyName}</option>
+                ));
+              })()}
+            </select>
           </div>
         </div>
       )}
