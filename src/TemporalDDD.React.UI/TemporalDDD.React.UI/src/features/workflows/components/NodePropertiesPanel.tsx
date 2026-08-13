@@ -224,6 +224,10 @@ export default function NodePropertiesPanel() {
     (selectedNode?.data.inputBindings as ParameterBinding[]) || []
   );
 
+  // Hooks for Start node output management (always called to satisfy Rules of Hooks)
+  const [newOutputName, setNewOutputName] = useState('');
+  const [newOutputType, setNewOutputType] = useState<PrimitiveType>('String');
+
   const handleClose = () => setSelectedNodeIds([]);
 
   // API Node Form
@@ -352,8 +356,6 @@ export default function NodePropertiesPanel() {
     const nodeLabel = nodeType === 0 ? 'Start Node' : 'End Node';
     const buttonColor = nodeType === 0 ? 'green' : 'red';
     const outputDefinitions = (selectedNode?.data.outputDefinitions as NodeOutputDefinition[]) || [];
-    const [newOutputName, setNewOutputName] = useState('');
-    const [newOutputType, setNewOutputType] = useState<PrimitiveType>('String');
 
     const handleAddOutput = () => {
       if (newOutputName.trim() && selectedNodeId) {
