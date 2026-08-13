@@ -49,7 +49,8 @@ public class WorkflowNodeConfiguration : IEntityTypeConfiguration<WorkflowNodeDb
             .HasValue<StartWorkflowNodeDbo>(0)  // NodeType.Start
             .HasValue<ApiWorkflowNodeDbo>(1)  // NodeType.Api
             .HasValue<NotificationWorkflowNodeDbo>(2)  // NodeType.Notification
-            .HasValue<HumanTaskWorkflowNodeDbo>(3)  // NodeType.HumanTask
+            .HasValue<DecisionWorkflowNodeDbo>(3)  // NodeType.Decision
+            .HasValue<HumanTaskWorkflowNodeDbo>(4)  // NodeType.HumanTask
             .HasValue<EndWorkflowNodeDbo>(99);  // NodeType.End
     }
 }
@@ -91,6 +92,15 @@ public class NotificationWorkflowNodeConfiguration : IEntityTypeConfiguration<No
         // Configure unified technical inputs as JSON
         builder.Property(x => x.TechnicalInputsJson)
             .IsRequired(false);
+    }
+}
+
+public class DecisionWorkflowNodeConfiguration : IEntityTypeConfiguration<DecisionWorkflowNodeDbo>
+{
+    public void Configure(EntityTypeBuilder<DecisionWorkflowNodeDbo> builder)
+    {
+        // DecisionWorkflowNodeDbo currently has no additional properties beyond base
+        // This configuration is kept for future extensibility
     }
 }
 

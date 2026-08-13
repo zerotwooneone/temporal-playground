@@ -144,10 +144,14 @@ public class WorkflowDefinitionRepository : IWorkflowDefinitionRepository
             throw new InvalidOperationException($"Invalid NodeType in database: {dbo.NodeType}. {nodeTypeResult.Error}");
         var nodeType = nodeTypeResult.Value;
 
-        // Deserialize JSON columns
-        var inputDefinitions = JsonSerializer.Deserialize<List<NodeInputDefinition>>(dbo.InputDefinitionsJson, GetJsonOptions()) ?? new List<NodeInputDefinition>();
-        var outputDefinitions = JsonSerializer.Deserialize<List<NodeOutputDefinition>>(dbo.OutputDefinitionsJson, GetJsonOptions()) ?? new List<NodeOutputDefinition>();
+        // Deserialize JSON columns using DTOs
+        var inputDefinitionDtos = JsonSerializer.Deserialize<List<NodeInputDefinitionDto>>(dbo.InputDefinitionsJson, GetJsonOptions()) ?? new List<NodeInputDefinitionDto>();
+        var outputDefinitionDtos = JsonSerializer.Deserialize<List<NodeOutputDefinitionDto>>(dbo.OutputDefinitionsJson, GetJsonOptions()) ?? new List<NodeOutputDefinitionDto>();
         var inputBindings = JsonSerializer.Deserialize<List<ParameterBinding>>(dbo.InputBindingsJson, GetJsonOptions()) ?? new List<ParameterBinding>();
+
+        // Convert DTOs to domain objects
+        var inputDefinitions = inputDefinitionDtos.Select(NodeContractsDtoMapper.ToDomain).ToList();
+        var outputDefinitions = outputDefinitionDtos.Select(NodeContractsDtoMapper.ToDomain).ToList();
 
         return nodeType switch
         {
@@ -332,8 +336,8 @@ public class WorkflowDefinitionRepository : IWorkflowDefinitionRepository
                 Name = startNode.Name,
                 BusinessNotes = startNode.BusinessNotes,
                 IsConfigured = startNode.IsConfigured,
-                InputDefinitionsJson = JsonSerializer.Serialize(startNode.InputDefinitions, GetJsonOptions()),
-                OutputDefinitionsJson = JsonSerializer.Serialize(startNode.OutputDefinitions, GetJsonOptions()),
+                InputDefinitionsJson = JsonSerializer.Serialize(startNode.InputDefinitions.Select(NodeContractsDtoMapper.ToDto).ToList(), GetJsonOptions()),
+                OutputDefinitionsJson = JsonSerializer.Serialize(startNode.OutputDefinitions.Select(NodeContractsDtoMapper.ToDto).ToList(), GetJsonOptions()),
                 InputBindingsJson = JsonSerializer.Serialize(startNode.InputBindings, GetJsonOptions())
             },
             EndWorkflowNode endNode => new EndWorkflowNodeDbo
@@ -344,8 +348,8 @@ public class WorkflowDefinitionRepository : IWorkflowDefinitionRepository
                 Name = endNode.Name,
                 BusinessNotes = endNode.BusinessNotes,
                 IsConfigured = endNode.IsConfigured,
-                InputDefinitionsJson = JsonSerializer.Serialize(endNode.InputDefinitions, GetJsonOptions()),
-                OutputDefinitionsJson = JsonSerializer.Serialize(endNode.OutputDefinitions, GetJsonOptions()),
+                InputDefinitionsJson = JsonSerializer.Serialize(endNode.InputDefinitions.Select(NodeContractsDtoMapper.ToDto).ToList(), GetJsonOptions()),
+                OutputDefinitionsJson = JsonSerializer.Serialize(endNode.OutputDefinitions.Select(NodeContractsDtoMapper.ToDto).ToList(), GetJsonOptions()),
                 InputBindingsJson = JsonSerializer.Serialize(endNode.InputBindings, GetJsonOptions())
             },
             ApiWorkflowNode apiNode => MapApiNodeToDbo(apiNode, workflowDefinitionId),
@@ -373,8 +377,8 @@ public class WorkflowDefinitionRepository : IWorkflowDefinitionRepository
             ContractMappingQueryParameters = node.ContractMapping?.QueryParameters,
             ContractMappingRequestMapping = node.ContractMapping?.RequestMapping,
             ContractMappingResponseMapping = node.ContractMapping?.ResponseMapping,
-            InputDefinitionsJson = JsonSerializer.Serialize(node.InputDefinitions, GetJsonOptions()),
-            OutputDefinitionsJson = JsonSerializer.Serialize(node.OutputDefinitions, GetJsonOptions()),
+            InputDefinitionsJson = JsonSerializer.Serialize(node.InputDefinitions.Select(NodeContractsDtoMapper.ToDto).ToList(), GetJsonOptions()),
+            OutputDefinitionsJson = JsonSerializer.Serialize(node.OutputDefinitions.Select(NodeContractsDtoMapper.ToDto).ToList(), GetJsonOptions()),
             InputBindingsJson = JsonSerializer.Serialize(node.InputBindings, GetJsonOptions())
         };
     }
@@ -390,8 +394,8 @@ public class WorkflowDefinitionRepository : IWorkflowDefinitionRepository
             BusinessNotes = node.BusinessNotes,
             IsConfigured = node.IsConfigured,
             TechnicalInputsJson = node.TechnicalInputs.Any() ? JsonSerializer.Serialize(node.TechnicalInputs, GetJsonOptions()) : null,
-            InputDefinitionsJson = JsonSerializer.Serialize(node.InputDefinitions, GetJsonOptions()),
-            OutputDefinitionsJson = JsonSerializer.Serialize(node.OutputDefinitions, GetJsonOptions()),
+            InputDefinitionsJson = JsonSerializer.Serialize(node.InputDefinitions.Select(NodeContractsDtoMapper.ToDto).ToList(), GetJsonOptions()),
+            OutputDefinitionsJson = JsonSerializer.Serialize(node.OutputDefinitions.Select(NodeContractsDtoMapper.ToDto).ToList(), GetJsonOptions()),
             InputBindingsJson = JsonSerializer.Serialize(node.InputBindings, GetJsonOptions())
         };
     }
@@ -410,8 +414,8 @@ public class WorkflowDefinitionRepository : IWorkflowDefinitionRepository
             SignalName = node.SignalName?.Value,
             TimeoutInMinutes = node.Timeout?.TimeoutInMinutes,
             UIFormSchema = node.UIFormSchema,
-            InputDefinitionsJson = JsonSerializer.Serialize(node.InputDefinitions, GetJsonOptions()),
-            OutputDefinitionsJson = JsonSerializer.Serialize(node.OutputDefinitions, GetJsonOptions()),
+            InputDefinitionsJson = JsonSerializer.Serialize(node.InputDefinitions.Select(NodeContractsDtoMapper.ToDto).ToList(), GetJsonOptions()),
+            OutputDefinitionsJson = JsonSerializer.Serialize(node.OutputDefinitions.Select(NodeContractsDtoMapper.ToDto).ToList(), GetJsonOptions()),
             InputBindingsJson = JsonSerializer.Serialize(node.InputBindings, GetJsonOptions())
         };
     }
@@ -426,8 +430,8 @@ public class WorkflowDefinitionRepository : IWorkflowDefinitionRepository
             Name = node.Name,
             BusinessNotes = node.BusinessNotes,
             IsConfigured = node.IsConfigured,
-            InputDefinitionsJson = JsonSerializer.Serialize(node.InputDefinitions, GetJsonOptions()),
-            OutputDefinitionsJson = JsonSerializer.Serialize(node.OutputDefinitions, GetJsonOptions()),
+            InputDefinitionsJson = JsonSerializer.Serialize(node.InputDefinitions.Select(NodeContractsDtoMapper.ToDto).ToList(), GetJsonOptions()),
+            OutputDefinitionsJson = JsonSerializer.Serialize(node.OutputDefinitions.Select(NodeContractsDtoMapper.ToDto).ToList(), GetJsonOptions()),
             InputBindingsJson = JsonSerializer.Serialize(node.InputBindings, GetJsonOptions())
         };
     }

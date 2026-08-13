@@ -7,11 +7,11 @@ public abstract record WorkflowDataType
     {
         public int Value { get; }
         public string Name { get; }
-        
-        private Primitive(int value, string name) 
-        { 
-            Value = value; 
-            Name = name; 
+
+        private Primitive(int value, string name)
+        {
+            Value = value;
+            Name = name;
         }
 
         public static readonly Primitive String = new(1, "String");

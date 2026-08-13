@@ -16,13 +16,11 @@ public sealed record NodeType
     public static readonly NodeType Start = new(0, "Start");
     public static readonly NodeType Api = new(1, "Api");
     public static readonly NodeType Notification = new(2, "Notification");
-    public static readonly NodeType HumanTask = new(3, "HumanTask");
-    public static readonly NodeType Delay = new(4, "Delay");
-    public static readonly NodeType Decision = new(5, "Decision");
-    public static readonly NodeType DataTransformation = new(6, "DataTransformation");
+    public static readonly NodeType Decision = new(3, "Decision");
+    public static readonly NodeType HumanTask = new(4, "HumanTask");
     public static readonly NodeType End = new(99, "End");
 
-    private static readonly NodeType[] AllTypes = { Start, Api, Notification, HumanTask, Delay, Decision, DataTransformation, End };
+    private static readonly NodeType[] AllTypes = { Start, Api, Notification, Decision, HumanTask, End };
 
     public static Result<NodeType> FromValue(int value)
     {

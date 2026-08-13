@@ -11,15 +11,15 @@ public class PolymorphicTypeResolver : DefaultJsonTypeInfoResolver
     {
         JsonTypeInfo typeInfo = base.GetTypeInfo(type, options);
 
-        if (type == typeof(WorkflowDataType))
+        if (type == typeof(WorkflowDataTypeDto))
         {
             typeInfo.PolymorphismOptions = new JsonPolymorphismOptions
             {
-                TypeDiscriminatorPropertyName = "$type",
+                TypeDiscriminatorPropertyName = "TypeDiscriminator",
                 DerivedTypes =
                 {
-                    new JsonDerivedType(typeof(WorkflowDataType.Primitive), "Primitive"),
-                    new JsonDerivedType(typeof(WorkflowDataType.Semantic), "Semantic")
+                    new JsonDerivedType(typeof(WorkflowDataTypeDto.PrimitiveDto), "Primitive"),
+                    new JsonDerivedType(typeof(WorkflowDataTypeDto.SemanticDto), "Semantic")
                 }
             };
         }
