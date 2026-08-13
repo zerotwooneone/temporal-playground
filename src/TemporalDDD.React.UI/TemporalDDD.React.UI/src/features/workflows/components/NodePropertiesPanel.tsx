@@ -4,7 +4,7 @@ import { z } from 'zod';
 import { useWorkflowStore } from '../../../store/workflowStore';
 import { X, Plus, Trash2 } from 'lucide-react';
 import { useEffect, useState } from 'react';
-import type { ParameterBinding, NodeInputDefinition, NodeOutputDefinition, InputValueSource, PrimitiveType } from '../../../types/workflowTypes';
+import type { NodeInputDefinition, NodeOutputDefinition, InputValueSource, PrimitiveType } from '../../../types/workflowTypes';
 
 // API Node Schema
 const apiNodeSchema = z.object({
@@ -215,18 +215,51 @@ function TechnicalInputConfig({
 }
 
 export default function NodePropertiesPanel() {
-  const { selectedNodeIds, nodes, updateNodeData, updateNodeInputBindings, setSelectedNodeIds } = useWorkflowStore();
+  const { selectedNodeIds, nodes, updateNodeData, setSelectedNodeIds } = useWorkflowStore();
   const selectedNodeId = selectedNodeIds[0] || null;
   const selectedNode = nodes.find((n) => n.id === selectedNodeId);
 
   const nodeType = selectedNode?.data.nodeType as number | undefined;
-  const [inputBindings, setInputBindings] = useState<ParameterBinding[]>(
-    (selectedNode?.data.inputBindings as ParameterBinding[]) || []
-  );
 
   // Hooks for Start node output management (always called to satisfy Rules of Hooks)
   const [newOutputName, setNewOutputName] = useState('');
   const [newOutputType, setNewOutputType] = useState<PrimitiveType>('String');
+
+  // Form hooks (always called to satisfy Rules of Hooks)
+  const decisionForm = useForm<BasicNodeFormData>({
+    resolver: zodResolver(basicNodeSchema),
+    defaultValues: {
+      name: '',
+      businessNotes: '',
+    },
+  });
+
+  const humanTaskForm = useForm<BasicNodeFormData>({
+    resolver: zodResolver(basicNodeSchema),
+    defaultValues: {
+      name: '',
+      businessNotes: '',
+    },
+  });
+
+  // Reset forms when selected node changes
+  useEffect(() => {
+    if (selectedNode && nodeType === 3) {
+      decisionForm.reset({
+        name: (selectedNode.data.name as string) || '',
+        businessNotes: (selectedNode.data.businessNotes as string) || '',
+      });
+    }
+  }, [selectedNode, nodeType, decisionForm]);
+
+  useEffect(() => {
+    if (selectedNode && nodeType === 4) {
+      humanTaskForm.reset({
+        name: (selectedNode.data.name as string) || '',
+        businessNotes: (selectedNode.data.businessNotes as string) || '',
+      });
+    }
+  }, [selectedNode, nodeType, humanTaskForm]);
 
   const handleClose = () => setSelectedNodeIds([]);
 
@@ -281,42 +314,6 @@ export default function NodePropertiesPanel() {
       updateNodeData(selectedNodeId, { ...data, isConfigured: true });
     }
   };
-
-  const addInputBinding = () => {
-    const newBinding: ParameterBinding = {
-      targetInputProperty: '',
-      source: { sourceNodeId: '', sourcePath: '' }
-    };
-    setInputBindings([...inputBindings, newBinding]);
-  };
-
-  const removeInputBinding = (index: number) => {
-    const updated = inputBindings.filter((_, i) => i !== index);
-    setInputBindings(updated);
-    if (selectedNodeId) {
-      updateNodeInputBindings(selectedNodeId, updated);
-    }
-  };
-
-  const updateInputBinding = (index: number, field: keyof ParameterBinding, value: any) => {
-    const updated = [...inputBindings];
-    if (field === 'source') {
-      updated[index].source = value;
-    } else {
-      updated[index][field] = value;
-    }
-    setInputBindings(updated);
-    if (selectedNodeId) {
-      updateNodeInputBindings(selectedNodeId, updated);
-    }
-  };
-
-  // Sync inputBindings when selected node changes
-  useEffect(() => {
-    if (selectedNode) {
-      setInputBindings((selectedNode.data.inputBindings as ParameterBinding[]) || []);
-    }
-  }, [selectedNode]);
 
   // Start/End Node Form
   const basicForm = useForm<BasicNodeFormData>({
@@ -688,6 +685,18 @@ export default function NodePropertiesPanel() {
 
   // Decision Node Form (nodeType === 3)
   if (nodeType === 3) {
+    const decisionOnSubmit = (data: BasicNodeFormData) => {
+      if (selectedNodeId) {
+        updateNodeData(selectedNodeId, { ...data, isConfigured: true });
+      }
+    };
+
+    const {
+      register: decisionRegister,
+      handleSubmit: decisionHandleSubmit,
+      formState: { errors: decisionErrors },
+    } = decisionForm;
+
     return (
       <div className="fixed right-0 top-0 h-full w-96 bg-white border-l border-gray-200 shadow-xl z-10 overflow-y-auto">
         <div className="p-4 border-b border-gray-200 flex items-center justify-between">
@@ -700,98 +709,23 @@ export default function NodePropertiesPanel() {
           </button>
         </div>
 
-        <div className="p-4 space-y-4">
+        <form onSubmit={decisionHandleSubmit(decisionOnSubmit)} className="p-4 space-y-4">
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">Name</label>
             <input
-              value={(selectedNode?.data.name as string) || ''}
-              readOnly
-              className="w-full px-3 py-2 border border-gray-300 rounded-md bg-gray-50 text-gray-600"
-            />
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Business Notes</label>
-            <textarea
-              value={(selectedNode?.data.businessNotes as string) || ''}
-              readOnly
-              rows={4}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md bg-gray-50 text-gray-600"
-            />
-          </div>
-
-          <div className="border-t border-gray-200 pt-4 mt-4">
-            <ContractBadges
-              inputs={(selectedNode?.data.inputDefinitions as NodeInputDefinition[]) || []}
-              outputs={(selectedNode?.data.outputDefinitions as NodeOutputDefinition[]) || []}
-              isEditable={false}
-            />
-          </div>
-        </div>
-      </div>
-    );
-  }
-
-  // HumanTask Node Form (nodeType === 4)
-  if (nodeType === 4) {
-    const humanTaskForm = useForm<BasicNodeFormData>({
-      resolver: zodResolver(basicNodeSchema),
-      defaultValues: {
-        name: '',
-        businessNotes: '',
-      },
-    });
-
-    useEffect(() => {
-      if (selectedNode && nodeType === 4) {
-        humanTaskForm.reset({
-          name: (selectedNode.data.name as string) || '',
-          businessNotes: (selectedNode.data.businessNotes as string) || '',
-        });
-      }
-    }, [selectedNode, nodeType, humanTaskForm]);
-
-    const humanTaskOnSubmit = (data: BasicNodeFormData) => {
-      if (selectedNodeId) {
-        updateNodeData(selectedNodeId, { ...data, isConfigured: true });
-      }
-    };
-
-    const {
-      register,
-      handleSubmit,
-      formState: { errors },
-    } = humanTaskForm;
-
-    return (
-      <div className="fixed right-0 top-0 h-full w-96 bg-white border-l border-gray-200 shadow-xl z-10 overflow-y-auto">
-        <div className="p-4 border-b border-gray-200 flex items-center justify-between">
-          <h2 className="text-lg font-semibold text-gray-900">Human Task Node Properties</h2>
-          <button
-            onClick={handleClose}
-            className="p-1 hover:bg-gray-100 rounded-md transition-colors"
-          >
-            <X size={20} className="text-gray-500" />
-          </button>
-        </div>
-
-        <form onSubmit={handleSubmit(humanTaskOnSubmit)} className="p-4 space-y-4">
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Name</label>
-            <input
-              {...register('name')}
+              {...decisionRegister('name')}
               className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-orange-500"
-              placeholder="Human Task Name"
+              placeholder="Decision Name"
             />
-            {errors.name && (
-              <p className="text-sm text-red-600 mt-1">{errors.name.message}</p>
+            {decisionErrors.name && (
+              <p className="text-sm text-red-600 mt-1">{decisionErrors.name.message}</p>
             )}
           </div>
 
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">Business Notes</label>
             <textarea
-              {...register('businessNotes')}
+              {...decisionRegister('businessNotes')}
               rows={4}
               className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-orange-500"
               placeholder="Optional business context..."
@@ -809,75 +743,82 @@ export default function NodePropertiesPanel() {
             <ContractBadges
               inputs={(selectedNode?.data.inputDefinitions as NodeInputDefinition[]) || []}
               outputs={(selectedNode?.data.outputDefinitions as NodeOutputDefinition[]) || []}
-              isEditable={true}
+              isEditable={false}
             />
-          </div>
-
-          <div className="border-t border-gray-200 pt-4 mt-4">
-            <div className="flex items-center justify-between mb-3">
-              <h3 className="text-sm font-semibold text-gray-900">Input Bindings</h3>
-              <button
-                type="button"
-                onClick={addInputBinding}
-                className="flex items-center gap-1 text-sm text-orange-600 hover:text-orange-700"
-              >
-                <Plus size={16} />
-                Add Binding
-              </button>
-            </div>
-
-            {inputBindings.map((binding, index) => (
-              <div key={index} className="space-y-2 p-3 bg-gray-50 rounded-md mb-2">
-                <div className="flex items-center justify-between">
-                  <span className="text-xs text-gray-500">Binding {index + 1}</span>
-                  <button
-                    type="button"
-                    onClick={() => removeInputBinding(index)}
-                    className="text-red-600 hover:text-red-700"
-                  >
-                    <Trash2 size={16} />
-                  </button>
-                </div>
-                <div>
-                  <label className="block text-xs font-medium text-gray-700 mb-1">Target Property</label>
-                  <input
-                    type="text"
-                    value={binding.targetInputProperty}
-                    onChange={(e) => updateInputBinding(index, 'targetInputProperty', e.target.value)}
-                    className="w-full px-2 py-1 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-orange-500"
-                    placeholder="e.g., InputData"
-                  />
-                </div>
-                <div>
-                  <label className="block text-xs font-medium text-gray-700 mb-1">Source Node</label>
-                  <select
-                    value={binding.source.sourceNodeId}
-                    onChange={(e) => updateInputBinding(index, 'source', { ...binding.source, sourceNodeId: e.target.value })}
-                    className="w-full px-2 py-1 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-orange-500"
-                  >
-                    <option value="">Select source node...</option>
-                    {nodes.map(node => (
-                      <option key={node.id} value={node.id}>{(node.data.name as string) || node.id}</option>
-                    ))}
-                  </select>
-                </div>
-                <div>
-                  <label className="block text-xs font-medium text-gray-700 mb-1">Source Property</label>
-                  <input
-                    type="text"
-                    value={binding.source.sourcePath}
-                    onChange={(e) => updateInputBinding(index, 'source', { ...binding.source, sourcePath: e.target.value })}
-                    className="w-full px-2 py-1 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-orange-500"
-                    placeholder="e.g., OutputData"
-                  />
-                </div>
-              </div>
-            ))}
           </div>
         </form>
       </div>
     );
   }
 
+  // HumanTask Node Form (nodeType === 4)
+  if (nodeType === 4) {
+    const humanTaskOnSubmit = (data: BasicNodeFormData) => {
+      if (selectedNodeId) {
+        updateNodeData(selectedNodeId, { ...data, isConfigured: true });
+      }
+    };
+
+    const {
+      register: humanTaskRegister,
+      handleSubmit: humanTaskHandleSubmit,
+      formState: { errors: humanTaskErrors },
+    } = humanTaskForm;
+
+    return (
+      <div className="fixed right-0 top-0 h-full w-96 bg-white border-l border-gray-200 shadow-xl z-10 overflow-y-auto">
+        <div className="p-4 border-b border-gray-200 flex items-center justify-between">
+          <h2 className="text-lg font-semibold text-gray-900">Human Task Node Properties</h2>
+          <button
+            onClick={handleClose}
+            className="p-1 hover:bg-gray-100 rounded-md transition-colors"
+          >
+            <X size={20} className="text-gray-500" />
+          </button>
+        </div>
+
+        <form onSubmit={humanTaskHandleSubmit(humanTaskOnSubmit)} className="p-4 space-y-4">
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Name</label>
+            <input
+              {...humanTaskRegister('name')}
+              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-yellow-500"
+              placeholder="Human Task Name"
+            />
+            {humanTaskErrors.name && (
+              <p className="text-sm text-red-600 mt-1">{humanTaskErrors.name.message}</p>
+            )}
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Business Notes</label>
+            <textarea
+              {...humanTaskRegister('businessNotes')}
+              rows={4}
+              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-yellow-500"
+              placeholder="Optional business context..."
+            />
+          </div>
+
+          <button
+            type="submit"
+            className="w-full bg-yellow-600 text-white py-2 px-4 rounded-md hover:bg-yellow-700 transition-colors font-medium"
+          >
+            Save Changes
+          </button>
+
+          <div className="border-t border-gray-200 pt-4 mt-4">
+            <ContractBadges
+              inputs={(selectedNode?.data.inputDefinitions as NodeInputDefinition[]) || []}
+              outputs={(selectedNode?.data.outputDefinitions as NodeOutputDefinition[]) || []}
+              isEditable={false}
+            />
+          </div>
+        </form>
+      </div>
+    );
+  }
+
+  // Fallback for unhandled node types
   return null;
 }

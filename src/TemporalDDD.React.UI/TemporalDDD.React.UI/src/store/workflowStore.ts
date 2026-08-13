@@ -25,7 +25,7 @@ interface WorkflowStore {
   setSelectedEdgeIds: (ids: string[]) => void;
   toggleNodeSelection: (id: string, isMultiSelect: boolean) => void;
   toggleEdgeSelection: (id: string, isMultiSelect: boolean) => void;
-  addNode: (type: 'apiNode' | 'notificationNode') => void;
+  addNode: (type: 'apiNode' | 'notificationNode' | 'decisionNode' | 'humanTaskNode') => void;
   updateNodeData: (id: string, data: Record<string, any>) => void;
   updateNodeInputBindings: (id: string, bindings: ParameterBinding[]) => void;
   deleteSelectedEdges: () => void;
@@ -88,6 +88,8 @@ export const useWorkflowStore = create<WorkflowStore>((set) => ({
       let inputDefinitions: NodeInputDefinition[] = [];
       let outputDefinitions: NodeOutputDefinition[] = [];
       let technicalInputs: Record<string, InputValueSource> = {};
+      let nodeName = '';
+      let nodeTypeValue = 0;
 
       // Initialize contracts based on node type
       if (type === 'apiNode') {
@@ -105,6 +107,8 @@ export const useWorkflowStore = create<WorkflowStore>((set) => ({
           EndpointUrl: { $type: 'Fixed', Value: '' },
           AuthToken: { $type: 'Fixed', Value: '' }
         };
+        nodeName = 'New API Task';
+        nodeTypeValue = 1;
       } else if (type === 'notificationNode') {
         // Notification nodes have technical input: MessageTemplate (Required)
         inputDefinitions = [
@@ -114,6 +118,30 @@ export const useWorkflowStore = create<WorkflowStore>((set) => ({
         technicalInputs = {
           MessageTemplate: { $type: 'Fixed', Value: '' }
         };
+        nodeName = 'New Notification';
+        nodeTypeValue = 2;
+      } else if (type === 'decisionNode') {
+        // Decision nodes have input: ConditionExpression (Required)
+        inputDefinitions = [
+          { propertyName: 'ConditionExpression', dataType: { kind: 'Primitive', name: 'String', value: 1 }, isRequired: true }
+        ];
+        // Decision nodes have output: BranchResult as Boolean
+        outputDefinitions = [
+          { propertyName: 'BranchResult', dataType: { kind: 'Primitive', name: 'Boolean', value: 3 } }
+        ];
+        nodeName = 'New Decision';
+        nodeTypeValue = 3;
+      } else if (type === 'humanTaskNode') {
+        // HumanTask nodes have input: TaskAssignment (Required)
+        inputDefinitions = [
+          { propertyName: 'TaskAssignment', dataType: { kind: 'Primitive', name: 'String', value: 1 }, isRequired: true }
+        ];
+        // HumanTask nodes have output: TaskResult as JsonDocument
+        outputDefinitions = [
+          { propertyName: 'TaskResult', dataType: { kind: 'Primitive', name: 'JsonDocument', value: 5 } }
+        ];
+        nodeName = 'New Human Task';
+        nodeTypeValue = 4;
       }
 
       const newNode: Node = {
@@ -121,8 +149,8 @@ export const useWorkflowStore = create<WorkflowStore>((set) => ({
         type,
         position: { x: 250, y: 150 },
         data: {
-          name: type === 'apiNode' ? 'New API Task' : 'New Notification',
-          nodeType: type === 'apiNode' ? 1 : 2,
+          name: nodeName,
+          nodeType: nodeTypeValue,
           isConfigured: false,
           technicalInputs,
           inputDefinitions,

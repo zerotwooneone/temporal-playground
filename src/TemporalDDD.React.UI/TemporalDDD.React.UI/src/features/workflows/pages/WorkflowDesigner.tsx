@@ -9,6 +9,8 @@ import ApiNode from '../components/nodes/ApiNode';
 import NotificationNode from '../components/nodes/NotificationNode';
 import StartNode from '../components/nodes/StartNode';
 import EndNode from '../components/nodes/EndNode';
+import DecisionNode from '../components/nodes/DecisionNode';
+import HumanTaskNode from '../components/nodes/HumanTaskNode';
 import WorkflowToolbar from '../components/WorkflowToolbar';
 import NodePropertiesPanel from '../components/NodePropertiesPanel';
 
@@ -17,6 +19,8 @@ const nodeTypes = {
   notificationNode: NotificationNode,
   start: StartNode,
   end: EndNode,
+  decisionNode: DecisionNode,
+  humanTaskNode: HumanTaskNode,
 };
 
 export default function WorkflowDesigner() {

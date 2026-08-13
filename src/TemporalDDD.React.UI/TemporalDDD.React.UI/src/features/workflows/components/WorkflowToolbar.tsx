@@ -1,7 +1,8 @@
 import { useWorkflowStore } from '../../../store/workflowStore';
-import { Plus, Save } from 'lucide-react';
+import { Plus, Save, ChevronDown } from 'lucide-react';
 import { useMutation } from '@tanstack/react-query';
 import { apiClient } from '../../../api/client';
+import { useState } from 'react';
 
 interface WorkflowToolbarProps {
   publicId: string;
@@ -9,6 +10,7 @@ interface WorkflowToolbarProps {
 
 export default function WorkflowToolbar({ publicId }: WorkflowToolbarProps) {
   const { addNode, nodes, edges } = useWorkflowStore();
+  const [isToolPanelOpen, setIsToolPanelOpen] = useState(false);
 
   const saveMutation = useMutation({
     mutationFn: async () => {
@@ -55,21 +57,64 @@ export default function WorkflowToolbar({ publicId }: WorkflowToolbarProps) {
       </div>
 
       <div className="flex items-center gap-2">
-        <button
-          onClick={() => addNode('apiNode')}
-          className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors font-medium"
-        >
-          <Plus size={16} />
-          Add API Task
-        </button>
+        {/* Tool Panel */}
+        <div className="relative">
+          <button
+            onClick={() => setIsToolPanelOpen(!isToolPanelOpen)}
+            className="flex items-center gap-2 px-4 py-2 bg-gray-600 text-white rounded-md hover:bg-gray-700 transition-colors font-medium"
+          >
+            <Plus size={16} />
+            Add Node
+            <ChevronDown size={16} className={isToolPanelOpen ? 'rotate-180' : ''} />
+          </button>
 
-        <button
-          onClick={() => addNode('notificationNode')}
-          className="flex items-center gap-2 px-4 py-2 bg-purple-600 text-white rounded-md hover:bg-purple-700 transition-colors font-medium"
-        >
-          <Plus size={16} />
-          Add Notification
-        </button>
+          {isToolPanelOpen && (
+            <div className="absolute right-0 mt-2 w-56 bg-white rounded-md shadow-lg border border-gray-200 z-10">
+              <div className="py-1">
+                <button
+                  onClick={() => {
+                    addNode('apiNode');
+                    setIsToolPanelOpen(false);
+                  }}
+                  className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 flex items-center gap-2"
+                >
+                  <div className="w-3 h-3 bg-blue-500 rounded-full" />
+                  API Task
+                </button>
+                <button
+                  onClick={() => {
+                    addNode('notificationNode');
+                    setIsToolPanelOpen(false);
+                  }}
+                  className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 flex items-center gap-2"
+                >
+                  <div className="w-3 h-3 bg-purple-500 rounded-full" />
+                  Notification
+                </button>
+                <button
+                  onClick={() => {
+                    addNode('decisionNode');
+                    setIsToolPanelOpen(false);
+                  }}
+                  className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 flex items-center gap-2"
+                >
+                  <div className="w-3 h-3 bg-orange-500 rounded-full" />
+                  Decision
+                </button>
+                <button
+                  onClick={() => {
+                    addNode('humanTaskNode');
+                    setIsToolPanelOpen(false);
+                  }}
+                  className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 flex items-center gap-2"
+                >
+                  <div className="w-3 h-3 bg-yellow-500 rounded-full" />
+                  Human Task
+                </button>
+              </div>
+            </div>
+          )}
+        </div>
 
         <button
           onClick={() => saveMutation.mutate()}
