@@ -4,7 +4,7 @@ import { z } from 'zod';
 import { useWorkflowStore } from '../../../store/workflowStore';
 import { X, Plus, Trash2 } from 'lucide-react';
 import { useEffect, useState } from 'react';
-import type { ParameterBinding, NodeInputDefinition, NodeOutputDefinition, InputValueSource } from '../../../types/workflowTypes';
+import type { ParameterBinding, NodeInputDefinition, NodeOutputDefinition, InputValueSource, PrimitiveType } from '../../../types/workflowTypes';
 
 // API Node Schema
 const apiNodeSchema = z.object({
@@ -168,8 +168,17 @@ function TechnicalInputConfig({
               className="w-full px-2 py-1 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500"
             >
               <option value="">Select source node...</option>
-              {allNodes.map(node => (
-                <option key={node.id} value={node.id}>{(node.data.name as string) || node.id}</option>
+              {[...allNodes].sort((a, b) => {
+                // Start node (nodeType 0) always first
+                if (a.data.nodeType === 0) return -1;
+                if (b.data.nodeType === 0) return 1;
+                return 0;
+              }).map(node => (
+                <option key={node.id} value={node.id}>
+                  {node.data.nodeType === 0 
+                    ? '🚀 Workflow Input' 
+                    : (node.data.name as string) || node.id}
+                </option>
               ))}
             </select>
           </div>
@@ -342,6 +351,42 @@ export default function NodePropertiesPanel() {
 
     const nodeLabel = nodeType === 0 ? 'Start Node' : 'End Node';
     const buttonColor = nodeType === 0 ? 'green' : 'red';
+    const outputDefinitions = (selectedNode?.data.outputDefinitions as NodeOutputDefinition[]) || [];
+    const [newOutputName, setNewOutputName] = useState('');
+    const [newOutputType, setNewOutputType] = useState<PrimitiveType>('String');
+
+    const handleAddOutput = () => {
+      if (newOutputName.trim() && selectedNodeId) {
+        const newOutput: NodeOutputDefinition = {
+          propertyName: newOutputName.trim(),
+          dataType: { kind: 'Primitive', name: newOutputType, value: getDataTypeValue(newOutputType) }
+        };
+        updateNodeData(selectedNodeId, {
+          outputDefinitions: [...outputDefinitions, newOutput]
+        });
+        setNewOutputName('');
+      }
+    };
+
+    const handleRemoveOutput = (index: number) => {
+      if (selectedNodeId) {
+        const updatedOutputs = outputDefinitions.filter((_, i) => i !== index);
+        updateNodeData(selectedNodeId, {
+          outputDefinitions: updatedOutputs
+        });
+      }
+    };
+
+    const getDataTypeValue = (type: PrimitiveType): number => {
+      const values: Record<PrimitiveType, number> = {
+        'String': 1,
+        'Number': 2,
+        'Boolean': 3,
+        'Date': 4,
+        'JsonDocument': 5
+      };
+      return values[type];
+    };
 
     return (
       <div className="fixed right-0 top-0 h-full w-96 bg-white border-l border-gray-200 shadow-xl z-10 overflow-y-auto">
@@ -386,13 +431,66 @@ export default function NodePropertiesPanel() {
             Save Changes
           </button>
 
-          <div className="border-t border-gray-200 pt-4 mt-4">
-            <ContractBadges
-              inputs={(selectedNode?.data.inputDefinitions as NodeInputDefinition[]) || []}
-              outputs={(selectedNode?.data.outputDefinitions as NodeOutputDefinition[]) || []}
-              isEditable={true}
-            />
-          </div>
+          {nodeType === 0 && (
+            <div className="border-t border-gray-200 pt-4 mt-4">
+              <h3 className="text-sm font-semibold text-gray-900 mb-3">Workflow Inputs (Trigger Payload)</h3>
+              <p className="text-xs text-gray-500 mb-3">Define the parameters this workflow accepts when triggered.</p>
+              
+              <div className="space-y-2 mb-4">
+                {outputDefinitions.map((output, index) => (
+                  <div key={index} className="flex items-center gap-2 p-2 bg-gray-50 rounded-md">
+                    <span className="text-sm font-medium text-gray-700 flex-1">{output.propertyName}</span>
+                    <span className="text-xs text-gray-500">{output.dataType.kind === 'Primitive' ? output.dataType.name : output.dataType.semanticName}</span>
+                    <button
+                      type="button"
+                      onClick={() => handleRemoveOutput(index)}
+                      className="p-1 hover:bg-red-100 rounded-md text-red-600"
+                    >
+                      <Trash2 size={14} />
+                    </button>
+                  </div>
+                ))}
+              </div>
+
+              <div className="flex gap-2">
+                <input
+                  type="text"
+                  value={newOutputName}
+                  onChange={(e) => setNewOutputName(e.target.value)}
+                  className="flex-1 px-2 py-1 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-green-500"
+                  placeholder="Parameter name..."
+                />
+                <select
+                  value={newOutputType}
+                  onChange={(e) => setNewOutputType(e.target.value as PrimitiveType)}
+                  className="px-2 py-1 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-green-500"
+                >
+                  <option value="String">String</option>
+                  <option value="Number">Number</option>
+                  <option value="Boolean">Boolean</option>
+                  <option value="Date">Date</option>
+                  <option value="JsonDocument">Json</option>
+                </select>
+                <button
+                  type="button"
+                  onClick={handleAddOutput}
+                  className="px-3 py-1 bg-green-600 text-white text-sm rounded-md hover:bg-green-700"
+                >
+                  <Plus size={14} />
+                </button>
+              </div>
+            </div>
+          )}
+
+          {nodeType === 99 && (
+            <div className="border-t border-gray-200 pt-4 mt-4">
+              <ContractBadges
+                inputs={(selectedNode?.data.inputDefinitions as NodeInputDefinition[]) || []}
+                outputs={(selectedNode?.data.outputDefinitions as NodeOutputDefinition[]) || []}
+                isEditable={false}
+              />
+            </div>
+          )}
         </form>
       </div>
     );

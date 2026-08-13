@@ -29,6 +29,16 @@ public class RoslynWorkflowCodeGeneratorService : IWorkflowCodeGeneratorService
         if (startNode == null)
             throw new InvalidOperationException("Workflow must have a Start node");
 
+        // Generate workflow input record from Start node's output definitions
+        var inputRecordName = $"{className}Input";
+        var inputRecordFields = new List<string>();
+        foreach (var outputDef in startNode.OutputDefinitions)
+        {
+            var csharpType = MapDataTypeToCSharp(outputDef.DataType);
+            var sanitizedName = SanitizeIdentifier(outputDef.PropertyName);
+            inputRecordFields.Add($"    {csharpType} {sanitizedName}");
+        }
+
         // Build raw C# code using StringBuilder
         var sb = new StringBuilder();
         sb.AppendLine("using System;");
@@ -40,6 +50,16 @@ public class RoslynWorkflowCodeGeneratorService : IWorkflowCodeGeneratorService
         sb.AppendLine("using TemporalDDD.Domain.WorkflowOrchestration;");
         sb.AppendLine("using System.Text.Json;");
         sb.AppendLine();
+
+        // Generate workflow input record
+        if (inputRecordFields.Any())
+        {
+            sb.AppendLine($"public record {inputRecordName}(");
+            sb.AppendLine(string.Join(",\n", inputRecordFields));
+            sb.AppendLine(");");
+            sb.AppendLine();
+        }
+
         sb.AppendLine($"[Workflow]");
         sb.AppendLine($"public class {className}");
         sb.AppendLine("{");
@@ -68,7 +88,14 @@ public class RoslynWorkflowCodeGeneratorService : IWorkflowCodeGeneratorService
 
         // Generate the Run method with unrolled workflow logic
         sb.AppendLine($"    [WorkflowRun]");
-        sb.AppendLine($"    public async Task RunAsync(WorkflowInstancePublicId workflowInstancePublicId)");
+        if (inputRecordFields.Any())
+        {
+            sb.AppendLine($"    public async Task RunAsync({inputRecordName} input)");
+        }
+        else
+        {
+            sb.AppendLine($"    public async Task RunAsync()");
+        }
         sb.AppendLine($"    {{");
 
         // Traverse the graph at compile time and generate unrolled code
@@ -211,5 +238,27 @@ public class RoslynWorkflowCodeGeneratorService : IWorkflowCodeGeneratorService
             sanitized = "_" + sanitized;
         }
         return sanitized;
+    }
+
+    private static string MapDataTypeToCSharp(WorkflowDataType dataType)
+    {
+        if (dataType is WorkflowDataType.Primitive primitive)
+        {
+            return primitive.Name switch
+            {
+                "String" => "string",
+                "Number" => "double",
+                "Boolean" => "bool",
+                "Date" => "DateTime",
+                "JsonDocument" => "JsonDocument",
+                _ => "object"
+            };
+        }
+        else if (dataType is WorkflowDataType.Semantic semantic)
+        {
+            // For semantic types, use the underlying primitive type
+            return MapDataTypeToCSharp(semantic.UnderlyingType);
+        }
+        return "object";
     }
 }
