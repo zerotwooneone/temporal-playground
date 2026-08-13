@@ -11,8 +11,8 @@ using TemporalDDD.Infrastructure.Persistence;
 namespace TemporalDDD.Infrastructure.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    [Migration("20260812194400_AddWorkflowDataMappingAndBranching")]
-    partial class AddWorkflowDataMappingAndBranching
+    [Migration("20260813232418_InitialCreate")]
+    partial class InitialCreate
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -555,10 +555,11 @@ namespace TemporalDDD.Infrastructure.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("INTEGER");
 
-                    b.Property<string>("BranchLabel")
+                    b.Property<string>("SourceNodeId")
+                        .IsRequired()
                         .HasColumnType("TEXT");
 
-                    b.Property<string>("SourceNodeId")
+                    b.Property<string>("SourcePort")
                         .IsRequired()
                         .HasColumnType("TEXT");
 
@@ -581,9 +582,6 @@ namespace TemporalDDD.Infrastructure.Migrations
                 {
                     b.HasBaseType("TemporalDDD.Infrastructure.WorkflowOrchestration.WorkflowNodeDbo");
 
-                    b.Property<string>("AuthToken")
-                        .HasColumnType("TEXT");
-
                     b.Property<bool?>("ContractMappingConvertXmlToJson")
                         .HasColumnType("INTEGER");
 
@@ -596,16 +594,29 @@ namespace TemporalDDD.Infrastructure.Migrations
                     b.Property<string>("ContractMappingResponseMapping")
                         .HasColumnType("TEXT");
 
-                    b.Property<string>("EndpointUrl")
-                        .HasColumnType("TEXT");
-
                     b.Property<int?>("RetryPolicyBackoffCoefficient")
                         .HasColumnType("INTEGER");
 
                     b.Property<int?>("RetryPolicyMaxAttempts")
                         .HasColumnType("INTEGER");
 
+                    b.Property<string>("TechnicalInputsJson")
+                        .HasColumnType("TEXT");
+
+                    b.ToTable("Workflow_Nodes", t =>
+                        {
+                            t.Property("TechnicalInputsJson")
+                                .HasColumnName("ApiWorkflowNodeDbo_TechnicalInputsJson");
+                        });
+
                     b.HasDiscriminator().HasValue(1);
+                });
+
+            modelBuilder.Entity("TemporalDDD.Infrastructure.WorkflowOrchestration.DecisionWorkflowNodeDbo", b =>
+                {
+                    b.HasBaseType("TemporalDDD.Infrastructure.WorkflowOrchestration.WorkflowNodeDbo");
+
+                    b.HasDiscriminator().HasValue(3);
                 });
 
             modelBuilder.Entity("TemporalDDD.Infrastructure.WorkflowOrchestration.EndWorkflowNodeDbo", b =>
@@ -631,14 +642,14 @@ namespace TemporalDDD.Infrastructure.Migrations
                     b.Property<string>("UIFormSchema")
                         .HasColumnType("TEXT");
 
-                    b.HasDiscriminator().HasValue(3);
+                    b.HasDiscriminator().HasValue(4);
                 });
 
             modelBuilder.Entity("TemporalDDD.Infrastructure.WorkflowOrchestration.NotificationWorkflowNodeDbo", b =>
                 {
                     b.HasBaseType("TemporalDDD.Infrastructure.WorkflowOrchestration.WorkflowNodeDbo");
 
-                    b.Property<string>("MessageTemplate")
+                    b.Property<string>("TechnicalInputsJson")
                         .HasColumnType("TEXT");
 
                     b.HasDiscriminator().HasValue(2);
