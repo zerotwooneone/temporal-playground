@@ -24,3 +24,25 @@ export interface ParameterBinding {
   targetInputProperty: string;
   source: VariableReference;
 }
+
+export type InputValueSource =
+  | { $type: 'Fixed'; Value: string }
+  | { $type: 'Mapped'; Source: VariableReference };
+
+export interface NodeData {
+  name: string;
+  nodeType: number;
+  businessNotes?: string;
+  isConfigured: boolean;
+  technicalInputs: Record<string, InputValueSource>;
+  inputDefinitions: NodeInputDefinition[];
+  outputDefinitions: NodeOutputDefinition[];
+  inputBindings?: ParameterBinding[];
+  // Value object properties for API nodes
+  retryPolicyMaxAttempts?: number;
+  retryPolicyBackoffCoefficient?: number;
+  contractMappingConvertXmlToJson?: boolean;
+  contractMappingQueryParameters?: string;
+  contractMappingRequestMapping?: string;
+  contractMappingResponseMapping?: string;
+}

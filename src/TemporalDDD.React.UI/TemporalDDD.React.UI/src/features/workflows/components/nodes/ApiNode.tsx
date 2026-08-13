@@ -1,16 +1,19 @@
 import { Handle, Position } from '@xyflow/react';
 import { Globe } from 'lucide-react';
 import type { NodeProps } from '@xyflow/react';
+import type { InputValueSource } from '../../../../types/workflowTypes';
 
 interface ApiNodeData {
   name: string;
-  endpointUrl?: string;
+  technicalInputs?: Record<string, InputValueSource>;
   isConfigured?: boolean;
 }
 
 export default function ApiNode({ data }: NodeProps) {
   const nodeData = data as unknown as ApiNodeData;
   const isConfigured = nodeData.isConfigured ?? false;
+  const technicalInputs = nodeData.technicalInputs || {};
+  const endpointUrl = technicalInputs['EndpointUrl']?.$type === 'Fixed' ? technicalInputs['EndpointUrl'].Value : '';
 
   return (
     <div className="bg-white border-2 border-blue-500 rounded-lg shadow-md min-w-[200px]">
@@ -26,9 +29,9 @@ export default function ApiNode({ data }: NodeProps) {
       {/* Content */}
       <div className="p-3">
         <div className="font-medium text-gray-900 mb-1">{nodeData.name || 'Unnamed API'}</div>
-        {nodeData.endpointUrl && (
-          <div className="text-xs text-gray-500 truncate" title={nodeData.endpointUrl}>
-            {nodeData.endpointUrl}
+        {endpointUrl && (
+          <div className="text-xs text-gray-500 truncate" title={endpointUrl}>
+            {endpointUrl}
           </div>
         )}
       </div>

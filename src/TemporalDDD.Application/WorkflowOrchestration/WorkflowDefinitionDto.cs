@@ -1,3 +1,5 @@
+using TemporalDDD.Domain.WorkflowOrchestration;
+
 namespace TemporalDDD.Application.WorkflowOrchestration;
 
 public record WorkflowDefinitionDto(
@@ -21,13 +23,11 @@ public record WorkflowNodeDetailDto(
     string Name,
     string? BusinessNotes,
     bool IsConfigured,
-    string? EndpointUrl,
-    string? AuthToken,
+    Dictionary<string, InputValueSource> TechnicalInputs,
     int? RetryPolicyMaxAttempts,
     int? RetryPolicyBackoffCoefficient,
     bool? ContractMappingConvertXmlToJson,
     string? ContractMappingQueryParameters,
     string? ContractMappingRequestMapping,
-    string? ContractMappingResponseMapping,
-    string? MessageTemplate
+    string? ContractMappingResponseMapping
 );

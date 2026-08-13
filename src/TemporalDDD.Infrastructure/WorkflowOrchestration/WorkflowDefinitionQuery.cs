@@ -75,15 +75,13 @@ public class WorkflowDefinitionQuery : IWorkflowDefinitionQuery
                     Name: n.Name,
                     BusinessNotes: n.BusinessNotes,
                     IsConfigured: n.IsConfigured,
-                    EndpointUrl: ExtractFixedValueFromDictionary(technicalInputs, ApiWorkflowNode.EndpointUrlKey),
-                    AuthToken: ExtractFixedValueFromDictionary(technicalInputs, ApiWorkflowNode.AuthTokenKey),
+                    TechnicalInputs: technicalInputs,
                     RetryPolicyMaxAttempts: apiNode.RetryPolicyMaxAttempts,
                     RetryPolicyBackoffCoefficient: apiNode.RetryPolicyBackoffCoefficient,
                     ContractMappingConvertXmlToJson: apiNode.ContractMappingConvertXmlToJson,
                     ContractMappingQueryParameters: apiNode.ContractMappingQueryParameters,
                     ContractMappingRequestMapping: apiNode.ContractMappingRequestMapping,
-                    ContractMappingResponseMapping: apiNode.ContractMappingResponseMapping,
-                    MessageTemplate: null
+                    ContractMappingResponseMapping: apiNode.ContractMappingResponseMapping
                 );
             }
             else if (n is NotificationWorkflowNodeDbo notificationNode)
@@ -95,15 +93,13 @@ public class WorkflowDefinitionQuery : IWorkflowDefinitionQuery
                     Name: n.Name,
                     BusinessNotes: n.BusinessNotes,
                     IsConfigured: n.IsConfigured,
-                    EndpointUrl: null,
-                    AuthToken: null,
+                    TechnicalInputs: technicalInputs,
                     RetryPolicyMaxAttempts: null,
                     RetryPolicyBackoffCoefficient: null,
                     ContractMappingConvertXmlToJson: null,
                     ContractMappingQueryParameters: null,
                     ContractMappingRequestMapping: null,
-                    ContractMappingResponseMapping: null,
-                    MessageTemplate: ExtractFixedValueFromDictionary(technicalInputs, NotificationWorkflowNode.MessageTemplateKey)
+                    ContractMappingResponseMapping: null
                 );
             }
             else
@@ -115,15 +111,13 @@ public class WorkflowDefinitionQuery : IWorkflowDefinitionQuery
                     Name: n.Name,
                     BusinessNotes: n.BusinessNotes,
                     IsConfigured: n.IsConfigured,
-                    EndpointUrl: null,
-                    AuthToken: null,
+                    TechnicalInputs: new Dictionary<string, InputValueSource>(),
                     RetryPolicyMaxAttempts: null,
                     RetryPolicyBackoffCoefficient: null,
                     ContractMappingConvertXmlToJson: null,
                     ContractMappingQueryParameters: null,
                     ContractMappingRequestMapping: null,
-                    ContractMappingResponseMapping: null,
-                    MessageTemplate: null
+                    ContractMappingResponseMapping: null
                 );
             }
         }).ToList();
@@ -171,23 +165,4 @@ public class WorkflowDefinitionQuery : IWorkflowDefinitionQuery
         }
     }
 
-    private static string? ExtractFixedValueFromDictionary(Dictionary<string, InputValueSource> technicalInputs, string key)
-    {
-        if (!technicalInputs.TryGetValue(key, out var valueSource))
-            return null;
-
-        if (valueSource is InputValueSource.Fixed fixedValue)
-            return fixedValue.Value;
-
-        return null;
-    }
-
-    private static string? ExtractFixedValueFromNode(WorkflowNode node, string key)
-    {
-        var valueSource = node.GetTechnicalInput(key);
-        if (valueSource is InputValueSource.Fixed fixedValue)
-            return fixedValue.Value;
-
-        return null;
-    }
 }

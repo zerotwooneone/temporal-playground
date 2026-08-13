@@ -9,7 +9,7 @@ import {
   type OnEdgesChange,
   type OnConnect,
 } from '@xyflow/react';
-import type { ParameterBinding, NodeInputDefinition, NodeOutputDefinition } from '../types/workflowTypes';
+import type { ParameterBinding, NodeInputDefinition, NodeOutputDefinition, InputValueSource } from '../types/workflowTypes';
 
 interface WorkflowStore {
   nodes: Node[];
@@ -87,18 +87,33 @@ export const useWorkflowStore = create<WorkflowStore>((set) => ({
       const guid = crypto.randomUUID();
       let inputDefinitions: NodeInputDefinition[] = [];
       let outputDefinitions: NodeOutputDefinition[] = [];
+      let technicalInputs: Record<string, InputValueSource> = {};
 
       // Initialize contracts based on node type
       if (type === 'apiNode') {
+        // API nodes have technical inputs: EndpointUrl (Required) and AuthToken (Optional)
+        inputDefinitions = [
+          { propertyName: 'EndpointUrl', dataType: { kind: 'Primitive', name: 'String', value: 1 }, isRequired: true },
+          { propertyName: 'AuthToken', dataType: { kind: 'Primitive', name: 'String', value: 1 }, isRequired: false }
+        ];
         // API nodes have fixed output: ApiResponse as JsonDocument
         outputDefinitions = [
           { propertyName: 'ApiResponse', dataType: { kind: 'Primitive', name: 'JsonDocument', value: 5 } }
         ];
+        // Initialize technical inputs with empty Fixed values
+        technicalInputs = {
+          EndpointUrl: { $type: 'Fixed', Value: '' },
+          AuthToken: { $type: 'Fixed', Value: '' }
+        };
       } else if (type === 'notificationNode') {
-        // Notification nodes have fixed input: MessageTemplate as String
+        // Notification nodes have technical input: MessageTemplate (Required)
         inputDefinitions = [
           { propertyName: 'MessageTemplate', dataType: { kind: 'Primitive', name: 'String', value: 1 }, isRequired: true }
         ];
+        // Initialize technical input with empty Fixed value
+        technicalInputs = {
+          MessageTemplate: { $type: 'Fixed', Value: '' }
+        };
       }
 
       const newNode: Node = {
@@ -109,6 +124,7 @@ export const useWorkflowStore = create<WorkflowStore>((set) => ({
           name: type === 'apiNode' ? 'New API Task' : 'New Notification',
           nodeType: type === 'apiNode' ? 1 : 2,
           isConfigured: false,
+          technicalInputs,
           inputDefinitions,
           outputDefinitions,
         },
@@ -189,15 +205,13 @@ export const useWorkflowStore = create<WorkflowStore>((set) => ({
               nodeType: node.nodeType,
               businessNotes: node.businessNotes,
               isConfigured: node.isConfigured,
-              endpointUrl: node.endpointUrl,
-              authToken: node.authToken,
+              technicalInputs: node.technicalInputs || {},
               retryPolicyMaxAttempts: node.retryPolicyMaxAttempts,
               retryPolicyBackoffCoefficient: node.retryPolicyBackoffCoefficient,
               contractMappingConvertXmlToJson: node.contractMappingConvertXmlToJson,
               contractMappingQueryParameters: node.contractMappingQueryParameters,
               contractMappingRequestMapping: node.contractMappingRequestMapping,
               contractMappingResponseMapping: node.contractMappingResponseMapping,
-              messageTemplate: node.messageTemplate,
               inputDefinitions: node.inputDefinitions || [],
               outputDefinitions: node.outputDefinitions || [],
               inputBindings: node.inputBindings || [],

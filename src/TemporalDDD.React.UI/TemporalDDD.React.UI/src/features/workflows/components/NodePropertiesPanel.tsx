@@ -4,12 +4,11 @@ import { z } from 'zod';
 import { useWorkflowStore } from '../../../store/workflowStore';
 import { X, Plus, Trash2 } from 'lucide-react';
 import { useEffect, useState } from 'react';
-import type { ParameterBinding, NodeInputDefinition, NodeOutputDefinition } from '../../../types/workflowTypes';
+import type { ParameterBinding, NodeInputDefinition, NodeOutputDefinition, InputValueSource } from '../../../types/workflowTypes';
 
 // API Node Schema
 const apiNodeSchema = z.object({
   name: z.string().min(1, 'Name is required'),
-  endpointUrl: z.string().url('Invalid URL').optional().or(z.literal('')),
   retryPolicyMaxAttempts: z.number().min(1).max(10).optional(),
   businessNotes: z.string().optional(),
 });
@@ -17,7 +16,6 @@ const apiNodeSchema = z.object({
 // Notification Node Schema
 const notificationNodeSchema = z.object({
   name: z.string().min(1, 'Name is required'),
-  messageTemplate: z.string().min(1, 'Message template is required'),
   businessNotes: z.string().optional(),
 });
 
@@ -86,6 +84,119 @@ function ContractBadges({
   );
 }
 
+// Helper component for technical input configuration
+function TechnicalInputConfig({
+  inputDefinition,
+  inputValue,
+  onUpdate,
+  allNodes
+}: {
+  inputDefinition: NodeInputDefinition;
+  inputValue: InputValueSource;
+  onUpdate: (value: InputValueSource) => void;
+  allNodes: any[];
+}) {
+  const [mode, setMode] = useState<'Fixed' | 'Mapped'>(inputValue.$type);
+
+  const handleModeChange = (newMode: 'Fixed' | 'Mapped') => {
+    setMode(newMode);
+    if (newMode === 'Fixed') {
+      onUpdate({ $type: 'Fixed', Value: '' });
+    } else {
+      onUpdate({ $type: 'Mapped', Source: { sourceNodeId: '', sourcePath: '' } });
+    }
+  };
+
+  return (
+    <div className="p-3 bg-gray-50 rounded-md mb-2">
+      <div className="flex items-center justify-between mb-2">
+        <span className="text-sm font-medium text-gray-700">
+          {inputDefinition.propertyName}
+          {inputDefinition.isRequired && <span className="ml-1 text-red-600">*</span>}
+        </span>
+        <div className="flex gap-2">
+          <button
+            type="button"
+            onClick={() => handleModeChange('Fixed')}
+            className={`text-xs px-2 py-1 rounded ${
+              mode === 'Fixed'
+                ? 'bg-blue-600 text-white'
+                : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+            }`}
+          >
+            Fixed
+          </button>
+          <button
+            type="button"
+            onClick={() => handleModeChange('Mapped')}
+            className={`text-xs px-2 py-1 rounded ${
+              mode === 'Mapped'
+                ? 'bg-blue-600 text-white'
+                : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+            }`}
+          >
+            Mapped
+          </button>
+        </div>
+      </div>
+
+      {mode === 'Fixed' && (
+        <input
+          type="text"
+          value={inputValue.$type === 'Fixed' ? inputValue.Value : ''}
+          onChange={(e) => onUpdate({ $type: 'Fixed', Value: e.target.value })}
+          className="w-full px-2 py-1 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500"
+          placeholder={`Enter ${inputDefinition.propertyName}...`}
+        />
+      )}
+
+      {mode === 'Mapped' && (
+        <div className="space-y-2">
+          <div>
+            <label className="block text-xs font-medium text-gray-700 mb-1">Source Node</label>
+            <select
+              value={inputValue.$type === 'Mapped' ? inputValue.Source.sourceNodeId : ''}
+              onChange={(e) => 
+                onUpdate({ 
+                  $type: 'Mapped', 
+                  Source: { 
+                    sourceNodeId: e.target.value, 
+                    sourcePath: inputValue.$type === 'Mapped' ? inputValue.Source.sourcePath : '' 
+                  } 
+                })
+              }
+              className="w-full px-2 py-1 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500"
+            >
+              <option value="">Select source node...</option>
+              {allNodes.map(node => (
+                <option key={node.id} value={node.id}>{(node.data.name as string) || node.id}</option>
+              ))}
+            </select>
+          </div>
+          <div>
+            <label className="block text-xs font-medium text-gray-700 mb-1">Source Property</label>
+            <input
+              type="text"
+              value={inputValue.$type === 'Mapped' ? inputValue.Source.sourcePath : ''}
+              onChange={(e) => 
+                onUpdate({ 
+                  $type: 'Mapped', 
+                  Source: { 
+                    sourceNodeId: inputValue.$type === 'Mapped' ? inputValue.Source.sourceNodeId : '', 
+                    sourcePath: e.target.value 
+                  } 
+                })
+              }
+              className="w-full px-2 py-1 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500"
+              placeholder="e.g., OutputData"
+            />
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
 export default function NodePropertiesPanel() {
   const { selectedNodeIds, nodes, updateNodeData, updateNodeInputBindings, setSelectedNodeIds } = useWorkflowStore();
   const selectedNodeId = selectedNodeIds[0] || null;
@@ -103,7 +214,6 @@ export default function NodePropertiesPanel() {
     resolver: zodResolver(apiNodeSchema),
     defaultValues: {
       name: '',
-      endpointUrl: '',
       retryPolicyMaxAttempts: 3,
       businessNotes: '',
     },
@@ -114,7 +224,6 @@ export default function NodePropertiesPanel() {
     if (selectedNode && nodeType === 1) {
       apiForm.reset({
         name: (selectedNode.data.name as string) || '',
-        endpointUrl: (selectedNode.data.endpointUrl as string) || '',
         retryPolicyMaxAttempts: (selectedNode.data.retryPolicyMaxAttempts as number) || 3,
         businessNotes: (selectedNode.data.businessNotes as string) || '',
       });
@@ -132,7 +241,6 @@ export default function NodePropertiesPanel() {
     resolver: zodResolver(notificationNodeSchema),
     defaultValues: {
       name: '',
-      messageTemplate: '',
       businessNotes: '',
     },
   });
@@ -142,7 +250,6 @@ export default function NodePropertiesPanel() {
     if (selectedNode && nodeType === 2) {
       notificationForm.reset({
         name: (selectedNode.data.name as string) || '',
-        messageTemplate: (selectedNode.data.messageTemplate as string) || '',
         businessNotes: (selectedNode.data.businessNotes as string) || '',
       });
     }
@@ -291,6 +398,17 @@ export default function NodePropertiesPanel() {
       formState: { errors },
     } = apiForm;
 
+    const technicalInputs = (selectedNode?.data.technicalInputs as Record<string, InputValueSource>) || {};
+    const inputDefinitions = (selectedNode?.data.inputDefinitions as NodeInputDefinition[]) || [];
+
+    const handleTechnicalInputChange = (key: string, value: InputValueSource) => {
+      if (selectedNodeId) {
+        updateNodeData(selectedNodeId, {
+          technicalInputs: { ...technicalInputs, [key]: value }
+        });
+      }
+    };
+
     return (
       <div className="fixed right-0 top-0 h-full w-96 bg-white border-l border-gray-200 shadow-xl z-10 overflow-y-auto">
         <div className="p-4 border-b border-gray-200 flex items-center justify-between">
@@ -313,18 +431,6 @@ export default function NodePropertiesPanel() {
             />
             {errors.name && (
               <p className="text-sm text-red-600 mt-1">{errors.name.message}</p>
-            )}
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Endpoint URL</label>
-            <input
-              {...register('endpointUrl')}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-              placeholder="https://api.example.com"
-            />
-            {errors.endpointUrl && (
-              <p className="text-sm text-red-600 mt-1">{errors.endpointUrl.message}</p>
             )}
           </div>
 
@@ -362,8 +468,21 @@ export default function NodePropertiesPanel() {
           </button>
 
           <div className="border-t border-gray-200 pt-4 mt-4">
+            <h3 className="text-sm font-semibold text-gray-900 mb-3">Technical Configuration</h3>
+            {inputDefinitions.map((inputDef) => (
+              <TechnicalInputConfig
+                key={inputDef.propertyName}
+                inputDefinition={inputDef}
+                inputValue={technicalInputs[inputDef.propertyName] || { $type: 'Fixed', Value: '' }}
+                onUpdate={(value) => handleTechnicalInputChange(inputDef.propertyName, value)}
+                allNodes={nodes}
+              />
+            ))}
+          </div>
+
+          <div className="border-t border-gray-200 pt-4 mt-4">
             <ContractBadges
-              inputs={(selectedNode?.data.inputDefinitions as NodeInputDefinition[]) || []}
+              inputs={inputDefinitions}
               outputs={(selectedNode?.data.outputDefinitions as NodeOutputDefinition[]) || []}
               isEditable={false}
             />
@@ -380,6 +499,17 @@ export default function NodePropertiesPanel() {
       handleSubmit,
       formState: { errors },
     } = notificationForm;
+
+    const technicalInputs = (selectedNode?.data.technicalInputs as Record<string, InputValueSource>) || {};
+    const inputDefinitions = (selectedNode?.data.inputDefinitions as NodeInputDefinition[]) || [];
+
+    const handleTechnicalInputChange = (key: string, value: InputValueSource) => {
+      if (selectedNodeId) {
+        updateNodeData(selectedNodeId, {
+          technicalInputs: { ...technicalInputs, [key]: value }
+        });
+      }
+    };
 
     return (
       <div className="fixed right-0 top-0 h-full w-96 bg-white border-l border-gray-200 shadow-xl z-10 overflow-y-auto">
@@ -407,19 +537,6 @@ export default function NodePropertiesPanel() {
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Message Template</label>
-            <textarea
-              {...register('messageTemplate')}
-              rows={4}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500"
-              placeholder="Hello {user}, your request has been processed..."
-            />
-            {errors.messageTemplate && (
-              <p className="text-sm text-red-600 mt-1">{errors.messageTemplate.message}</p>
-            )}
-          </div>
-
-          <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">Business Notes</label>
             <textarea
               {...register('businessNotes')}
@@ -437,8 +554,21 @@ export default function NodePropertiesPanel() {
           </button>
 
           <div className="border-t border-gray-200 pt-4 mt-4">
+            <h3 className="text-sm font-semibold text-gray-900 mb-3">Technical Configuration</h3>
+            {inputDefinitions.map((inputDef) => (
+              <TechnicalInputConfig
+                key={inputDef.propertyName}
+                inputDefinition={inputDef}
+                inputValue={technicalInputs[inputDef.propertyName] || { $type: 'Fixed', Value: '' }}
+                onUpdate={(value) => handleTechnicalInputChange(inputDef.propertyName, value)}
+                allNodes={nodes}
+              />
+            ))}
+          </div>
+
+          <div className="border-t border-gray-200 pt-4 mt-4">
             <ContractBadges
-              inputs={(selectedNode?.data.inputDefinitions as NodeInputDefinition[]) || []}
+              inputs={inputDefinitions}
               outputs={(selectedNode?.data.outputDefinitions as NodeOutputDefinition[]) || []}
               isEditable={false}
             />

@@ -22,17 +22,14 @@ export default function WorkflowToolbar({ publicId }: WorkflowToolbarProps) {
           name: node.data.name,
           businessNotes: node.data.businessNotes,
           isConfigured: node.data.isConfigured,
-          // API Node properties
-          endpointUrl: node.data.endpointUrl,
-          authToken: node.data.authToken,
+          technicalInputs: node.data.technicalInputs,
+          // API Node value object properties
           retryPolicyMaxAttempts: node.data.retryPolicyMaxAttempts,
           retryPolicyBackoffCoefficient: node.data.retryPolicyBackoffCoefficient,
           contractMappingConvertXmlToJson: node.data.contractMappingConvertXmlToJson,
           contractMappingQueryParameters: node.data.contractMappingQueryParameters,
           contractMappingRequestMapping: node.data.contractMappingRequestMapping,
           contractMappingResponseMapping: node.data.contractMappingResponseMapping,
-          // Notification Node properties
-          messageTemplate: node.data.messageTemplate,
         })),
         transitions: edges.map((edge) => ({
           sourceNodeId: edge.source,
