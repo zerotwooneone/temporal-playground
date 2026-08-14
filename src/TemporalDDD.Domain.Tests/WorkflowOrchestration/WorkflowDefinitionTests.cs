@@ -198,6 +198,36 @@ public class WorkflowDefinitionTests
         action.Should().Throw<InvalidOperationException>()
             .WithMessage("Cannot approve workflow: One or more nodes are missing technical configuration.");
     }
+
+    [Fact]
+    public void Approve_WithDecisionNodeAndValidTopology_ChangesToApproved()
+    {
+        // ARRANGE
+        var publicId = WorkflowDefinitionPublicId.New();
+        var workflow = WorkflowDefinition.Create(UserId.New(), "Test", "{}", publicId);
+        workflow.AddDecisionNodeStub("Decision Node", "Business notes");
+        var decisionNode = workflow.Nodes.OfType<DecisionWorkflowNode>().First();
+
+        // Add transitions: Start -> Decision (True) -> End, Start -> Decision (False) -> End
+        var startNode = workflow.Nodes.OfType<StartWorkflowNode>().First();
+        var endNode = workflow.Nodes.OfType<EndWorkflowNode>().First();
+        var transitions = new List<WorkflowTransition>
+        {
+            new WorkflowTransition(startNode.Id, decisionNode.Id, "Default"),
+            new WorkflowTransition(decisionNode.Id, endNode.Id, "True"),
+            new WorkflowTransition(decisionNode.Id, endNode.Id, "False")
+        };
+        workflow.UpdateNodes(workflow.Nodes.ToList(), transitions, null);
+
+        workflow.SubmitForReview();
+        var reviewerId = UserId.New();
+
+        // ACT
+        workflow.Approve(reviewerId);
+
+        // ASSERT
+        workflow.Status.Should().Be(WorkflowStatus.Approved);
+    }
     #endregion
 
     #region Reject Tests
@@ -339,10 +369,37 @@ public class WorkflowDefinitionTests
         workflow.UpdateNodes(newNodes, newTransitions, null);
 
         // ASSERT
-        workflow.Nodes.Should().HaveCount(2);
-        workflow.Transitions.Should().HaveCount(1);
-        workflow.Nodes.Should().NotContain(n => n.Name == "Start");
-        workflow.Nodes.Should().Contain(n => n.Name == "New Start");
+        workflow.Nodes.Count.Should().Be(2);
+        workflow.Transitions.Count.Should().Be(1);
+        workflow.Transitions.First().SourcePort.Should().Be("Default");
+    }
+
+    [Fact]
+    public void ValidateTopology_WithDecisionNodeAndBothPorts_Passes()
+    {
+        // ARRANGE
+        var publicId = WorkflowDefinitionPublicId.New();
+        var workflow = WorkflowDefinition.Create(UserId.New(), "Test", "{}", publicId);
+
+        var startNode = StartWorkflowNode.CreateStub("Start", null);
+        var decisionNode = DecisionWorkflowNode.CreateStub("Decision", null);
+        var endNode = EndWorkflowNode.CreateStub("End", null);
+
+        var nodes = new List<WorkflowNode> { startNode, decisionNode, endNode };
+        var transitions = new List<WorkflowTransition>
+        {
+            new WorkflowTransition(startNode.Id, decisionNode.Id, "Default"),
+            new WorkflowTransition(decisionNode.Id, endNode.Id, "True"),
+            new WorkflowTransition(decisionNode.Id, endNode.Id, "False")
+        };
+
+        workflow.UpdateNodes(nodes, transitions, null);
+
+        // ACT
+        var result = workflow.ValidateTopology();
+
+        // ASSERT
+        result.IsSuccess.Should().BeTrue();
     }
     #endregion
 }

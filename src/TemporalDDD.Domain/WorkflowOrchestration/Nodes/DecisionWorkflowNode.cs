@@ -30,9 +30,9 @@ public class DecisionWorkflowNode : WorkflowNode
         _outputPorts.Add("False");
     }
 
-    public static DecisionWorkflowNode CreateStub(string name, string? businessNotes)
+    public static DecisionWorkflowNode CreateStub(string name, string? businessNotes, WorkflowNodeId? id = null)
     {
-        var node = new DecisionWorkflowNode(WorkflowNodeId.New(), name, businessNotes);
+        var node = new DecisionWorkflowNode(id ?? WorkflowNodeId.New(), name, businessNotes);
         node._outputPorts.Add("True");
         node._outputPorts.Add("False");
         return node;
@@ -44,6 +44,6 @@ public class DecisionWorkflowNode : WorkflowNode
         var hasTrueTransition = transitions.Any(t => t.SourceNodeId == Id && t.SourcePort == "True");
         var hasFalseTransition = transitions.Any(t => t.SourceNodeId == Id && t.SourcePort == "False");
 
-        IsConfigured = true; //todo:hasTrueTransition || hasFalseTransition;
+        IsConfigured = hasTrueTransition || hasFalseTransition;
     }
 }

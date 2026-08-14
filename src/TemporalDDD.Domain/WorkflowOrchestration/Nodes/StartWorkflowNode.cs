@@ -27,9 +27,9 @@ public sealed class StartWorkflowNode : WorkflowNode
         }
     }
 
-    public static StartWorkflowNode CreateStub(string name, string? businessNotes)
+    public static StartWorkflowNode CreateStub(string name, string? businessNotes, WorkflowNodeId? id = null)
     {
-        var node = new StartWorkflowNode(WorkflowNodeId.New(), name, businessNotes);
+        var node = new StartWorkflowNode(id ?? WorkflowNodeId.New(), name, businessNotes);
         node._outputPorts.Add("Default");
         node.IsConfigured = true; // Start nodes are always configured
         return node;

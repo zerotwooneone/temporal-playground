@@ -49,9 +49,9 @@ public sealed class ApiWorkflowNode : WorkflowNode, IActivityWorkflowNode
         ValidateConfiguration([]);
     }
 
-    public static ApiWorkflowNode CreateStub(string name, string? businessNotes)
+    public static ApiWorkflowNode CreateStub(string name, string? businessNotes, WorkflowNodeId? id = null)
     {
-        var node = new ApiWorkflowNode(WorkflowNodeId.New(), name, businessNotes);
+        var node = new ApiWorkflowNode(id ?? WorkflowNodeId.New(), name, businessNotes);
         node._outputPorts.Add("Default");
         // Technical input definitions: EndpointUrl (Required, String) and AuthToken (Optional, String)
         node._inputDefinitions.Add(new NodeInputDefinition(EndpointUrlKey, WorkflowDataType.Primitive.String, true));

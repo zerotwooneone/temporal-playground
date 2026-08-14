@@ -143,7 +143,8 @@ public class WorkflowOrchestrationController : ControllerBase
 
         var applicationTransitionDtos = request.Transitions.Select(t => new Application.WorkflowOrchestration.WorkflowTransitionDto(
             SourceNodeId: t.SourceNodeId,
-            TargetNodeId: t.TargetNodeId
+            TargetNodeId: t.TargetNodeId,
+            SourcePort: t.SourcePort
         )).ToList();
 
         var input = new UpdateWorkflowNodesInput(workflowDefinitionId.ToString(), request.FlowJson, applicationNodeDtos, applicationTransitionDtos);
@@ -298,7 +299,8 @@ public record WorkflowNodeDto(
 
 public record WorkflowTransitionDto(
     string SourceNodeId,
-    string TargetNodeId);
+    string TargetNodeId,
+    string? SourcePort = null);
 
 public record UpdateWorkflowNodesRequest(
     string FlowJson,

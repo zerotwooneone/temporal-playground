@@ -80,7 +80,7 @@ public class WorkflowNodeServiceTests
 
         var transitionDtos = new List<WorkflowTransitionDto>
         {
-            new WorkflowTransitionDto(SourceNodeId: FixedNodeId1, TargetNodeId: FixedNodeId2)
+            new WorkflowTransitionDto(SourceNodeId: FixedNodeId1, TargetNodeId: FixedNodeId2, SourcePort: "Default")
         };
 
         var input = new UpdateWorkflowNodesInput(
@@ -364,6 +364,122 @@ public class WorkflowNodeServiceTests
         workflow.Nodes.OfType<ApiWorkflowNode>().Should().ContainSingle();
         workflow.Nodes.OfType<NotificationWorkflowNode>().Should().ContainSingle();
         workflow.Nodes.OfType<EndWorkflowNode>().Should().ContainSingle();
+    }
+
+    [Fact]
+    public async Task UpdateNodesAsync_WithDecisionNodeAndSourcePort_PreservesSourcePort()
+    {
+        // ARRANGE
+        var mockRepository = new Mock<IWorkflowDefinitionRepository>();
+        var workflowDefinitionId = WorkflowDefinitionId.Create(FixedWorkflowDefinitionId).Value;
+        var publicId = WorkflowDefinitionPublicId.Create(FixedPublicId).Value;
+        var workflow = WorkflowDefinition.Create(UserId.Create(FixedUserId).Value, "Test", "{}", publicId);
+
+        mockRepository.Setup(r => r.GetByIdAsync(workflowDefinitionId, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(workflow);
+
+        var service = new WorkflowNodeService(mockRepository.Object);
+
+        // Generate consistent IDs for all nodes
+        var startNodeId = WorkflowNodeId.New().ToString();
+        var decisionNodeId = WorkflowNodeId.New().ToString();
+        var endNodeId = WorkflowNodeId.New().ToString();
+
+        var nodeDtos = new List<WorkflowNodeDto>
+        {
+            new WorkflowNodeDto(
+                Id: startNodeId,
+                NodeType: 0, // Start
+                Name: "Start",
+                BusinessNotes: null,
+                IsConfigured: true,
+                EndpointUrl: null,
+                AuthToken: null,
+                RetryPolicyMaxAttempts: null,
+                RetryPolicyBackoffCoefficient: null,
+                ContractMappingConvertXmlToJson: null,
+                ContractMappingQueryParameters: null,
+                ContractMappingRequestMapping: null,
+                ContractMappingResponseMapping: null,
+                MessageTemplate: null
+            ),
+            new WorkflowNodeDto(
+                Id: decisionNodeId,
+                NodeType: 3, // Decision
+                Name: "Decision",
+                BusinessNotes: null,
+                IsConfigured: true,
+                EndpointUrl: null,
+                AuthToken: null,
+                RetryPolicyMaxAttempts: null,
+                RetryPolicyBackoffCoefficient: null,
+                ContractMappingConvertXmlToJson: null,
+                ContractMappingQueryParameters: null,
+                ContractMappingRequestMapping: null,
+                ContractMappingResponseMapping: null,
+                MessageTemplate: null
+            ),
+            new WorkflowNodeDto(
+                Id: endNodeId,
+                NodeType: 99, // End
+                Name: "End",
+                BusinessNotes: null,
+                IsConfigured: true,
+                EndpointUrl: null,
+                AuthToken: null,
+                RetryPolicyMaxAttempts: null,
+                RetryPolicyBackoffCoefficient: null,
+                ContractMappingConvertXmlToJson: null,
+                ContractMappingQueryParameters: null,
+                ContractMappingRequestMapping: null,
+                ContractMappingResponseMapping: null,
+                MessageTemplate: null
+            )
+        };
+
+        var transitionDtos = new List<WorkflowTransitionDto>
+        {
+            new WorkflowTransitionDto(SourceNodeId: startNodeId, TargetNodeId: decisionNodeId, SourcePort: "Default"),
+            new WorkflowTransitionDto(SourceNodeId: decisionNodeId, TargetNodeId: endNodeId, SourcePort: "True"),
+            new WorkflowTransitionDto(SourceNodeId: decisionNodeId, TargetNodeId: endNodeId, SourcePort: "False")
+        };
+
+        var input = new UpdateWorkflowNodesInput(
+            workflowDefinitionId.ToString(),
+            "{}",
+            nodeDtos,
+            transitionDtos
+        );
+
+        // ACT
+        await service.UpdateNodesAsync(workflowDefinitionId, "{}", input);
+
+        // ASSERT
+        Console.WriteLine($"Node count: {workflow.Nodes.Count}");
+        Console.WriteLine($"Transition count: {workflow.Transitions.Count}");
+        Console.WriteLine($"Nodes: {string.Join(", ", workflow.Nodes.Select(n => $"{n.Type}:{n.Id}"))}");
+        Console.WriteLine($"Transitions: {string.Join(", ", workflow.Transitions.Select(t => $"{t.SourceNodeId} -> {t.TargetNodeId} ({t.SourcePort})"))}");
+
+        // Verify node IDs match transition IDs
+        var startNode = workflow.Nodes.OfType<StartWorkflowNode>().First();
+        var decisionNode = workflow.Nodes.OfType<DecisionWorkflowNode>().First();
+        var endNode = workflow.Nodes.OfType<EndWorkflowNode>().First();
+
+        Console.WriteLine($"Start node ID: {startNode.Id} (expected: {startNodeId})");
+        Console.WriteLine($"Decision node ID: {decisionNode.Id} (expected: {decisionNodeId})");
+        Console.WriteLine($"End node ID: {endNode.Id} (expected: {endNodeId})");
+
+        workflow.Transitions.Should().HaveCount(3);
+        workflow.Transitions.Count(t => t.SourcePort == "True").Should().Be(1);
+        workflow.Transitions.Count(t => t.SourcePort == "False").Should().Be(1);
+        workflow.Transitions.Count(t => t.SourcePort == "Default").Should().Be(1);
+
+        var topologyResult = workflow.ValidateTopology();
+        if (topologyResult.IsFailure)
+        {
+            Console.WriteLine($"Topology validation failed: {topologyResult.Error}");
+        }
+        topologyResult.IsSuccess.Should().BeTrue();
     }
     #endregion
 }

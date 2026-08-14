@@ -34,12 +34,12 @@ public class WorkflowNodeService : IWorkflowNodeService
 
             WorkflowNode domainNode = nodeTypeResult.Value.Value switch
             {
-                0 => StartWorkflowNode.CreateStub(nodeDto.Name, nodeDto.BusinessNotes),
-                1 => ApiWorkflowNode.CreateStub(nodeDto.Name, nodeDto.BusinessNotes),
-                2 => NotificationWorkflowNode.CreateStub(nodeDto.Name, nodeDto.BusinessNotes),
-                3 => DecisionWorkflowNode.CreateStub(nodeDto.Name, nodeDto.BusinessNotes),
-                4 => HumanTaskWorkflowNode.CreateStub(nodeDto.Name, nodeDto.BusinessNotes),
-                99 => EndWorkflowNode.CreateStub(nodeDto.Name, nodeDto.BusinessNotes),
+                0 => StartWorkflowNode.CreateStub(nodeDto.Name, nodeDto.BusinessNotes, nodeIdResult.Value),
+                1 => ApiWorkflowNode.CreateStub(nodeDto.Name, nodeDto.BusinessNotes, nodeIdResult.Value),
+                2 => NotificationWorkflowNode.CreateStub(nodeDto.Name, nodeDto.BusinessNotes, nodeIdResult.Value),
+                3 => DecisionWorkflowNode.CreateStub(nodeDto.Name, nodeDto.BusinessNotes, nodeIdResult.Value),
+                4 => HumanTaskWorkflowNode.CreateStub(nodeDto.Name, nodeDto.BusinessNotes, nodeIdResult.Value),
+                99 => EndWorkflowNode.CreateStub(nodeDto.Name, nodeDto.BusinessNotes, nodeIdResult.Value),
                 _ => throw new InvalidOperationException($"Unsupported NodeType: {nodeTypeResult.Value.Name}")
             };
 

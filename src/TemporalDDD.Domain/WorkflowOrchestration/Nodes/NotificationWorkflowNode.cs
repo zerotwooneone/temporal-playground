@@ -41,9 +41,9 @@ public sealed class NotificationWorkflowNode : WorkflowNode
         ValidateConfiguration([]);
     }
 
-    public static NotificationWorkflowNode CreateStub(string name, string? businessNotes)
+    public static NotificationWorkflowNode CreateStub(string name, string? businessNotes, WorkflowNodeId? id = null)
     {
-        var node = new NotificationWorkflowNode(WorkflowNodeId.New(), name, businessNotes);
+        var node = new NotificationWorkflowNode(id ?? WorkflowNodeId.New(), name, businessNotes);
         node._outputPorts.Add("Default");
         // Technical input definition: MessageTemplate (Required, String)
         node._inputDefinitions.Add(new NodeInputDefinition(MessageTemplateKey, WorkflowDataType.Primitive.String, true));

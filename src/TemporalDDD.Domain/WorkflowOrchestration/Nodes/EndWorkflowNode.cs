@@ -20,9 +20,9 @@ public sealed class EndWorkflowNode : WorkflowNode
         // End nodes have no output ports (terminal node)
     }
 
-    public static EndWorkflowNode CreateStub(string name, string? businessNotes)
+    public static EndWorkflowNode CreateStub(string name, string? businessNotes, WorkflowNodeId? id = null)
     {
-        var node = new EndWorkflowNode(WorkflowNodeId.New(), name, businessNotes);
+        var node = new EndWorkflowNode(id ?? WorkflowNodeId.New(), name, businessNotes);
         node.IsConfigured = true; // End nodes are always configured
         return node;
     }

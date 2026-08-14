@@ -45,9 +45,9 @@ public sealed class HumanTaskWorkflowNode : WorkflowNode
         }
     }
 
-    public static HumanTaskWorkflowNode CreateStub(string name, string? businessNotes)
+    public static HumanTaskWorkflowNode CreateStub(string name, string? businessNotes, WorkflowNodeId? id = null)
     {
-        var node = new HumanTaskWorkflowNode(WorkflowNodeId.New(), name, businessNotes);
+        var node = new HumanTaskWorkflowNode(id ?? WorkflowNodeId.New(), name, businessNotes);
         node._outputPorts.Add("Default");
         return node;
     }
