@@ -1,7 +1,7 @@
 import { useWorkflowStore } from '../../../store/workflowStore';
-import { Plus, Save, ChevronDown, Check, Send } from 'lucide-react';
+import { Plus, Save, ChevronDown, Check, Send, Rocket } from 'lucide-react';
 import { useMutation } from '@tanstack/react-query';
-import { apiClient, approveWorkflow, submitWorkflowForReview } from '../../../api/client';
+import { apiClient, approveWorkflow, submitWorkflowForReview, publishWorkflow } from '../../../api/client';
 import { useState } from 'react';
 import { useUser } from '../../../contexts/UserContext';
 
@@ -79,6 +79,19 @@ export default function WorkflowToolbar({ publicId }: WorkflowToolbarProps) {
     onError: (error) => {
       console.error('Failed to submit workflow for review:', error);
       alert('Failed to submit workflow for review. Please try again.');
+    },
+  });
+
+  const publishMutation = useMutation({
+    mutationFn: async () => {
+      return await publishWorkflow(publicId);
+    },
+    onSuccess: () => {
+      alert('Workflow published successfully!');
+    },
+    onError: (error) => {
+      console.error('Failed to publish workflow:', error);
+      alert('Failed to publish workflow. Please try again.');
     },
   });
 
@@ -172,14 +185,24 @@ export default function WorkflowToolbar({ publicId }: WorkflowToolbarProps) {
         )}
 
         {role === 'approver' && (
-          <button
-            onClick={() => approveMutation.mutate()}
-            disabled={approveMutation.isPending}
-            className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors font-medium disabled:opacity-50 disabled:cursor-not-allowed"
-          >
-            <Check size={16} />
-            {approveMutation.isPending ? 'Approving...' : 'Approve'}
-          </button>
+          <>
+            <button
+              onClick={() => approveMutation.mutate()}
+              disabled={approveMutation.isPending}
+              className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors font-medium disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              <Check size={16} />
+              {approveMutation.isPending ? 'Approving...' : 'Approve'}
+            </button>
+            <button
+              onClick={() => publishMutation.mutate()}
+              disabled={publishMutation.isPending}
+              className="flex items-center gap-2 px-4 py-2 bg-purple-600 text-white rounded-md hover:bg-purple-700 transition-colors font-medium disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              <Rocket size={16} />
+              {publishMutation.isPending ? 'Publishing...' : 'Publish'}
+            </button>
+          </>
         )}
       </div>
     </div>
