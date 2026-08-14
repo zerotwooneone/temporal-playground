@@ -41,8 +41,9 @@ public sealed class StartWorkflowNode : WorkflowNode
         _outputDefinitions.AddRange(workflowInputs);
     }
 
-    public override void ValidateConfiguration()
+    public override void ValidateConfiguration(IReadOnlyList<WorkflowTransition> transitions)
     {
+        // Transitions parameter is not used for Start node configuration
         IsConfigured = true; // Start nodes are always configured
     }
 }

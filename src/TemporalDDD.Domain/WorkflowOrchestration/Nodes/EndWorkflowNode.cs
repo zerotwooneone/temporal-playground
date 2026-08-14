@@ -27,8 +27,9 @@ public sealed class EndWorkflowNode : WorkflowNode
         return node;
     }
 
-    public override void ValidateConfiguration()
+    public override void ValidateConfiguration(IReadOnlyList<WorkflowTransition> transitions)
     {
+        // Transitions parameter is not used for End node configuration
         IsConfigured = true; // End nodes are always configured
     }
 }

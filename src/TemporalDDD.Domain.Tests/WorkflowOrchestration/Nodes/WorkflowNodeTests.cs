@@ -173,4 +173,124 @@ public class WorkflowNodeTests
         node.IsConfigured.Should().BeFalse();
     }
     #endregion
+
+    #region DecisionWorkflowNode Tests
+    [Fact]
+    public void DecisionWorkflowNode_WhenAddedViaAggregate_HasCorrectDefaults()
+    {
+        // ARRANGE
+        var publicId = WorkflowDefinitionPublicId.New();
+        var workflow = WorkflowDefinition.Create(UserId.New(), "Test", "{}", publicId);
+
+        // ACT
+        workflow.AddDecisionNodeStub("Decision Node", "Business notes");
+
+        // ASSERT
+        var node = workflow.Nodes.OfType<DecisionWorkflowNode>().First();
+        node.Name.Should().Be("Decision Node");
+        node.BusinessNotes.Should().Be("Business notes");
+        node.Type.Should().Be(NodeType.Decision);
+        node.IsConfigured.Should().BeFalse();
+        node.Id.Should().NotBeNull();
+    }
+
+    [Fact]
+    public void DecisionWorkflowNode_ValidateConfiguration_WhenTruePortHasTransition_SetsIsConfiguredToTrue()
+    {
+        // ARRANGE
+        var publicId = WorkflowDefinitionPublicId.New();
+        var workflow = WorkflowDefinition.Create(UserId.New(), "Test", "{}", publicId);
+        workflow.AddDecisionNodeStub("Decision Node", "Business notes");
+        var decisionNode = workflow.Nodes.OfType<DecisionWorkflowNode>().First();
+        var transitions = new List<WorkflowTransition>
+        {
+            new WorkflowTransition(decisionNode.Id, workflow.Nodes.OfType<EndWorkflowNode>().First().Id, "True")
+        };
+
+        // ACT
+        decisionNode.ValidateConfiguration(transitions);
+
+        // ASSERT
+        decisionNode.IsConfigured.Should().BeTrue();
+    }
+
+    [Fact]
+    public void DecisionWorkflowNode_ValidateConfiguration_WhenFalsePortHasTransition_SetsIsConfiguredToTrue()
+    {
+        // ARRANGE
+        var publicId = WorkflowDefinitionPublicId.New();
+        var workflow = WorkflowDefinition.Create(UserId.New(), "Test", "{}", publicId);
+        workflow.AddDecisionNodeStub("Decision Node", "Business notes");
+        var decisionNode = workflow.Nodes.OfType<DecisionWorkflowNode>().First();
+        var transitions = new List<WorkflowTransition>
+        {
+            new WorkflowTransition(decisionNode.Id, workflow.Nodes.OfType<EndWorkflowNode>().First().Id, "False")
+        };
+
+        // ACT
+        decisionNode.ValidateConfiguration(transitions);
+
+        // ASSERT
+        decisionNode.IsConfigured.Should().BeTrue();
+    }
+
+    [Fact]
+    public void DecisionWorkflowNode_ValidateConfiguration_WhenBothPortsHaveTransitions_SetsIsConfiguredToTrue()
+    {
+        // ARRANGE
+        var publicId = WorkflowDefinitionPublicId.New();
+        var workflow = WorkflowDefinition.Create(UserId.New(), "Test", "{}", publicId);
+        workflow.AddDecisionNodeStub("Decision Node", "Business notes");
+        var decisionNode = workflow.Nodes.OfType<DecisionWorkflowNode>().First();
+        var endNode = workflow.Nodes.OfType<EndWorkflowNode>().First();
+        var transitions = new List<WorkflowTransition>
+        {
+            new WorkflowTransition(decisionNode.Id, endNode.Id, "True"),
+            new WorkflowTransition(decisionNode.Id, endNode.Id, "False")
+        };
+
+        // ACT
+        decisionNode.ValidateConfiguration(transitions);
+
+        // ASSERT
+        decisionNode.IsConfigured.Should().BeTrue();
+    }
+
+    [Fact]
+    public void DecisionWorkflowNode_ValidateConfiguration_WhenNeitherPortHasTransition_SetsIsConfiguredToFalse()
+    {
+        // ARRANGE
+        var publicId = WorkflowDefinitionPublicId.New();
+        var workflow = WorkflowDefinition.Create(UserId.New(), "Test", "{}", publicId);
+        workflow.AddDecisionNodeStub("Decision Node", "Business notes");
+        var decisionNode = workflow.Nodes.OfType<DecisionWorkflowNode>().First();
+        var transitions = new List<WorkflowTransition>();
+
+        // ACT
+        decisionNode.ValidateConfiguration(transitions);
+
+        // ASSERT
+        decisionNode.IsConfigured.Should().BeFalse();
+    }
+
+    [Fact]
+    public void DecisionWorkflowNode_ValidateConfiguration_WhenTransitionHasWrongPort_SetsIsConfiguredToFalse()
+    {
+        // ARRANGE
+        var publicId = WorkflowDefinitionPublicId.New();
+        var workflow = WorkflowDefinition.Create(UserId.New(), "Test", "{}", publicId);
+        workflow.AddDecisionNodeStub("Decision Node", "Business notes");
+        var decisionNode = workflow.Nodes.OfType<DecisionWorkflowNode>().First();
+        var transitions = new List<WorkflowTransition>
+        {
+            new WorkflowTransition(decisionNode.Id, workflow.Nodes.OfType<EndWorkflowNode>().First().Id, "WrongPort")
+        };
+
+        // ACT
+        decisionNode.ValidateConfiguration(transitions);
+
+        // ASSERT
+        decisionNode.IsConfigured.Should().BeFalse();
+    }
+    #endregion
 }

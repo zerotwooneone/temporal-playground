@@ -58,7 +58,7 @@ public sealed class HumanTaskWorkflowNode : WorkflowNode
         SignalName = signalName;
         Timeout = timeout;
         UIFormSchema = uiFormSchema;
-        ValidateConfiguration();
+        ValidateConfiguration([]);
     }
 
     public void ConfigureInputs(IEnumerable<NodeInputDefinition> inputs)
@@ -73,8 +73,9 @@ public sealed class HumanTaskWorkflowNode : WorkflowNode
         _outputDefinitions.AddRange(outputs);
     }
 
-    public override void ValidateConfiguration()
+    public override void ValidateConfiguration(IReadOnlyList<WorkflowTransition> transitions)
     {
+        // Transitions parameter is not used for HumanTask node configuration
         IsConfigured = RequiredRole != null && SignalName != null && Timeout != null;
     }
 }

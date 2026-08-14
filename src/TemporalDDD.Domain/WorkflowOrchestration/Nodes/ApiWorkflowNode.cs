@@ -46,7 +46,7 @@ public sealed class ApiWorkflowNode : WorkflowNode, IActivityWorkflowNode
             _outputDefinitions.AddRange(outputDefinitions);
         }
         // Re-validate after rehydration
-        ValidateConfiguration();
+        ValidateConfiguration([]);
     }
 
     public static ApiWorkflowNode CreateStub(string name, string? businessNotes)
@@ -65,11 +65,12 @@ public sealed class ApiWorkflowNode : WorkflowNode, IActivityWorkflowNode
     {
         RetryPolicy = retryPolicy;
         ContractMapping = mapping;
-        ValidateConfiguration();
+        ValidateConfiguration([]);
     }
 
-    public override void ValidateConfiguration()
+    public override void ValidateConfiguration(IReadOnlyList<WorkflowTransition> transitions)
     {
+        // Transitions parameter is not used for API node configuration
         IsConfigured = _technicalInputs.ContainsKey(EndpointUrlKey) && RetryPolicy != null && ContractMapping != null;
     }
 }

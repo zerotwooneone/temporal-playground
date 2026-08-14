@@ -38,7 +38,7 @@ public sealed class NotificationWorkflowNode : WorkflowNode
             _outputDefinitions.AddRange(outputDefinitions);
         }
         // Re-validate after rehydration
-        ValidateConfiguration();
+        ValidateConfiguration([]);
     }
 
     public static NotificationWorkflowNode CreateStub(string name, string? businessNotes)
@@ -51,8 +51,9 @@ public sealed class NotificationWorkflowNode : WorkflowNode
         return node;
     }
 
-    public override void ValidateConfiguration()
+    public override void ValidateConfiguration(IReadOnlyList<WorkflowTransition> transitions)
     {
+        // Transitions parameter is not used for Notification node configuration
         if (!_technicalInputs.ContainsKey(MessageTemplateKey))
         {
             IsConfigured = false;

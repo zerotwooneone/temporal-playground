@@ -30,3 +30,18 @@ export const getWorkflowById = async (id: string) => {
   const response = await apiClient.get(`/workflows/${id}`);
   return response.data;
 };
+
+export const publishWorkflow = async (id: string) => {
+  const response = await apiClient.post(`/workflows/${id}/publish`);
+  return response.data;
+};
+
+export const submitWorkflowForReview = async (id: string) => {
+  const response = await apiClient.post(`/workflows/${id}/submit`);
+  return response.data;
+};
+
+export const approveWorkflow = async (id: string, reviewerId: string) => {
+  const response = await apiClient.post(`/workflows/${id}/approve`, { reviewerId });
+  return response.data;
+};

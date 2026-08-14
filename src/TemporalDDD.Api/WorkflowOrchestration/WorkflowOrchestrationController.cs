@@ -159,6 +159,75 @@ public class WorkflowOrchestrationController : ControllerBase
         }
     }
 
+    [HttpPost("{publicId}/submit")]
+    public async Task<IActionResult> SubmitForReview(string publicId, CancellationToken cancellationToken = default)
+    {
+        // Validate workflow ID using domain value type
+        var publicIdResult = WorkflowDefinitionPublicId.Create(publicId);
+        if (publicIdResult.IsFailure)
+            return BadRequest(publicIdResult.Error);
+
+        // Resolve WorkflowDefinitionId from PublicId
+        var workflowDefinitionId = await _query.GetWorkflowDefinitionIdByPublicIdAsync(publicIdResult.Value, cancellationToken);
+        if (workflowDefinitionId == null)
+            return NotFound($"Workflow with PublicId '{publicId}' not found");
+
+        // Retrieve the workflow definition from the database
+        var workflowDefinition = await _repository.GetByIdAsync(workflowDefinitionId, cancellationToken);
+        if (workflowDefinition == null)
+            return NotFound($"Workflow with ID '{publicId}' not found");
+
+        try
+        {
+            // Submit workflow for review
+            workflowDefinition.SubmitForReview();
+            await _repository.SaveAsync(workflowDefinition, cancellationToken);
+
+            return Ok(new { message = "Workflow submitted for review successfully" });
+        }
+        catch (Exception ex)
+        {
+            return BadRequest(ex.Message);
+        }
+    }
+
+    [HttpPost("{publicId}/approve")]
+    public async Task<IActionResult> ApproveWorkflow(string publicId, [FromBody] ApproveWorkflowRequest request, CancellationToken cancellationToken = default)
+    {
+        // Validate workflow ID using domain value type
+        var publicIdResult = WorkflowDefinitionPublicId.Create(publicId);
+        if (publicIdResult.IsFailure)
+            return BadRequest(publicIdResult.Error);
+
+        // Validate ReviewerId at the edge using domain value type
+        var reviewerIdResult = UserId.Create(request.ReviewerId);
+        if (reviewerIdResult.IsFailure)
+            return BadRequest(reviewerIdResult.Error);
+
+        // Resolve WorkflowDefinitionId from PublicId
+        var workflowDefinitionId = await _query.GetWorkflowDefinitionIdByPublicIdAsync(publicIdResult.Value, cancellationToken);
+        if (workflowDefinitionId == null)
+            return NotFound($"Workflow with PublicId '{publicId}' not found");
+
+        // Retrieve the workflow definition from the database
+        var workflowDefinition = await _repository.GetByIdAsync(workflowDefinitionId, cancellationToken);
+        if (workflowDefinition == null)
+            return NotFound($"Workflow with ID '{publicId}' not found");
+
+        try
+        {
+            // Approve workflow
+            workflowDefinition.Approve(reviewerIdResult.Value);
+            await _repository.SaveAsync(workflowDefinition, cancellationToken);
+
+            return Ok(new { message = "Workflow approved successfully" });
+        }
+        catch (Exception ex)
+        {
+            return BadRequest(ex.Message);
+        }
+    }
+
     [HttpPost("{publicId}/publish")]
     public async Task<IActionResult> PublishWorkflow(string publicId, CancellationToken cancellationToken = default)
     {
@@ -235,3 +304,6 @@ public record UpdateWorkflowNodesRequest(
     string FlowJson,
     List<WorkflowNodeDto> Nodes,
     List<WorkflowTransitionDto> Transitions);
+
+public record ApproveWorkflowRequest(
+    string ReviewerId);

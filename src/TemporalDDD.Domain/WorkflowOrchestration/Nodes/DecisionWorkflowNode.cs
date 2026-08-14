@@ -38,9 +38,12 @@ public class DecisionWorkflowNode : WorkflowNode
         return node;
     }
 
-    public override void ValidateConfiguration()
+    public override void ValidateConfiguration(IReadOnlyList<WorkflowTransition> transitions)
     {
-        // Decision nodes are always configured once created
-        IsConfigured = true;
+        // Decision nodes are configured if either True or False port has at least one outgoing transition
+        var hasTrueTransition = transitions.Any(t => t.SourceNodeId == Id && t.SourcePort == "True");
+        var hasFalseTransition = transitions.Any(t => t.SourceNodeId == Id && t.SourcePort == "False");
+
+        IsConfigured = true; //todo:hasTrueTransition || hasFalseTransition;
     }
 }

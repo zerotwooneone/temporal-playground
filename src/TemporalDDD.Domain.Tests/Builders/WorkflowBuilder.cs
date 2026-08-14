@@ -73,13 +73,13 @@ public class WorkflowBuilder
     }
 
     public WorkflowBuilder WithDecisionNode(
-        string referenceName, 
+        string referenceName,
         out WorkflowNodeId nodeId)
     {
         var node = DecisionWorkflowNode.CreateStub(referenceName, null);
-        
+
         // Decision nodes are always configured once created
-        node.ValidateConfiguration();
+        node.ValidateConfiguration([]);
 
         _additionalNodes.Add(node);
         _nodes[referenceName] = node.Id;

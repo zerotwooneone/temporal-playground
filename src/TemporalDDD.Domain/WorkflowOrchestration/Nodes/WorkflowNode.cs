@@ -29,7 +29,7 @@ public abstract class WorkflowNode
     public void SetTechnicalInput(string key, InputValueSource value)
     {
         _technicalInputs[key] = value;
-        ValidateConfiguration();
+        ValidateConfiguration([]);
     }
     public InputValueSource? GetTechnicalInput(string key) => _technicalInputs.TryGetValue(key, out var val) ? val : null;
 
@@ -56,5 +56,5 @@ public abstract class WorkflowNode
         _inputBindings.AddRange(newBindings);
     }
 
-    public abstract void ValidateConfiguration();
+    public abstract void ValidateConfiguration(IReadOnlyList<WorkflowTransition> transitions);
 }

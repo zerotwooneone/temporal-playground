@@ -17,6 +17,7 @@ const apiNodeSchema = z.object({
 const notificationNodeSchema = z.object({
   name: z.string().min(1, 'Name is required'),
   businessNotes: z.string().optional(),
+  messageTemplate: z.string().min(1, 'Message template is required'),
 });
 
 // Start/End Node Schema
@@ -296,15 +297,18 @@ export default function NodePropertiesPanel() {
     defaultValues: {
       name: '',
       businessNotes: '',
+      messageTemplate: '',
     },
   });
 
   // Reset form when selected node changes
   useEffect(() => {
     if (selectedNode && nodeType === 2) {
+      const nodeData = selectedNode.data as any;
       notificationForm.reset({
-        name: (selectedNode.data.name as string) || '',
-        businessNotes: (selectedNode.data.businessNotes as string) || '',
+        name: (nodeData.name as string) || '',
+        businessNotes: (nodeData.businessNotes as string) || '',
+        messageTemplate: (nodeData.messageTemplate as string) || '',
       });
     }
   }, [selectedNode, nodeType, notificationForm]);
@@ -649,6 +653,19 @@ export default function NodePropertiesPanel() {
               className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500"
               placeholder="Optional business context..."
             />
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Message Template</label>
+            <textarea
+              {...register('messageTemplate')}
+              rows={3}
+              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500"
+              placeholder="e.g., Hello {name}, your order {orderId} is ready"
+            />
+            {errors.messageTemplate && (
+              <p className="text-sm text-red-600 mt-1">{errors.messageTemplate.message}</p>
+            )}
           </div>
 
           <button

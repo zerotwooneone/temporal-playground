@@ -114,6 +114,12 @@ public sealed class WorkflowDefinition : AggregateRoot
         if (Status != WorkflowStatus.PendingReview)
             throw new InvalidOperationException("Cannot approve workflow when status is not PendingReview");
 
+        // Validate node configuration with transitions
+        foreach (var node in _nodes)
+        {
+            node.ValidateConfiguration(_transitions);
+        }
+
         if (_nodes.Any(n => !n.IsConfigured))
             throw new InvalidOperationException("Cannot approve workflow: One or more nodes are missing technical configuration.");
 
@@ -137,6 +143,11 @@ public sealed class WorkflowDefinition : AggregateRoot
     public void AddNotificationNodeStub(string name, string? businessNotes)
     {
         _nodes.Add(NotificationWorkflowNode.CreateStub(name, businessNotes));
+    }
+
+    public void AddDecisionNodeStub(string name, string? businessNotes)
+    {
+        _nodes.Add(DecisionWorkflowNode.CreateStub(name, businessNotes));
     }
 
     public void UpdateNodes(IReadOnlyList<WorkflowNode> nodes, IReadOnlyList<WorkflowTransition> transitions, string? flowJson)
